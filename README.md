@@ -1,1 +1,1 @@
-# agentic-rag
+![](images/cardiology-rag.drawio.png)

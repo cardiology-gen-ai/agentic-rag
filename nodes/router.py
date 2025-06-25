@@ -28,24 +28,64 @@ class Router:
             ):  # <- Added missing colon here
         
         self.medical_keywords = [
+            # Cardiovascular anatomy
+            'heart', 'cardiac', 'cardio', 'myocardium', 'myocardial', 'pericardium',
+            'endocardium', 'epicardium', 'atrium', 'atrial', 'ventricle', 'ventricular',
+            'aorta', 'aortic', 'mitral', 'tricuspid', 'pulmonary valve', 'coronary',
+            'artery', 'arterial', 'vein', 'venous', 'vessel', 'vascular', 'circulation',
+            
             # Cardiovascular conditions
-            'myocardial infarction', 'mi', 'heart attack', 'coronary', 'cardiac arrest',
-            'arrhythmia', 'atrial fibrillation', 'afib', 'heart failure', 'cardiomyopathy',
-            'angina', 'pericarditis', 'endocarditis', 'valvular', 'stenosis', 'regurgitation',
-            'hypertension', 'hypotension', 'tachycardia', 'bradycardia',
+            'myocardial infarction', 'heart attack', 'acute coronary syndrome', 'acs',
+            'stemi', 'nstemi', 'unstable angina', 'stable angina', 'heart failure',
+            'hf', 'cardiomyopathy', 'dilated cardiomyopathy', 'hypertrophic cardiomyopathy',
+            'arrhythmia', 'atrial fibrillation', 'afib', 'ventricular tachycardia',
+            'ventricular fibrillation', 'bradycardia', 'tachycardia', 'cardiac arrest',
+            'sudden cardiac death', 'heart block', 'pericarditis', 'endocarditis',
+            'myocarditis', 'aortic stenosis', 'aortic regurgitation', 'mitral stenosis',
+            'mitral regurgitation', 'tricuspid regurgitation', 'pulmonary embolism',
+            'deep vein thrombosis', 'hypertension', 'hypotension', 'shock', 'cardiogenic shock',
             
             # Procedures and interventions
-            'catheterization', 'angioplasty', 'stent', 'bypass', 'ablation', 'pacemaker',
-            'defibrillator', 'echocardiography', 'echo', 'ekg', 'ecg', 'stress test',
-            'cardiac', 'cardiovascular', 'cardiology',
+            'percutaneous coronary intervention', 'pci', 'angioplasty', 'stent', 'stenting',
+            'coronary artery bypass', 'cabg', 'cardiac catheterization', 'angiography',
+            'echocardiography', 'echo', 'transesophageal echo', 'tee', 'stress test',
+            'electrocardiogram', 'ecg', 'ekg', 'holter monitor', 'event monitor',
+            'cardiac mri', 'cardiac ct', 'nuclear stress test', 'thallium scan',
+            'ablation', 'cardioversion', 'defibrillation', 'pacemaker', 'icd',
+            'cardiac resynchronization therapy', 'crt', 'valve replacement',
+            'valve repair', 'balloon valvuloplasty', 'atherectomy', 'thrombectomy',
             
             # Medications
-            'anticoagulation', 'beta blocker', 'ace inhibitor', 'statin', 'aspirin',
-            'warfarin', 'heparin', 'diuretic', 'nitrate',
+            'anticoagulant', 'anticoagulation', 'antiplatelet', 'aspirin', 'clopidogrel',
+            'warfarin', 'heparin', 'enoxaparin', 'dabigatran', 'rivaroxaban', 'apixaban',
+            'beta blocker', 'metoprolol', 'atenolol', 'carvedilol', 'ace inhibitor',
+            'lisinopril', 'enalapril', 'arb', 'losartan', 'valsartan', 'statin',
+            'atorvastatin', 'simvastatin', 'rosuvastatin', 'diuretic', 'furosemide',
+            'hydrochlorothiazide', 'calcium channel blocker', 'amlodipine', 'diltiazem',
+            'nitrate', 'nitroglycerin', 'isosorbide', 'digoxin', 'amiodarone',
             
-            # ESC specific terms
-            'esc', 'european society of cardiology', 'guidelines', 'protocol', 'recommendation'
-        ]
+            # Risk factors and comorbidities
+            'diabetes', 'diabetic', 'hyperlipidemia', 'dyslipidemia', 'cholesterol',
+            'smoking', 'obesity', 'metabolic syndrome', 'chronic kidney disease',
+            'peripheral artery disease', 'pad', 'cerebrovascular disease', 'stroke',
+            
+            # Clinical parameters
+            'ejection fraction', 'left ventricular function', 'wall motion',
+            'cardiac output', 'stroke volume', 'preload', 'afterload', 'contractility',
+            'hemodynamics', 'blood pressure', 'heart rate', 'pulse', 'murmur',
+            'gallop', 'rub', 'chest pain', 'dyspnea', 'orthopnea', 'edema',
+            'syncope', 'palpitations', 'fatigue', 'exercise intolerance',
+            
+            # Diagnostic tests and values
+            'troponin', 'ck', 'ck-mb', 'bnp', 'nt-probnp', 'lipid panel',
+            'ldl', 'hdl', 'triglycerides', 'hemoglobin a1c', 'creatinine',
+            'gfr', 'inr', 'pt', 'ptt', 'platelet count',
+            
+            # ESC specific
+            'esc', 'european society of cardiology', 'guidelines', 'recommendations',
+            'class i', 'class ii', 'class iii', 'level of evidence', 'grade a',
+            'grade b', 'grade c'
+       ]
         
         self.conversational_patterns = [
             r'\b(hello|hi|hey|good morning|good afternoon|good evening)\b',

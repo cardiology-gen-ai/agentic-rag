@@ -10,10 +10,11 @@ First idea:
 """
 
 import re
-from typing import Dict, List
+from typing import List
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
+from state import State
 
 
 class Router:
@@ -25,15 +26,15 @@ class Router:
             self,
             llm_model: str = 'llama3.2:1b',
             temperature: float = 0.1  # this controls the creativity of the llm responses
-            ):  # <- Added missing colon here
-        
+            ):
+
         self.medical_keywords = [
             # Cardiovascular anatomy
             'heart', 'cardiac', 'cardio', 'myocardium', 'myocardial', 'pericardium',
             'endocardium', 'epicardium', 'atrium', 'atrial', 'ventricle', 'ventricular',
             'aorta', 'aortic', 'mitral', 'tricuspid', 'pulmonary valve', 'coronary',
             'artery', 'arterial', 'vein', 'venous', 'vessel', 'vascular', 'circulation',
-            
+
             # Cardiovascular conditions
             'myocardial infarction', 'heart attack', 'acute coronary syndrome', 'acs',
             'stemi', 'nstemi', 'unstable angina', 'stable angina', 'heart failure',
@@ -44,7 +45,7 @@ class Router:
             'myocarditis', 'aortic stenosis', 'aortic regurgitation', 'mitral stenosis',
             'mitral regurgitation', 'tricuspid regurgitation', 'pulmonary embolism',
             'deep vein thrombosis', 'hypertension', 'hypotension', 'shock', 'cardiogenic shock',
-            
+
             # Procedures and interventions
             'percutaneous coronary intervention', 'pci', 'angioplasty', 'stent', 'stenting',
             'coronary artery bypass', 'cabg', 'cardiac catheterization', 'angiography',
@@ -54,7 +55,7 @@ class Router:
             'ablation', 'cardioversion', 'defibrillation', 'pacemaker', 'icd',
             'cardiac resynchronization therapy', 'crt', 'valve replacement',
             'valve repair', 'balloon valvuloplasty', 'atherectomy', 'thrombectomy',
-            
+
             # Medications
             'anticoagulant', 'anticoagulation', 'antiplatelet', 'aspirin', 'clopidogrel',
             'warfarin', 'heparin', 'enoxaparin', 'dabigatran', 'rivaroxaban', 'apixaban',
@@ -63,30 +64,30 @@ class Router:
             'atorvastatin', 'simvastatin', 'rosuvastatin', 'diuretic', 'furosemide',
             'hydrochlorothiazide', 'calcium channel blocker', 'amlodipine', 'diltiazem',
             'nitrate', 'nitroglycerin', 'isosorbide', 'digoxin', 'amiodarone',
-            
+
             # Risk factors and comorbidities
             'diabetes', 'diabetic', 'hyperlipidemia', 'dyslipidemia', 'cholesterol',
             'smoking', 'obesity', 'metabolic syndrome', 'chronic kidney disease',
             'peripheral artery disease', 'pad', 'cerebrovascular disease', 'stroke',
-            
+
             # Clinical parameters
             'ejection fraction', 'left ventricular function', 'wall motion',
             'cardiac output', 'stroke volume', 'preload', 'afterload', 'contractility',
             'hemodynamics', 'blood pressure', 'heart rate', 'pulse', 'murmur',
             'gallop', 'rub', 'chest pain', 'dyspnea', 'orthopnea', 'edema',
             'syncope', 'palpitations', 'fatigue', 'exercise intolerance',
-            
+
             # Diagnostic tests and values
             'troponin', 'ck', 'ck-mb', 'bnp', 'nt-probnp', 'lipid panel',
             'ldl', 'hdl', 'triglycerides', 'hemoglobin a1c', 'creatinine',
             'gfr', 'inr', 'pt', 'ptt', 'platelet count',
-            
+
             # ESC specific
             'esc', 'european society of cardiology', 'guidelines', 'recommendations',
             'class i', 'class ii', 'class iii', 'level of evidence', 'grade a',
             'grade b', 'grade c'
        ]
-        
+
         self.conversational_patterns = [
             r'\b(hello|hi|hey|good morning|good afternoon|good evening)\b',
             r'\b(thank you|thanks|appreciate)\b',
@@ -101,7 +102,7 @@ class Router:
         self.temperature = temperature
         self._setup_llm()
         self._setup_prompts()
-    
+
     def _setup_llm(self):
         """
         Function that setups the basic information for the llm.
@@ -209,7 +210,7 @@ class Router:
         Uses rules to classify the queries.
         """
         query_lower = query.lower()
-        
+
         # Check for conversational patterns first
         for pattern in self.conversational_patterns:
             if re.search(pattern, query_lower):
@@ -235,12 +236,12 @@ class Router:
         # Default to document_based for medical system
         return "document_based"
 
-    def router_node(self, state: Dict) -> Dict:
+    def router_node(self, state: State) -> State:
         """
         LangGraph node function for query routing
 
         Args:
-            state: Agent state dictionary containing messages
+            state: Agent state containing messages
 
         Returns:
             Updated state with query_type classification
@@ -263,22 +264,22 @@ class Router:
 
         query_type = self.classify_query(last_message)
         state["query_type"] = query_type
-        
+
         return state
 
-    def route_query(self, state: Dict) -> str:
+    def route_query(self, state: State) -> str:
         """
         Conditional edge function for LangGraph routing
 
         Args:
-            state: Agent state dictionary
+            state: Agent state
 
         Returns:
             str: Route name ("conversational" or "document_based")
         """
         return state.get("query_type", "document_based")
 
-    def batch_classify(self, queries: List[str]) -> List[Dict[str, str]]:
+    def batch_classify(self, queries: List[str]) -> List[dict]:
         """
         Classify multiple queries at once
 
@@ -297,7 +298,7 @@ class Router:
             })
         return results
 
-    def get_classification_confidence(self, query: str) -> Dict[str, float]:
+    def get_classification_confidence(self, query: str) -> dict:
         """
         Get confidence scores for both classifications
 
@@ -384,8 +385,18 @@ def test_router():
     print("\nTesting LangGraph Integration:")
     print("-" * 30)
 
-    test_state = {
-        "messages": [HumanMessage(content="What is the ESC protocol for acute MI?")]
+    test_state: State = {
+        "messages": [HumanMessage(content="What is the ESC protocol for acute MI?")],
+        "query_type": None,
+        "response": None,
+        "context": None,
+        "conversation_summary": None,
+        "documents": None,
+        "metadata": None,
+        "retrieval_attempts": None,
+        "generation_attempts": None,
+        "current_state": None,
+        "next_action": None
     }
 
     updated_state = router.router_node(test_state)

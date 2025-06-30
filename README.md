@@ -1,4 +1,4 @@
-
-![](images/cardiology-agent-dark.drawio.png)
-
+<center>
+![](images/cardiology-agent-transparent.drawio.png)
+</center>
 

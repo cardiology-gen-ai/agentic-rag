@@ -14,11 +14,11 @@ This node:
 import re
 import os
 import sys
-from typing import List
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
-from state import State
 
 # Add the data-etl directory to Python path to import vectorstore
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -267,7 +267,7 @@ Answer:"""
             return reformulations[attempt]
         return original_query
 
-    def selfRAG_node(self, state: State) -> State:
+    def selfRAG_node(self, state: Dict) -> Dict:
         """Main self-RAG node for LangGraph integration."""
         print("\n🔄 Self-RAG Node Processing")
         print("=" * 50)
@@ -330,8 +330,6 @@ Answer:"""
         if not relevant_docs:
             state["response"] = "I couldn't find relevant information in the cardiology protocols to answer your question."
             state["documents"] = []
-            state["retrieval_attempts"] = retrieval_attempt
-            state["generation_attempts"] = 0
             return state
 
         # Generation loop with self-assessment
@@ -365,8 +363,6 @@ Answer:"""
         if final_answer:
             state["response"] = final_answer
             state["documents"] = relevant_docs
-            state["retrieval_attempts"] = retrieval_attempt + 1
-            state["generation_attempts"] = generation_attempt + 1
             state["metadata"] = {
                 "retrieval_attempts": retrieval_attempt + 1,
                 "generation_attempts": generation_attempt + 1,
@@ -376,8 +372,6 @@ Answer:"""
         else:
             state["response"] = "I found relevant information but couldn't generate a satisfactory answer. Please try rephrasing your question."
             state["documents"] = relevant_docs
-            state["retrieval_attempts"] = retrieval_attempt
-            state["generation_attempts"] = generation_attempt
 
         return state
 
@@ -420,18 +414,8 @@ def test_selfRAG():
         print(f"{'='*60}")
 
         # Create test state
-        test_state: State = {
-            "messages": [HumanMessage(content=query)],
-            "query_type": None,
-            "response": None,
-            "context": None,
-            "conversation_summary": None,
-            "documents": None,
-            "metadata": None,
-            "retrieval_attempts": None,
-            "generation_attempts": None,
-            "current_state": None,
-            "next_action": None
+        test_state = {
+            "messages": [HumanMessage(content=query)]
         }
 
         # Process through Self-RAG
@@ -439,13 +423,10 @@ def test_selfRAG():
 
         # Display results
         print(f"\n📋 Results:")
-        response = result_state.get('response', 'No response')
-        print(f"Response: {response[:200]}...")
-        if result_state.get('metadata'):
+        print(f"Response: {result_state.get('response', 'No response')[:200]}...")
+        if 'metadata' in result_state:
             print(f"Metadata: {result_state['metadata']}")
         print(f"Documents retrieved: {len(result_state.get('documents', []))}")
-        print(f"Retrieval attempts: {result_state.get('retrieval_attempts', 'N/A')}")
-        print(f"Generation attempts: {result_state.get('generation_attempts', 'N/A')}")
 
 
 if __name__ == "__main__":

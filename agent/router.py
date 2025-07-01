@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Improved Router node for the RAG pipeline.
+Router node for the RAG pipeline.
 Enhanced classification for medical queries vs conversational queries.
 """
 
@@ -292,7 +292,7 @@ def test_improved_router():
     print("🧪 Testing Improved Router")
     print("=" * 60)
 
-    router = ImprovedRouter()
+    router = Router()
 
     test_cases = [
         # Clear document-based cases

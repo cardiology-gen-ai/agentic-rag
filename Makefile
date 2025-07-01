@@ -46,21 +46,6 @@ run: check-deps
 	@echo "🚀 Starting Agentic RAG Pipeline..."
 	@cd agent && python3 orchestrator.py
 
-# Interactive testing
-demo:
-	@echo "🎭 Starting interactive demo..."
-	@echo "This will run sample queries through the pipeline"
-	@cd agent && python -c "\
-	from orchestrator import AgenticRAG; \
-	agent = AgenticRAG(); \
-	print('Demo queries:'); \
-	queries = ['Hello!', 'What is the ESC protocol for acute MI?', 'Thank you!']; \
-	for q in queries: \
-		print(f'\\nQuery: {q}'); \
-		response = agent.process_query(q); \
-		print(f'Response: {response[:100]}...'); \
-	"
-
 # Status and monitoring
 status:
 	@echo "📊 System Status"

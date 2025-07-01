@@ -173,10 +173,6 @@ make test-router      # Router classification tests
 make test-selfrag     # Self-RAG pipeline tests  
 make test-conv        # Conversation tests
 make test-memory      # Memory management tests
-
-# Run interactive demo
-make demo
-
 ```
 
 **System Health Check**

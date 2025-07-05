@@ -1,6 +1,8 @@
 # Agentic RAG Pipeline for Cardiology Protocols
 
-![Agent Scheme](images/agent_scheme.png)
+<div align="center">
+  <img src="images/agent_scheme.png" alt="Agent Scheme" />
+</div>
 
 An intelligent multi-agent system for querying European Society of Cardiology (ESC) guidelines using advanced RAG (Retrieval-Augmented Generation) techniques with self-reflection and conversational capabilities.
 

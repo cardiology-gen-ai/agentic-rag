@@ -13,7 +13,7 @@ This node:
 
 import os
 import sys
-from typing import Dict, List
+from typing import Dict, List, Optional
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
@@ -38,12 +38,13 @@ except ImportError as e:
 class SelfRAG:
     """Self-RAG node with proper grading and generation."""
     
-    def __init__(self, vectorstore, llm_model: str = "llama3.2:1b", state_manager: StateManager = None):
+    def __init__(self, vectorstore, llm_model: str = "llama3.2:1b", state_manager: StateManager = None, callback_handler = None):
         self.vectorstore = vectorstore
         self.llm_model = llm_model
         self.llm = ChatOllama(model=llm_model, temperature=0.0, verbose=False)
         self.generation_llm = ChatOllama(model=llm_model, temperature=0.7, verbose=False)
         self.state_manager = state_manager
+        self.callback_handler = callback_handler
         
         if vectorstore:
             self.retriever = vectorstore.as_retriever(
@@ -75,10 +76,15 @@ class SelfRAG:
             ("system", system_prompt)
         ])
         
-        result = self.llm.invoke(prompt.format_messages(
-            document=document.page_content[:500],
-            query=query
-        ))
+        config = {"callbacks": [self.callback_handler]} if self.callback_handler else {}
+        
+        result = self.llm.invoke(
+            prompt.format_messages(
+                document=document.page_content[:500],
+                query=query
+            ),
+            config=config
+        )
         
         return "relevant" in result.content.lower()
     
@@ -100,10 +106,15 @@ class SelfRAG:
             ("system", system_prompt)
         ])
         
-        result = self.generation_llm.invoke(prompt.format_messages(
-            context=context,
-            query=query
-        ))
+        config = {"callbacks": [self.callback_handler]} if self.callback_handler else {}
+        
+        result = self.generation_llm.invoke(
+            prompt.format_messages(
+                context=context,
+                query=query
+            ),
+            config=config
+        )
         
         return result.content.strip()
     
@@ -122,10 +133,15 @@ class SelfRAG:
             ("system", system_prompt)
         ])
         
-        result = self.llm.invoke(prompt.format_messages(
-            context=context,
-            answer=answer
-        ))
+        config = {"callbacks": [self.callback_handler]} if self.callback_handler else {}
+        
+        result = self.llm.invoke(
+            prompt.format_messages(
+                context=context,
+                answer=answer
+            ),
+            config=config
+        )
         
         return "grounded" in result.content.lower()
     
@@ -142,10 +158,15 @@ class SelfRAG:
             ("system", system_prompt)
         ])
         
-        result = self.llm.invoke(prompt.format_messages(
-            query=query,
-            answer=answer
-        ))
+        config = {"callbacks": [self.callback_handler]} if self.callback_handler else {}
+        
+        result = self.llm.invoke(
+            prompt.format_messages(
+                query=query,
+                answer=answer
+            ),
+            config=config
+        )
         
         return "adequate" in result.content.lower()
     

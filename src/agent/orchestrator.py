@@ -33,6 +33,16 @@ except ImportError as e:
     print(f"Import error: {e}")
     sys.exit(1)
 
+from langfuse import Langfuse
+from langfuse.langchain import CallbackHandler
+
+langfuse = Langfuse(
+    public_key="pk-lf-2e9fb95c-ae8e-4d0c-b102-e878d6b6738f",
+    secret_key="sk-lf-81521946-8bfc-4822-b518-09031931753c",
+    host="https://cloud.langfuse.com"
+)
+
+langfuse_handler = CallbackHandler()
 
 class Orchestrator:
     """Enhanced orchestrator with complete cross-session persistence."""
@@ -121,7 +131,10 @@ class Orchestrator:
         if not thread_id:
             thread_id = str(uuid.uuid4())
         
-        config = {"configurable": {"thread_id": thread_id}}
+        config = {
+            "configurable": {"thread_id": thread_id},
+            "callbacks": [langfuse_handler]
+        }
         
         # Try to get messages from LangGraph memory first
         try:
@@ -149,7 +162,7 @@ class Orchestrator:
             "conversation_summary": conversation_summary
         }
         
-        # Run the graph
+        # Run the graph with LangFuse callback
         try:
             result = self.graph.invoke(initial_state, config)
             response = result.get("response", "I'm sorry, I couldn't process your request.")

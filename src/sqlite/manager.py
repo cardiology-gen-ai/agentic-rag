@@ -6,7 +6,7 @@ SQLite database manager.
 import json
 import sqlite3
 import uuid
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.documents import Document
 
@@ -165,3 +165,76 @@ class StateManager:
         
         conn.close()
         return state
+    
+    def load_thread_messages(self, thread_id: str) -> List:
+        """Load all messages for a specific thread."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Get all messages for this thread, ordered chronologically
+        cursor.execute('''
+            SELECT m.message_type, m.content, m.created_at
+            FROM messages m
+            JOIN agent_states a ON m.state_id = a.id 
+            WHERE a.thread_id = ? 
+            ORDER BY m.created_at ASC
+        ''', (thread_id,))
+        
+        messages = []
+        for msg_type, content, created_at in cursor.fetchall():
+            if msg_type == "human":
+                messages.append(HumanMessage(content=content))
+            else:
+                messages.append(AIMessage(content=content))
+        
+        conn.close()
+        return messages
+    
+    def get_thread_summary(self, thread_id: str) -> Optional[str]:
+        """Get the latest conversation summary for a thread."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT conversation_summary 
+            FROM agent_states 
+            WHERE thread_id = ? AND conversation_summary IS NOT NULL
+            ORDER BY created_at DESC 
+            LIMIT 1
+        ''', (thread_id,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else None
+    
+    def list_threads(self) -> List[tuple]:
+        """List all conversation threads with basic info."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT DISTINCT a.thread_id, 
+                   MIN(a.created_at) as first_message,
+                   MAX(a.created_at) as last_message,
+                   COUNT(DISTINCT m.id) as message_count
+            FROM agent_states a
+            LEFT JOIN messages m ON a.id = m.state_id
+            WHERE a.thread_id IS NOT NULL
+            GROUP BY a.thread_id 
+            ORDER BY MAX(a.created_at) DESC
+        ''')
+        
+        threads = cursor.fetchall()
+        conn.close()
+        return threads
+
+    def thread_exists(self, thread_id: str) -> bool:
+        """Check if a thread exists in the database."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT 1 FROM agent_states WHERE thread_id = ? LIMIT 1', (thread_id,))
+        exists = cursor.fetchone() is not None
+        
+        conn.close()
+        return exists

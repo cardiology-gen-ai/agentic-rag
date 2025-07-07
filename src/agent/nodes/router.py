@@ -31,7 +31,7 @@ class Router:
             return "conversational"
         
         system_prompt = """You are a router for a medical chatbot. Classify the message into one of these categories:
-        - document_based: Questions about specific medical conditions, treatments, protocols, or clinical guidelines
+        - document_based: Questions about specific medical conditions, treatments, protocols, or clinical guidelines. So, if you encounter specific medical keyword it is highly probable that it is document_based.
         - conversational: General greetings, farewells, system questions, or non-medical topics
         
         Respond with only: document_based OR conversational"""
@@ -44,7 +44,7 @@ class Router:
         result = self.llm.invoke(prompt.format_messages(query=query))
         response = result.content.strip().lower()
         
-        return "document_based" if "document_based" in response else "conversational"
+        return "document_based" 
     
     def update_state(self, state: Dict) -> Dict:
         """LangGraph node function for query routing."""
@@ -59,5 +59,5 @@ class Router:
         return state
     
     def route_query(self, state: Dict) -> str:
-        """Conditional edge function for LangGraph routing."""
-        return state.get("query_type", "conversational")
+        query_type = state.get("query_type", "conversational")
+        return query_type

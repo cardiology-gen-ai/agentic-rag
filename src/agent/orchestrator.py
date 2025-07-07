@@ -9,7 +9,7 @@ import uuid
 import sqlite3
 from typing import List, Optional, Dict
 from langchain_core.messages import HumanMessage, AIMessage
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, END, START
 from langgraph.checkpoint.memory import MemorySaver
 
 # Add paths for imports
@@ -47,7 +47,7 @@ langfuse_handler = CallbackHandler()
 class Orchestrator:
     """Enhanced orchestrator with complete cross-session persistence."""
     
-    def __init__(self, llm_model: str = "llama3.2:1b"):
+    def __init__(self, llm_model: str = "llama3.1:latest"):
         self.llm_model = llm_model
         self.state_manager = StateManager()
         
@@ -84,10 +84,11 @@ class Orchestrator:
         
         # Set entry point
         workflow.set_entry_point("router")
+        workflow.add_edge("router", "memory")
         
         # Add conditional edges from router
         workflow.add_conditional_edges(
-            "router",
+            "memory",
             self.router.route_query,
             {
                 "document_based": "self_rag",
@@ -95,10 +96,8 @@ class Orchestrator:
             }
         )
         
-        # Add edges to memory and end
-        workflow.add_edge("conversational", "memory")
-        workflow.add_edge("self_rag", "memory")
-        workflow.add_edge("memory", END)
+        workflow.add_edge("self_rag", END)
+        workflow.add_edge("conversational", END)
         
         # Compile with checkpointer
         checkpointer = MemorySaver()
@@ -173,64 +172,44 @@ class Orchestrator:
             print(f"Error processing message: {e}")
             return "I encountered an error processing your request. Please try again."
     
-    def start_chat(self, resume_thread: str = None):
+    def start_chat(self):
         """Start interactive chat session with optional thread resumption."""
         print("\n" + "="*60)
         print("CARDIOLOGY PROTOCOLS ASSISTANT")
         print("="*60)
-        
-        # Handle conversation resumption
-        if resume_thread:
-            if self.state_manager.thread_exists(resume_thread):
-                print(f"Resuming conversation: {resume_thread[:8]}...")
-                thread_id = resume_thread
-                # Load and display last few messages for context
-                messages = self.load_conversation(thread_id)
-                if messages:
-                    print(f"Found {len(messages)} previous messages")
-                    print("Recent context:")
-                    for msg in messages[-4:]:  # Show last 4 messages
-                        role = "You" if isinstance(msg, HumanMessage) else "Assistant"
-                        content = msg.content[:60] + "..." if len(msg.content) > 60 else msg.content
-                        print(f"  {role}: {content}")
-                    print()
-            else:
-                print(f"Thread {resume_thread} not found. Starting new conversation.")
-                thread_id = str(uuid.uuid4())
-        else:
-            # Ask if user wants to resume
-            threads = self.state_manager.list_threads()
-            if threads:
-                print("Previous conversations available.")
-                choice = input("Resume previous conversation? (y/n): ").strip().lower()
-                if choice == 'y':
-                    self.list_conversations()
-                    try:
-                        selection = input("Enter conversation number (or press Enter for new): ").strip()
-                        if selection.isdigit():
-                            idx = int(selection) - 1
-                            if 0 <= idx < len(threads):
-                                thread_id = threads[idx][0]
-                                print(f"Resuming conversation: {thread_id[:8]}...")
-                                # Show context
-                                messages = self.load_conversation(thread_id)
-                                if messages:
-                                    print("Recent context:")
-                                    for msg in messages[-4:]:
-                                        role = "You" if isinstance(msg, HumanMessage) else "Assistant"
-                                        content = msg.content[:60] + "..." if len(msg.content) > 60 else msg.content
-                                        print(f"  {role}: {content}")
-                                    print()
-                            else:
-                                thread_id = str(uuid.uuid4())
+        # Ask if user wants to resume
+        threads = self.state_manager.list_threads()
+        if threads:
+            print("Previous conversations available.")
+            choice = input("Resume previous conversation? (y/n): ").strip().lower()
+            if choice == 'y':
+                self.list_conversations()
+                try:
+                    selection = input("Enter conversation number (or press Enter for new): ").strip()
+                    if selection.isdigit():
+                        idx = int(selection) - 1
+                        if 0 <= idx < len(threads):
+                            thread_id = threads[idx][0]
+                            print(f"Resuming conversation: {thread_id[:8]}...")
+                            # Show context
+                            messages = self.load_conversation(thread_id)
+                            if messages:
+                                print("Recent context:")
+                                for msg in messages[-4:]:
+                                    role = "You" if isinstance(msg, HumanMessage) else "Assistant"
+                                    content = msg.content[:60] + "..." if len(msg.content) > 60 else msg.content
+                                    print(f"  {role}: {content}")
+                                print()
                         else:
                             thread_id = str(uuid.uuid4())
-                    except:
+                    else:
                         thread_id = str(uuid.uuid4())
-                else:
+                except:
                     thread_id = str(uuid.uuid4())
             else:
                 thread_id = str(uuid.uuid4())
+        else:
+            thread_id = str(uuid.uuid4())
         
         print("I can help you with:")
         print("• Cardiology guidelines and protocols")
@@ -269,22 +248,10 @@ class Orchestrator:
 
 def main():
     """Main function with conversation management options."""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='Cardiology Protocols Assistant')
-    parser.add_argument('--resume', type=str, help='Resume conversation with thread ID')
-    parser.add_argument('--list', action='store_true', help='List all conversations')
-    
-    args = parser.parse_args()
-    
     try:
         orchestrator = Orchestrator()
         
-        if args.list:
-            orchestrator.list_conversations()
-            return
-        
-        orchestrator.start_chat(resume_thread=args.resume)
+        orchestrator.start_chat()
         
     except KeyboardInterrupt:
         print("\n\nExiting...")

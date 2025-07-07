@@ -38,7 +38,7 @@ except ImportError as e:
 class SelfRAG:
     """Self-RAG node with proper grading and generation."""
     
-    def __init__(self, vectorstore, llm_model: str = "llama3.2:1b", state_manager: StateManager = None, callback_handler = None):
+    def __init__(self, vectorstore, llm_model: str = "llama3.1:latest", state_manager: StateManager = None, callback_handler = None):
         self.vectorstore = vectorstore
         self.llm_model = llm_model
         self.llm = ChatOllama(model=llm_model, temperature=0.0, verbose=False)
@@ -49,7 +49,7 @@ class SelfRAG:
         if vectorstore:
             self.retriever = vectorstore.as_retriever(
                 search_type="similarity",
-                search_kwargs={"k": 5, "score_threshold": 0.5}
+                search_kwargs={"k": 5, "score_threshold": 0.3}
             )
     
     def retrieve_documents(self, query: str) -> List[Document]:
@@ -65,7 +65,9 @@ class SelfRAG:
     
     def grade_relevance(self, document: Document, query: str) -> bool:
         """Grade document relevance to query."""
-        system_prompt = """Grade whether this document is relevant to the medical query.
+        system_prompt = """
+        You are a grader assessing whether an LLM generation is grounded and supported by a set of retrieved facts.
+        Given a set of facts and a generation, assess whether the generation is grounded in the facts.
         
         Document: {document}
         Query: {query}
@@ -173,8 +175,8 @@ class SelfRAG:
     def update_state(self, state: Dict) -> Dict:
         """Main self-RAG node function."""
         query = state.get("query", "")
-        max_retrieval_attempts = 2
-        max_generation_attempts = 2
+        max_retrieval_attempts = 3
+        max_generation_attempts = 3
         
         retrieval_attempts = 0
         generation_attempts = 0

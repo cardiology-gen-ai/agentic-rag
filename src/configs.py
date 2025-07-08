@@ -46,7 +46,7 @@ MEMORY_LLM_TEMPERATURE = 0.1
 CONVERSATIONAL_LLM_TEMPERATURE = 0.7
 
 ########################
-##### Orchestrator #####
+##### Agent #####
 ########################
 
 # Langfuse Configuration

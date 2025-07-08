@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Final Orchestrator for the Cardiology Protocols Pipeline with complete cross-session persistence.
+Final agent for the Cardiology Protocols Pipeline with complete cross-session persistence.
 """
 
 import os
@@ -47,8 +47,8 @@ langfuse = Langfuse(
 
 langfuse_handler = CallbackHandler()
 
-class Orchestrator:
-    """Enhanced orchestrator with complete cross-session persistence."""
+class Agent:
+    """Enhanced agent with complete cross-session persistence."""
     
     def __init__(self, llm_model: str = configs.LLM_MODEL):
         self.llm_model = llm_model
@@ -252,14 +252,14 @@ class Orchestrator:
 def main():
     """Main function with conversation management options."""
     try:
-        orchestrator = Orchestrator()
+        agent = Agent()
         
-        orchestrator.start_chat()
+        agent.start_chat()
         
     except KeyboardInterrupt:
         print("\n\nExiting...")
     except Exception as e:
-        print(f"Failed to start orchestrator: {e}")
+        print(f"Failed to start agent: {e}")
         print("Make sure all dependencies are installed and Qdrant is running")
 
 

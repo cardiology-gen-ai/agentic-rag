@@ -34,7 +34,7 @@ agentic-rag/
 │   ├── conversational_agent.py # Social interaction agent
 │   ├── memory.py             # Memory management agent
 │   ├── state.py              # Shared state definitions
-│   ├── orchestrator.py       # Main system orchestrator
+│   ├── agent.py       # Main system agent
 │   └── chainlit.md           # Chainlit configuration
 └── images/                    # Architecture diagrams
     ├── cardiology-agent-dark.drawio.png

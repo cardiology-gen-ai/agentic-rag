@@ -19,17 +19,18 @@ from langchain_core.prompts import ChatPromptTemplate
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 state_manager_path = os.path.join(current_dir, '../../sqlite')
-if os.path.exists(state_manager_path):
-    sys.path.insert(0, state_manager_path)
+configs_path = os.path.join(current_dir, '../../')
+
+sys.path.extend([state_manager_path, configs_path])
 
 from manager import StateManager
-
+import configs 
 
 class ConversationalAgent:
     """Conversational agent for non-medical queries."""
     
-    def __init__(self, llm_model: str = 'llama3.2:1b', state_manager: StateManager = None):
-        self.llm = ChatOllama(model=llm_model, temperature=0.7, verbose=False)
+    def __init__(self, llm_model: str = configs.LLM_MODEL, state_manager: StateManager = None):
+        self.llm = ChatOllama(model=llm_model, temperature=configs.CONVERSATIONAL_LLM_TEMPERATURE, verbose=False)
         self.state_manager = state_manager
     
     def generate_response(self, query: str, conversation_summary: str = "") -> str:

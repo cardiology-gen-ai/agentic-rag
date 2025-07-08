@@ -19,17 +19,18 @@ from langchain_core.messages import BaseMessage
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 state_manager_path = os.path.join(current_dir, '../../sqlite')
-if os.path.exists(state_manager_path):
-    sys.path.insert(0, state_manager_path)
+configs_path = os.path.join(current_dir, '../../')
+
+sys.path.extend([state_manager_path, configs_path])
 
 from manager import StateManager
-
+import configs
 
 class Memory:
     """Memory node for conversation summarization."""
     
     def __init__(self, llm_model: str, state_manager: StateManager = None):
-        self.llm = ChatOllama(model=llm_model, temperature=0.1)
+        self.llm = ChatOllama(model=configs.LLM_MODEL, temperature=configs.MEMORY_LLM_TEMPERATURE)
         self.state_manager = state_manager
     
     def summarize_conversation(self, messages: List[BaseMessage]) -> str:

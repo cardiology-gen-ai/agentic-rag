@@ -12,17 +12,19 @@ from langchain_core.prompts import ChatPromptTemplate
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 state_manager_path = os.path.join(current_dir, '../../sqlite')
-if os.path.exists(state_manager_path):
-    sys.path.insert(0, state_manager_path)
+configs_path = os.path.join(current_dir, '../../')
+
+sys.path.extend([current_dir, state_manager_path, configs_path])
 
 from manager import StateManager
+import configs
 
 
 class Router:
     """Router node for medical query classification."""
     
     def __init__(self, llm_model: str, state_manager: StateManager = None):
-        self.llm = ChatOllama(model=llm_model, temperature=0.0, verbose=False)
+        self.llm = ChatOllama(model=configs.LLM_MODEL, temperature=configs.ROUTER_LLM_TEMPERATURE, verbose=False)
         self.state_manager = state_manager
     
     def classify_query(self, query: str) -> str:

@@ -18,8 +18,9 @@ nodes_path = os.path.join(current_dir, 'nodes')
 utils_path = os.path.join(current_dir, 'utils')
 sqlite_path = os.path.join(current_dir, '../sqlite')
 vectorstore_path = os.path.join(current_dir, '../../../data-etl/src')
+configs_path = os.path.join(current_dir, '../')
 
-sys.path.extend([nodes_path, utils_path, sqlite_path, vectorstore_path])
+sys.path.extend([nodes_path, utils_path, sqlite_path, vectorstore_path, configs_path])
 
 try:
     from state import State
@@ -36,10 +37,12 @@ except ImportError as e:
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
 
+import configs
+
 langfuse = Langfuse(
-    public_key="pk-lf-2e9fb95c-ae8e-4d0c-b102-e878d6b6738f",
-    secret_key="sk-lf-81521946-8bfc-4822-b518-09031931753c",
-    host="https://cloud.langfuse.com"
+    public_key=configs.LANGFUSE_PUBLIC_KEY,
+    secret_key=configs.LANGFUSE_SECRET_KEY,
+    host=configs.LANGFUSE_HOST
 )
 
 langfuse_handler = CallbackHandler()
@@ -47,16 +50,16 @@ langfuse_handler = CallbackHandler()
 class Orchestrator:
     """Enhanced orchestrator with complete cross-session persistence."""
     
-    def __init__(self, llm_model: str = "llama3.1:latest"):
+    def __init__(self, llm_model: str = configs.LLM_MODEL):
         self.llm_model = llm_model
         self.state_manager = StateManager()
         
         # Initialize vectorstore
         try:
             self.vectorstore = load_vectorstore(
-                collection_name="cardio_protocols",
-                vectorstore_type="qdrant",
-                qdrant_url="http://localhost:6333"
+                collection_name=configs.QDRANT_COLLECTION_NAME,
+                vectorstore_type=configs.VECTORSTORE_TYPE,
+                qdrant_url=configs.QDRANT_URL
             )
             print("✓ Vectorstore loaded successfully")
         except Exception as e:

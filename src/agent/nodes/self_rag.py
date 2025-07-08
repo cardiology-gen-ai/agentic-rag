@@ -19,15 +19,11 @@ from langchain_core.documents import Document
 
 # Add the data-etl directory to Python path to import vectorstore
 current_dir = os.path.dirname(os.path.abspath(__file__))
-vectorstore_dir = os.path.join(current_dir, '../../../../data-etl/src')
-config_dir = os.path.join(current_dir, '../../')
+vectorstore_path = os.path.join(current_dir, '../../../../data-etl/src')
+configs_path = os.path.join(current_dir, '../../')
 state_manager_path = os.path.join(current_dir, '../../sqlite')
-if os.path.exists(vectorstore_dir):
-    sys.path.insert(0, vectorstore_dir)
-if os.path.exists(state_manager_path):
-    sys.path.insert(0, state_manager_path)
-if os.path.exists(config_dir):
-    sys.path.insert(0, config_dir)
+
+sys.path.extend([current_dir, vectorstore_path, configs_path, state_manager_path])
 
 from manager import StateManager
 import configs

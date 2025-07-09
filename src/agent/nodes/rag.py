@@ -17,18 +17,10 @@ from typing import Dict, List
 from langchain_community.chat_models import ChatOllama
 from langchain_core.documents import Document
 
-# Add the data-etl directory to Python path to import vectorstore
-current_dir = os.path.dirname(os.path.abspath(__file__))
-vectorstore_path = os.path.join(current_dir, '../../../../data-etl/src')
-configs_path = os.path.join(current_dir, '../../')
-state_manager_path = os.path.join(current_dir, '../../sqlite')
-
-sys.path.extend([current_dir, vectorstore_path, configs_path, state_manager_path])
-
-from manager import StateManager
+from sqlite.manager import StateManager
 import configs
 
-class SelfRAG:
+class RAG:
     """Self-RAG node with proper grading and generation."""
     
     def __init__(self, vectorstore, llm_model: str = configs.LLM_MODEL, state_manager: StateManager = None, callback_handler = None):

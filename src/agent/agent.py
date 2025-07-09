@@ -6,38 +6,26 @@ Final agent for the Cardiology Protocols Pipeline with complete cross-session pe
 import os
 import sys
 import uuid
-import sqlite3
-from typing import List, Optional, Dict
-from langchain_core.messages import HumanMessage, AIMessage
+from typing import List
+from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.checkpoint.memory import MemorySaver
 
-# Add paths for imports
+from agent.utils.state import State
+from agent.nodes.router import Router
+from agent.nodes.memory import Memory
+from agent.nodes.conversational_agent import ConversationalAgent
+from agent.nodes.rag import RAG
+from sqlite.manager import StateManager
+import configs
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
-nodes_path = os.path.join(current_dir, 'nodes')
-utils_path = os.path.join(current_dir, 'utils')
-sqlite_path = os.path.join(current_dir, '../sqlite')
 vectorstore_path = os.path.join(current_dir, '../../../data-etl/src')
-configs_path = os.path.join(current_dir, '../')
-
-sys.path.extend([nodes_path, utils_path, sqlite_path, vectorstore_path, configs_path])
-
-try:
-    from state import State
-    from router import Router
-    from memory import Memory
-    from conversational_agent import ConversationalAgent
-    from self_rag import SelfRAG
-    from manager import StateManager
-    from vectorstore import load_vectorstore
-except ImportError as e:
-    print(f"Import error: {e}")
-    sys.exit(1)
+sys.path.append(vectorstore_path)
+from vectorstore import load_vectorstore
 
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
-
-import configs
 
 langfuse = Langfuse(
     public_key=configs.LANGFUSE_PUBLIC_KEY,
@@ -50,9 +38,9 @@ langfuse_handler = CallbackHandler()
 class Agent:
     """Enhanced agent with complete cross-session persistence."""
     
-    def __init__(self, llm_model: str = configs.LLM_MODEL):
+    def __init__(self, state_manager, llm_model: str = configs.LLM_MODEL):
         self.llm_model = llm_model
-        self.state_manager = StateManager()
+        self.state_manager = state_manager
         
         # Initialize vectorstore
         try:
@@ -70,7 +58,7 @@ class Agent:
         self.router = Router(llm_model, self.state_manager)
         self.memory = Memory(llm_model, self.state_manager)
         self.conversational_agent = ConversationalAgent(llm_model, self.state_manager)
-        self.self_rag = SelfRAG(self.vectorstore, llm_model, self.state_manager)
+        self.rag = RAG(self.vectorstore, llm_model, self.state_manager)
         
         # Build graph
         self.graph = self._build_graph()
@@ -83,90 +71,42 @@ class Agent:
         workflow.add_node("router", self.router.update_state)
         workflow.add_node("memory", self.memory.update_state)
         workflow.add_node("conversational", self.conversational_agent.update_state)
-        workflow.add_node("self_rag", self.self_rag.update_state)
+        workflow.add_node("rag", self.rag.update_state)
         
         # Set entry point
-        workflow.set_entry_point("router")
-        workflow.add_edge("router", "memory")
+        workflow.add_edge(START, "memory")
+        workflow.add_edge("memory", "router")
         
         # Add conditional edges from router
         workflow.add_conditional_edges(
-            "memory",
+            "router",
             self.router.route_query,
             {
-                "document_based": "self_rag",
+                "document_based": "rag",
                 "conversational": "conversational"
             }
         )
         
-        workflow.add_edge("self_rag", END)
+        workflow.add_edge("rag", END)
         workflow.add_edge("conversational", END)
         
         # Compile with checkpointer
         checkpointer = MemorySaver()
         return workflow.compile(checkpointer=checkpointer)
     
-    def load_conversation(self, thread_id: str) -> List:
-        """Load existing conversation from SQLite."""
-        return self.state_manager.load_thread_messages(thread_id)
-    
-    def list_conversations(self):
-        """List all available conversations."""
-        threads = self.state_manager.list_threads()
-        
-        if not threads:
-            print("No previous conversations found.")
-            return []
-        
-        print("\nPrevious Conversations:")
-        print("-" * 80)
-        print(f"{'#':<3} {'Thread ID':<12} {'First Message':<19} {'Last Message':<19} {'Msgs':<5}")
-        print("-" * 80)
-        
-        for i, (thread_id, first_msg, last_msg, msg_count) in enumerate(threads, 1):
-            print(f"{i:<3} {thread_id[:10]+'...':<12} {first_msg[:19]:<19} {last_msg[:19]:<19} {msg_count:<5}")
-        
-        return threads
-    
-    def process_message(self, user_input: str, thread_id: str = None) -> str:
-        """Process a user message with proper cross-session persistence."""
-        if not thread_id:
-            thread_id = str(uuid.uuid4())
-        
+    def process_message(self, state : State) -> str:
+        """
+        Process a user message with proper cross-session persistence.
+        Assumes a state has already been initialized with a thread_id.
+        """
         config = {
-            "configurable": {"thread_id": thread_id},
+            "configurable": {"thread_id": state["thread_id"]},
             "callbacks": [langfuse_handler]
-        }
-        
-        # Try to get messages from LangGraph memory first
-        try:
-            current_state = self.graph.get_state(config).values
-            messages = current_state.get("messages", [])
-        except:
-            messages = []
-        
-        # CRITICAL: If no messages in LangGraph memory, load from SQLite
-        if not messages and self.state_manager.thread_exists(thread_id):
-            messages = self.load_conversation(thread_id)
-            print(f"Restored {len(messages)} messages from previous session")
-        
-        # Add new human message
-        messages.append(HumanMessage(content=user_input))
-        
-        # Get conversation summary if available
-        conversation_summary = self.state_manager.get_thread_summary(thread_id)
-        
-        initial_state = {
-            "messages": messages,
-            "query": user_input,
-            "thread_id": thread_id,
-            "user_id": "default_user",
-            "conversation_summary": conversation_summary
         }
         
         # Run the graph with LangFuse callback
         try:
-            result = self.graph.invoke(initial_state, config)
+            result = self.graph.invoke(state, config)
             response = result.get("response", "I'm sorry, I couldn't process your request.")
             
             return response
@@ -175,93 +115,4 @@ class Agent:
             print(f"Error processing message: {e}")
             return "I encountered an error processing your request. Please try again."
     
-    def start_chat(self):
-        """Start interactive chat session with optional thread resumption."""
-        print("\n" + "="*60)
-        print("CARDIOLOGY PROTOCOLS ASSISTANT")
-        print("="*60)
-        # Ask if user wants to resume
-        threads = self.state_manager.list_threads()
-        if threads:
-            print("Previous conversations available.")
-            choice = input("Resume previous conversation? (y/n): ").strip().lower()
-            if choice == 'y':
-                self.list_conversations()
-                try:
-                    selection = input("Enter conversation number (or press Enter for new): ").strip()
-                    if selection.isdigit():
-                        idx = int(selection) - 1
-                        if 0 <= idx < len(threads):
-                            thread_id = threads[idx][0]
-                            print(f"Resuming conversation: {thread_id[:8]}...")
-                            # Show context
-                            messages = self.load_conversation(thread_id)
-                            if messages:
-                                print("Recent context:")
-                                for msg in messages[-4:]:
-                                    role = "You" if isinstance(msg, HumanMessage) else "Assistant"
-                                    content = msg.content[:60] + "..." if len(msg.content) > 60 else msg.content
-                                    print(f"  {role}: {content}")
-                                print()
-                        else:
-                            thread_id = str(uuid.uuid4())
-                    else:
-                        thread_id = str(uuid.uuid4())
-                except:
-                    thread_id = str(uuid.uuid4())
-            else:
-                thread_id = str(uuid.uuid4())
-        else:
-            thread_id = str(uuid.uuid4())
-        
-        print("I can help you with:")
-        print("• Cardiology guidelines and protocols")
-        print("• Treatment recommendations")
-        print("• Clinical questions")
-        print("• General conversation")
-        print("\nType 'quit', 'exit', or 'bye' to end the conversation")
-        print(f"Thread ID: {thread_id[:8]}...")
-        print("-"*60 + "\n")
-        
-        while True:
-            try:
-                user_input = input("You: ").strip()
-                
-                if not user_input:
-                    continue
-                
-                # Check for exit commands
-                if user_input.lower() in ['quit', 'exit', 'bye', 'goodbye']:
-                    print("\nAssistant: Goodbye! Take care!")
-                    break
-                
-                # Process message
-                print("\nAssistant: ", end="", flush=True)
-                response = self.process_message(user_input, thread_id)
-                print(response)
-                print()
-                
-            except KeyboardInterrupt:
-                print("\n\nChat interrupted. Goodbye!")
-                break
-            except Exception as e:
-                print(f"\nError: {e}")
-                print("Please try again.\n")
-
-
-def main():
-    """Main function with conversation management options."""
-    try:
-        agent = Agent()
-        
-        agent.start_chat()
-        
-    except KeyboardInterrupt:
-        print("\n\nExiting...")
-    except Exception as e:
-        print(f"Failed to start agent: {e}")
-        print("Make sure all dependencies are installed and Qdrant is running")
-
-
-if __name__ == "__main__":
-    main()
+    

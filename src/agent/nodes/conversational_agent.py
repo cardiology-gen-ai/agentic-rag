@@ -17,13 +17,7 @@ from typing import Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-state_manager_path = os.path.join(current_dir, '../../sqlite')
-configs_path = os.path.join(current_dir, '../../')
-
-sys.path.extend([state_manager_path, configs_path])
-
-from manager import StateManager
+from sqlite.manager import StateManager
 import configs 
 
 class ConversationalAgent:

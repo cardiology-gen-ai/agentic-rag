@@ -30,7 +30,7 @@ agentic-rag/
 ├── requirements.txt            # Python dependencies
 ├── agent/                      # Core agent implementations
 │   ├── router.py              # Query classification agent
-│   ├── self_rag.py           # Self-reflecting RAG agent
+│   ├── rag.py           # Self-reflecting RAG agent
 │   ├── conversational_agent.py # Social interaction agent
 │   ├── memory.py             # Memory management agent
 │   ├── state.py              # Shared state definitions
@@ -49,7 +49,7 @@ The system consists of several specialized agents working together:
 ### Agent Details
 
 - **Router Agent** (`router.py`): Classifies incoming queries using both LLM and rule-based approaches
-- **Self-RAG Agent** (`self_rag.py`): Handles medical queries with retrieval, generation, and self-assessment
+- **Self-RAG Agent** (`rag.py`): Handles medical queries with retrieval, generation, and self-assessment
 - **Conversational Agent** (`conversational_agent.py`): Manages social interactions and system information
 - **Memory Manager** (`memory.py`): Maintains conversation context and manages token limits
 - **State Manager** (`state.py`): Defines the shared state structure across all agents
@@ -104,9 +104,9 @@ query_type = router.classify_query("What is the protocol for heart failure?")
 
 ```python
 # Example usage
-self_rag = SelfRAG(vectorstore)
+rag = RAG(vectorstore)
 state = {"messages": [HumanMessage(content="ESC heart failure guidelines?")]}
-result = self_rag.selfRAG_node(state)
+result = rag.RAG_node(state)
 ```
 
 ### Conversational Agent
@@ -174,7 +174,7 @@ make test
 
 # Test individual components
 make test-router      # Router classification tests
-make test-selfrag     # Self-RAG pipeline tests  
+make test-RAG     # Self-RAG pipeline tests  
 make test-conv        # Conversation tests
 make test-memory      # Memory management tests
 ```

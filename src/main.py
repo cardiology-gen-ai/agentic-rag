@@ -94,13 +94,9 @@ def main():
                     continue
 
                 if query == '/feedback':
-                    if last_ai_message_id is None:
-                        print('\nNo previous AI message to provide feedback on.')
-                        continue
-                    
                     value_input = input('\nPositive/Negative: ').strip().lower()
-                    if value_input not in ['positive', 'negative']:
-                        print('Please enter either "positive" or "negative"')
+                    if value_input not in ['Positive', 'Negative']:
+                        print('Please enter either "Positive" or "Negative"')
                         continue
                     
                     value = 1 if value_input == 'positive' else 0
@@ -108,7 +104,7 @@ def main():
                     comment = comment if comment else None
                     
                     try:
-                        state_manager.add_feedback(last_ai_message_id, value, comment)
+                        state_manager.add_feedback(state.get("message"), value, comment)
                         print('\nThanks for your feedback!')
                     except Exception as e:
                         print(f'\nError saving feedback: {e}')
@@ -123,17 +119,11 @@ def main():
                 state['conversation_id'] = conversation_id
                 state['query_id'] = query_id
                 
-                # Store human message
-                human_message_id = state_manager.add_message(conversation_id, 'human', query)
-                
                 # Process message
                 print("\nAssistant: ", end="", flush=True)
                 response = agent.process_message(state)
                 print(response)
                 print()
-                
-                # Store AI message and track its ID for feedback
-                last_ai_message_id = state_manager.add_message(conversation_id, 'ai', response)
                 
             except KeyboardInterrupt:
                 print("\n\nChat interrupted. Goodbye!")
@@ -152,8 +142,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# TO DO:
-# when retrieving past chats you have to
-# retrieve also the last state of that chat

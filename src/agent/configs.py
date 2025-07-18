@@ -50,9 +50,9 @@ CONVERSATIONAL_LLM_TEMPERATURE = 0.7
 ########################
 
 # Langfuse Configuration
-LANGFUSE_PUBLIC_KEY = "pk-lf-2e9fb95c-ae8e-4d0c-b102-e878d6b6738f"
-LANGFUSE_SECRET_KEY = "sk-lf-81521946-8bfc-4822-b518-09031931753c"
-LANGFUSE_HOST = "https://cloud.langfuse.com"
+LANGFUSE_PUBLIC_KEY="pk-lf-9cc47b55-9453-4803-b6fb-d924cef5b62d"
+LANGFUSE_SECRET_KEY="sk-lf-ab71411b-ee15-4992-8edf-0c70d79db29f"
+LANGFUSE_HOST="https://cloud.langfuse.com"
 
 # Vectorstore Configuration
 VECTORSTORE_TYPE = "qdrant"

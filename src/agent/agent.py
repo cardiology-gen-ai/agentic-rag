@@ -62,6 +62,8 @@ class Agent:
         
         # Build graph
         self.graph = self._build_graph()
+
+        langfuse_handler = CallbackHandler()
         
     def _build_graph(self) -> StateGraph:
         """Build the LangGraph workflow."""
@@ -100,7 +102,7 @@ class Agent:
         """
         config = {
             "configurable": {"thread_id": state.get("user_id", "default")},
-            "callbacks": []
+            "callbacks": [langfuse_handler]
         }
         
         # Run the graph with LangFuse callback

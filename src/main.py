@@ -36,6 +36,9 @@ def main():
         state["retrieval_attempts"] = None
         state["generation_attempts"] = None
         
+        # Track message IDs for feedback
+        last_ai_message_id = None
+        
         print("\n" + "="*60)
         print("CARDIOLOGY PROTOCOLS ASSISTANT")
         print("="*60)
@@ -89,6 +92,27 @@ def main():
                 
                 if not query:
                     continue
+
+                if query == '/feedback':
+                    if last_ai_message_id is None:
+                        print('\nNo previous AI message to provide feedback on.')
+                        continue
+                    
+                    value_input = input('\nPositive/Negative: ').strip().lower()
+                    if value_input not in ['positive', 'negative']:
+                        print('Please enter either "positive" or "negative"')
+                        continue
+                    
+                    value = 1 if value_input == 'positive' else 0
+                    comment = input('\nComment (optional): ').strip()
+                    comment = comment if comment else None
+                    
+                    try:
+                        state_manager.add_feedback(last_ai_message_id, value, comment)
+                        print('\nThanks for your feedback!')
+                    except Exception as e:
+                        print(f'\nError saving feedback: {e}')
+                    continue
                 
                 # Check for exit commands
                 if query.lower() in ['quit', 'exit', 'bye', 'goodbye']:
@@ -96,13 +120,20 @@ def main():
                     break
 
                 state['message'] = query
+                state['conversation_id'] = conversation_id
+                state['query_id'] = query_id
+                
+                # Store human message
+                human_message_id = state_manager.add_message(conversation_id, 'human', query)
                 
                 # Process message
                 print("\nAssistant: ", end="", flush=True)
                 response = agent.process_message(state)
-                response_id = str(uuid.uuid4())
                 print(response)
                 print()
+                
+                # Store AI message and track its ID for feedback
+                last_ai_message_id = state_manager.add_message(conversation_id, 'ai', response)
                 
             except KeyboardInterrupt:
                 print("\n\nChat interrupted. Goodbye!")

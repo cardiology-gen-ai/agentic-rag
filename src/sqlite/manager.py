@@ -22,23 +22,24 @@ class StateManager:
         """Initialize the SQLite database with required tables."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
-        # Create states table
+
+        # Create users table
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS agent_states (
+            CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
-                thread_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create conversations table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS conversations (
+                id TEXT PRIMARY KEY,
                 user_id TEXT,
-                query_type TEXT,
-                query TEXT,
-                response TEXT,
-                conversation_summary TEXT,
-                metadata TEXT,  -- JSON string
-                retrieval_attempts INTEGER,
-                generation_attempts INTEGER,
-                next_action TEXT,
+                title TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
             )
         ''')
         
@@ -46,11 +47,11 @@ class StateManager:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS messages (
                 id TEXT PRIMARY KEY,
-                state_id TEXT,
+                conversation_id TEXT,
                 message_type TEXT,  -- 'human' or 'ai'
                 content TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (state_id) REFERENCES agent_states (id)
+                FOREIGN KEY (conversation_id) REFERENCES conversations (id)
             )
         ''')
         
@@ -58,130 +59,116 @@ class StateManager:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS documents (
                 id TEXT PRIMARY KEY,
-                state_id TEXT,
+                conversation_id TEXT,
                 page_content TEXT,
                 metadata TEXT,  -- JSON string
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (state_id) REFERENCES agent_states (id)
+                FOREIGN KEY (conversation_id) REFERENCES conversations (id)
+            )
+        ''')
+        
+        # Create feedback table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS feedback (
+                id TEXT PRIMARY KEY,
+                message_id TEXT,
+                value INTEGER,  -- 0 for negative, 1 for positive
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (message_id) REFERENCES messages (id)
             )
         ''')
         
         conn.commit()
         conn.close()
     
-    def save_state(self, state: Dict) -> str:
-        """Save state to database and return state ID."""
-        state_id = str(uuid.uuid4())
+    def create_user(self, user_id: str) -> str:
+        """Create a new user."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Insert main state
         cursor.execute('''
-            INSERT INTO agent_states (
-                id, thread_id, user_id, query_type, query, response,
-                conversation_summary, metadata, retrieval_attempts,
-                generation_attempts, next_action
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            state_id,
-            state.get("thread_id"),
-            state.get("user_id"),
-            state.get("query_type"),
-            state.get("query"),
-            state.get("response"),
-            state.get("conversation_summary"),
-            json.dumps(state.get("metadata", {})),
-            state.get("retrieval_attempts"),
-            state.get("generation_attempts"),
-            state.get("next_action")
-        ))
-        
-        # Save messages
-        messages = state.get("messages", [])
-        for msg in messages:
-            msg_id = str(uuid.uuid4())
-            msg_type = "human" if isinstance(msg, HumanMessage) else "ai"
-            cursor.execute('''
-                INSERT INTO messages (id, state_id, message_type, content)
-                VALUES (?, ?, ?, ?)
-            ''', (msg_id, state_id, msg_type, msg.content))
-        
-        # Save documents
-        documents = state.get("documents", [])
-        for doc in documents:
-            doc_id = str(uuid.uuid4())
-            cursor.execute('''
-                INSERT INTO documents (id, state_id, page_content, metadata)
-                VALUES (?, ?, ?, ?)
-            ''', (doc_id, state_id, doc.page_content, json.dumps(doc.metadata)))
+            INSERT OR IGNORE INTO users (id) VALUES (?)
+        ''', (user_id,))
         
         conn.commit()
         conn.close()
-        return state_id
+        return user_id
     
-    def load_state(self, state_id: str) -> Optional[Dict]:
-        """Load state from database by ID."""
+    def create_conversation(self, user_id: str, title: str = None) -> str:
+        """Create a new conversation for a user."""
+        conversation_id = str(uuid.uuid4())
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Load main state
-        cursor.execute('SELECT * FROM agent_states WHERE id = ?', (state_id,))
-        row = cursor.fetchone()
-        
-        if not row:
-            conn.close()
-            return None
-        
-        state = {
-            "thread_id": row[1],
-            "user_id": row[2],
-            "query_type": row[3],
-            "query": row[4],
-            "response": row[5],
-            "conversation_summary": row[6],
-            "metadata": json.loads(row[7]) if row[7] else {},
-            "retrieval_attempts": row[8],
-            "generation_attempts": row[9],
-            "next_action": row[10]
-        }
-        
-        # Load messages
-        cursor.execute('SELECT message_type, content FROM messages WHERE state_id = ? ORDER BY created_at', (state_id,))
-        messages = []
-        for msg_type, content in cursor.fetchall():
-            if msg_type == "human":
-                messages.append(HumanMessage(content=content))
-            else:
-                messages.append(AIMessage(content=content))
-        state["messages"] = messages
-        
-        # Load documents
-        cursor.execute('SELECT page_content, metadata FROM documents WHERE state_id = ?', (state_id,))
-        documents = []
-        for content, metadata_str in cursor.fetchall():
-            metadata = json.loads(metadata_str) if metadata_str else {}
-            documents.append(Document(page_content=content, metadata=metadata))
-        state["documents"] = documents
-        
-        conn.close()
-        return state
-    
-    def load_thread_messages(self, thread_id: str) -> List:
-        """Load all messages for a specific thread."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Get all messages for this thread, ordered chronologically
         cursor.execute('''
-            SELECT m.message_type, m.content, m.created_at
-            FROM messages m
-            JOIN agent_states a ON m.state_id = a.id 
-            WHERE a.thread_id = ? 
-            ORDER BY m.created_at ASC
-        ''', (thread_id,))
+            INSERT INTO conversations (id, user_id, title) VALUES (?, ?, ?)
+        ''', (conversation_id, user_id, title))
+        
+        conn.commit()
+        conn.close()
+        return conversation_id
+    
+    def add_message(self, conversation_id: str, message_type: str, content: str) -> str:
+        """Add a message to a conversation."""
+        message_id = str(uuid.uuid4())
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO messages (id, conversation_id, message_type, content)
+            VALUES (?, ?, ?, ?)
+        ''', (message_id, conversation_id, message_type, content))
+        
+        conn.commit()
+        conn.close()
+        return message_id
+    
+    def add_document(self, conversation_id: str, page_content: str, metadata: Dict = None) -> str:
+        """Add a document to a conversation."""
+        document_id = str(uuid.uuid4())
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO documents (id, conversation_id, page_content, metadata)
+            VALUES (?, ?, ?, ?)
+        ''', (document_id, conversation_id, page_content, json.dumps(metadata or {})))
+        
+        conn.commit()
+        conn.close()
+        return document_id
+    
+    def add_feedback(self, message_id: str, value: int, comment: str = None) -> str:
+        """Add feedback to a message."""
+        feedback_id = str(uuid.uuid4())
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO feedback (id, message_id, value, comment)
+            VALUES (?, ?, ?, ?)
+        ''', (feedback_id, message_id, value, comment))
+        
+        conn.commit()
+        conn.close()
+        return feedback_id
+    
+    def get_conversation_messages(self, conversation_id: str) -> List:
+        """Get all messages for a conversation."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, message_type, content, created_at
+            FROM messages 
+            WHERE conversation_id = ? 
+            ORDER BY created_at ASC
+        ''', (conversation_id,))
         
         messages = []
-        for msg_type, content, created_at in cursor.fetchall():
+        for msg_id, msg_type, content, created_at in cursor.fetchall():
             if msg_type == "human":
                 messages.append(HumanMessage(content=content))
             else:
@@ -190,51 +177,115 @@ class StateManager:
         conn.close()
         return messages
     
-    def get_thread_summary(self, thread_id: str) -> Optional[str]:
-        """Get the latest conversation summary for a thread."""
+    def get_conversation_documents(self, conversation_id: str) -> List[Document]:
+        """Get all documents for a conversation."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT conversation_summary 
-            FROM agent_states 
-            WHERE thread_id = ? AND conversation_summary IS NOT NULL
-            ORDER BY created_at DESC 
-            LIMIT 1
-        ''', (thread_id,))
+            SELECT page_content, metadata 
+            FROM documents 
+            WHERE conversation_id = ?
+        ''', (conversation_id,))
         
-        result = cursor.fetchone()
+        documents = []
+        for content, metadata_str in cursor.fetchall():
+            metadata = json.loads(metadata_str) if metadata_str else {}
+            documents.append(Document(page_content=content, metadata=metadata))
+        
         conn.close()
-        return result[0] if result else None
+        return documents
     
-    def list_threads(self) -> List[tuple]:
-        """List all conversation threads with basic info."""
+    def get_message_feedback(self, message_id: str) -> Optional[Dict]:
+        """Get feedback for a specific message."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT DISTINCT a.thread_id, 
-                   MIN(a.created_at) as first_message,
-                   MAX(a.created_at) as last_message,
-                   COUNT(DISTINCT m.id) as message_count
-            FROM agent_states a
-            LEFT JOIN messages m ON a.id = m.state_id
-            WHERE a.thread_id IS NOT NULL
-            GROUP BY a.thread_id 
-            ORDER BY MAX(a.created_at) DESC
-        ''')
+            SELECT id, value, comment, created_at, updated_at
+            FROM feedback 
+            WHERE message_id = ?
+        ''', (message_id,))
         
-        threads = cursor.fetchall()
+        row = cursor.fetchone()
+        if row:
+            feedback = {
+                "id": row[0],
+                "message_id": message_id,
+                "value": row[1],
+                "comment": row[2],
+                "created_at": row[3],
+                "updated_at": row[4]
+            }
+            conn.close()
+            return feedback
+        
         conn.close()
-        return threads
-
-    def thread_exists(self, thread_id: str) -> bool:
-        """Check if a thread exists in the database."""
+        return None
+    
+    def get_user_conversations(self, user_id: str) -> List[Dict]:
+        """Get all conversations for a user."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        cursor.execute('SELECT 1 FROM agent_states WHERE thread_id = ? LIMIT 1', (thread_id,))
+        cursor.execute('''
+            SELECT id, title, created_at, updated_at
+            FROM conversations 
+            WHERE user_id = ? 
+            ORDER BY updated_at DESC
+        ''', (user_id,))
+        
+        conversations = []
+        for conv_id, title, created_at, updated_at in cursor.fetchall():
+            conversations.append({
+                "id": conv_id,
+                "title": title,
+                "created_at": created_at,
+                "updated_at": updated_at
+            })
+        
+        conn.close()
+        return conversations
+    
+    def conversation_exists(self, conversation_id: str) -> bool:
+        """Check if a conversation exists in the database."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT 1 FROM conversations WHERE id = ? LIMIT 1', (conversation_id,))
         exists = cursor.fetchone() is not None
         
         conn.close()
         return exists
+    
+    def update_conversation_title(self, conversation_id: str, title: str) -> bool:
+        """Update conversation title."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE conversations 
+            SET title = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (title, conversation_id))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return success
+
+    def update_feedback(self, feedback_id: str, value: int, comment: str = None) -> bool:
+        """Update existing feedback."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE feedback 
+            SET value = ?, comment = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (value, comment, feedback_id))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return success

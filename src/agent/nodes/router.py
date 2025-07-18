@@ -10,8 +10,14 @@ from typing import Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+agent_dir = os.path.join('current_dir', '../')
+sys.path.insert(0, agent_dir)
+
 from sqlite.manager import StateManager
-import configs
+from agent import configs
+from agent.state import State
+
 class Router:
     """Router node for medical query classification."""
     
@@ -38,20 +44,22 @@ class Router:
         result = self.llm.invoke(prompt.format_messages(query=query))
         response = result.content.strip().lower()
         
-        return "document_based" 
+        return response # this could lead to bugs since it is proned to classify always to conversational 
     
-    def update_state(self, state: Dict) -> Dict:
-        """LangGraph node function for query routing."""
-        query = state.get("query", "")
-        query_type = self.classify_query(query)
-        state["query_type"] = query_type
-        
-        if self.state_manager:
-            state_id = self.state_manager.save_state(state)
-            state["state_id"] = state_id
+    def route_query(self, state: State) -> str:
+        """Route the query to the appropriate node."""
+        if state.get("is_query"):
+            query = state.get("message")
+            query_type = self.classify_query(query)
+            state["query_type"] = query_type
+            return query_type
+        return "conversational"
+    
+    def update_state(self, state: State) -> State:
+        if state.get("is_query"):
+            query = state.get("message")
+            query_type = self.classify_query(query)
+            state["query_type"] = query_type
         
         return state
-    
-    def route_query(self, state: Dict) -> str:
-        query_type = state.get("query_type", "conversational")
-        return query_type
+   

@@ -18,7 +18,8 @@ from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 
 from sqlite.manager import StateManager
-import configs 
+from agent import configs 
+from agent.state import State
 
 class ConversationalAgent:
     """Conversational agent for non-medical queries."""
@@ -27,7 +28,7 @@ class ConversationalAgent:
         self.llm = ChatOllama(model=llm_model, temperature=configs.CONVERSATIONAL_LLM_TEMPERATURE, verbose=False)
         self.state_manager = state_manager
     
-    def generate_response(self, query: str, conversation_summary: str = "") -> str:
+    def generate_response(self, state) -> str:
         """Generate conversational response."""
         system_prompt = """You are a helpful assistant for a medical chatbot system. 
         Respond to general questions, greetings, and system inquiries in a friendly manner.
@@ -35,25 +36,20 @@ class ConversationalAgent:
         
         Keep responses concise and helpful."""
         
-        context = f"Previous conversation: {conversation_summary}\n" if conversation_summary else ""
+        context = f"Previous conversation: {state.get('conversation_summary')}\n"
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
-            ("human", f"{context}User query: {query}")
+            ("human", f"{context}User query: {state.get('message')}")
         ])
         
         result = self.llm.invoke(prompt.format_messages())
+        state["previous_messages"].append(state.get("message"))
         return result.content.strip()
     
-    def update_state(self, state: Dict) -> Dict:
+    def update_state(self, state: State) -> State:
         """Update state with conversational response."""
-        query = state.get("query", "")
-        conversation_summary = state.get("conversation_summary", "")
-        
-        response = self.generate_response(query, conversation_summary)
+        response = self.generate_response(state)
         state["response"] = response
-        
-        if self.state_manager:
-            self.state_manager.save_state(state)
         
         return state

@@ -11,13 +11,13 @@ from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.checkpoint.memory import MemorySaver
 
-from agent.utils.state import State
 from agent.nodes.router import Router
 from agent.nodes.memory import Memory
 from agent.nodes.conversational_agent import ConversationalAgent
 from agent.nodes.rag import RAG
 from sqlite.manager import StateManager
-import configs
+from agent.state import State
+from agent import configs
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 vectorstore_path = os.path.join(current_dir, '../../../data-etl/src')
@@ -94,14 +94,13 @@ class Agent:
         checkpointer = MemorySaver()
         return workflow.compile(checkpointer=checkpointer)
     
-    def process_message(self, state : State) -> str:
+    def process_message(self, state) -> str:
         """
         Process a user message with proper cross-session persistence.
-        Assumes a state has already been initialized with a thread_id.
         """
         config = {
-            "configurable": {"thread_id": state["thread_id"]},
-            "callbacks": [langfuse_handler]
+            "configurable": {"thread_id": state.get("user_id", "default")},
+            "callbacks": []
         }
         
         # Run the graph with LangFuse callback

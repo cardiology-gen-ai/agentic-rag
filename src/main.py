@@ -22,6 +22,7 @@ def main():
         state = State()
 
         user_id = "admin" # for developing purpose
+        state_manager.create_user(user_id)  # Ensure user exists in database
         state["user_id"] = user_id
         state["previous_messages"] = []
         state["conversation_summary"] = None
@@ -46,9 +47,9 @@ def main():
         conversations = state_manager.get_user_conversations(user_id)
         if conversations:
             print("Previous conversations available.")
+            state_manager.list_conversations(user_id)
             choice = input("Resume previous conversation? (y/n): ").strip().lower()
             if choice == 'y':
-                state_manager.list_conversations(user_id)
                 try:
                     selection = input("Enter conversation number (or press Enter for new): ").strip()
                     if selection.isdigit():
@@ -66,15 +67,15 @@ def main():
                                     print(f"  {role}: {content}")
                                 print()
                         else:
-                            conversation_id = str(uuid.uuid4())
+                            conversation_id = state_manager.create_conversation(user_id, "New Conversation")
                     else:
-                        conversation_id = str(uuid.uuid4())
+                        conversation_id = state_manager.create_conversation(user_id, "New Conversation")
                 except:
-                    conversation_id = str(uuid.uuid4())
+                    conversation_id = state_manager.create_conversation(user_id, "New Conversation")
             else:
-                conversation_id = str(uuid.uuid4())
+                conversation_id = state_manager.create_conversation(user_id, "New Conversation")
         else:
-            conversation_id = str(uuid.uuid4())
+            conversation_id = state_manager.create_conversation(user_id, "New Conversation")
 
         print("I can help you with:")
         print("• Cardiology guidelines and protocols")
@@ -95,7 +96,7 @@ def main():
 
                 if query == '/feedback':
                     value_input = input('\nPositive/Negative: ').strip().lower()
-                    if value_input not in ['Positive', 'Negative']:
+                    if value_input not in ['positive', 'negative']:
                         print('Please enter either "Positive" or "Negative"')
                         continue
                     
@@ -119,10 +120,16 @@ def main():
                 state['conversation_id'] = conversation_id
                 state['query_id'] = query_id
                 
+                # Save user message to database
+                user_message_id = state_manager.add_message(conversation_id, "human", query)
+                
                 # Process message
                 print("\nAssistant: ", end="", flush=True)
                 response = agent.process_message(state)
                 print(response)
+                
+                # Save AI response to database
+                ai_message_id = state_manager.add_message(conversation_id, "ai", response)
                 print()
                 
             except KeyboardInterrupt:

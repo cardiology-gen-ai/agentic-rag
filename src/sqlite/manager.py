@@ -223,7 +223,7 @@ class StateManager:
         conn.close()
         return None
     
-    def get_user_conversations(self, user_id: str) -> List[Dict]:
+    def get_user_conversations(self, user_id: str) -> List[tuple]:
         """Get all conversations for a user."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -235,17 +235,23 @@ class StateManager:
             ORDER BY updated_at DESC
         ''', (user_id,))
         
-        conversations = []
-        for conv_id, title, created_at, updated_at in cursor.fetchall():
-            conversations.append({
-                "id": conv_id,
-                "title": title,
-                "created_at": created_at,
-                "updated_at": updated_at
-            })
-        
+        conversations = cursor.fetchall()
         conn.close()
         return conversations
+    
+    def list_conversations(self, user_id: str) -> None:
+        """List all conversations for a user with numbered display."""
+        conversations = self.get_user_conversations(user_id)
+        
+        if not conversations:
+            print("No previous conversations found.")
+            return
+            
+        print("Previous conversations:")
+        for i, (conv_id, title, created_at, updated_at) in enumerate(conversations, 1):
+            display_title = title if title else f"Conversation {conv_id[:8]}..."
+            print(f"{i}. {display_title} (Updated: {updated_at})")
+        print()
     
     def conversation_exists(self, conversation_id: str) -> bool:
         """Check if a conversation exists in the database."""

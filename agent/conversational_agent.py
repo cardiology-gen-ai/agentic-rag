@@ -417,6 +417,13 @@ What specific cardiology topic interests you?"""
 • Mention if you're looking for diagnosis, treatment, or management guidelines
 • Ask about specific patient populations if relevant
 
+⚙️ **Available commands:**
+• 'help' - Show this help message
+• 'status' - Check system status
+• 'clear' - Clear conversation history
+• '/feedback <positive|negative> [comment]' - Rate my last response
+• '/stats' - View feedback statistics
+
 Just ask me anything about cardiology protocols and I'll search through the latest ESC guidelines to help you!"""
 
 

@@ -11,16 +11,27 @@ Gives as output:
 """
 
 import re
-from typing import Dict, List
+import uuid
+from typing import Dict, List, Optional
 from langchain_core.messages import HumanMessage, AIMessage, RemoveMessage
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages.utils import get_buffer_string
+from database_manager import SyncDatabaseManager, ConversationState
 
 
 class Memory:
-    def __init__(self, max_tokens: int = 2000, llm_model: str = "llama3.2:1b"):
+    def __init__(self, max_tokens: int = 2000, llm_model: str = "llama3.2:1b", session_id: str = None):
         self.max_tokens = max_tokens
         self.llm = ChatOllama(model=llm_model, temperature=0.1)
+        self.session_id = session_id or str(uuid.uuid4())
+        
+        # Initialize database manager
+        self.db_manager = SyncDatabaseManager()
+        try:
+            self.db_manager.initialize()
+        except Exception as e:
+            print(f"⚠️  Warning: Could not initialize database: {e}")
+            self.db_manager = None
         
         # Medical entities to preserve in memory
         self.medical_keywords = [
@@ -181,7 +192,116 @@ class Memory:
             "medical_context": medical_entities
         }
         
+        # Save to database if available
+        if self.db_manager:
+            try:
+                conversation_state = ConversationState(
+                    session_id=self.session_id,
+                    messages=messages_to_keep,
+                    conversation_summary=new_summary,
+                    medical_context=medical_entities,
+                    metadata=state.get("metadata", {})
+                )
+                self.save_to_database(conversation_state)
+                print("💾 State saved to database")
+            except Exception as e:
+                print(f"⚠️  Warning: Could not save to database: {e}")
+        
         return updated_state
+    
+    def save_to_database(self, conversation_state: ConversationState):
+        """Save conversation state to database"""
+        if self.db_manager:
+            # For now, use the simple state method
+            state_data = {
+                "messages": [
+                    {
+                        "type": msg.__class__.__name__,
+                        "content": msg.content
+                    } for msg in conversation_state.messages
+                ],
+                "conversation_summary": conversation_state.conversation_summary,
+                "medical_context": conversation_state.medical_context,
+                "metadata": conversation_state.metadata
+            }
+            self.db_manager.save_simple_state(self.session_id, state_data)
+    
+    def load_from_database(self) -> Optional[Dict]:
+        """Load conversation state from database"""
+        if self.db_manager:
+            try:
+                return self.db_manager.load_simple_state(self.session_id)
+            except Exception as e:
+                print(f"⚠️  Warning: Could not load from database: {e}")
+        return None
+    
+    def restore_conversation_state(self, state: Dict) -> Dict:
+        """Restore conversation from database if available"""
+        if self.db_manager:
+            saved_state = self.load_from_database()
+            if saved_state:
+                print(f"🔄 Restored conversation from database")
+                # Reconstruct messages
+                messages = []
+                for msg_data in saved_state.get("messages", []):
+                    if msg_data["type"] == "HumanMessage":
+                        messages.append(HumanMessage(content=msg_data["content"]))
+                    elif msg_data["type"] == "AIMessage":
+                        messages.append(AIMessage(content=msg_data["content"]))
+                
+                # Update state with restored data
+                state.update({
+                    "messages": messages,
+                    "conversation_summary": saved_state.get("conversation_summary"),
+                    "medical_context": saved_state.get("medical_context", []),
+                    "metadata": saved_state.get("metadata", {})
+                })
+        
+        return state
+    
+    def save_feedback(self, is_positive: bool, comment: str = None, message_id: str = None) -> Optional[str]:
+        """
+        Save feedback for the last response.
+        
+        Args:
+            is_positive: True for positive feedback, False for negative
+            comment: Optional feedback comment
+            message_id: Optional message identifier
+            
+        Returns:
+            str: Feedback ID if saved, None if database unavailable
+        """
+        if self.db_manager:
+            try:
+                return self.db_manager.save_feedback(
+                    self.session_id, 
+                    is_positive, 
+                    comment, 
+                    message_id, 
+                    "response"
+                )
+            except Exception as e:
+                print(f"⚠️  Warning: Could not save feedback: {e}")
+        return None
+    
+    def get_feedback_stats(self) -> Optional[Dict]:
+        """
+        Get feedback statistics for current session.
+        
+        Returns:
+            Dict with feedback stats or None if database unavailable
+        """
+        if self.db_manager:
+            try:
+                return self.db_manager.get_feedback_stats(self.session_id)
+            except Exception as e:
+                print(f"⚠️  Warning: Could not get feedback stats: {e}")
+        return None
+    
+    def close(self):
+        """Close database connection"""
+        if self.db_manager:
+            self.db_manager.close()
 
 
 def test_memory():

@@ -43,8 +43,9 @@ class Orchestrator:
     5. Provides a unified interface for the pipeline
     """
     
-    def __init__(self):
+    def __init__(self, session_id: str = None):
         """Initialize the orchestrator with empty components."""
+        self.session_id = session_id
         self.router = None
         self.memory = None
         self.self_rag = None
@@ -65,7 +66,7 @@ class Orchestrator:
             self.router = Router()
             
             print("2. Initializing Memory...")
-            self.memory = Memory(max_tokens=2000)
+            self.memory = Memory(max_tokens=2000, session_id=self.session_id)
             
             print("3. Initializing Conversational Agent...")
             self.conversational_agent = ConversationalAgent()
@@ -195,6 +196,15 @@ class Orchestrator:
             "next_action": None
         }
         
+        # Restore conversation state from database if available
+        if self.memory:
+            initial_state = self.memory.restore_conversation_state(initial_state)
+            # Add the new query to existing messages
+            if initial_state.get("messages"):
+                initial_state["messages"].append(HumanMessage(content=query))
+            else:
+                initial_state["messages"] = [HumanMessage(content=query)]
+        
         try:
             # Process through the workflow
             final_state = self.graph.invoke(initial_state)
@@ -279,6 +289,13 @@ class Orchestrator:
             "vectorstore_available": VECTORSTORE_AVAILABLE,
             "mode": "full_rag" if self.self_rag else "conversational_only"
         }
+    
+    def cleanup(self):
+        """Clean up resources and close database connections"""
+        print("🧹 Cleaning up resources...")
+        if self.memory:
+            self.memory.close()
+        print("✅ Cleanup completed")
 
     def initialize_and_build(self):
         """
@@ -356,7 +373,8 @@ def interactive_chat():
     print("Welcome to the ESC Cardiology Protocols Assistant!")
     print("Ask me about cardiology guidelines, protocols, and procedures.")
     print("Type 'quit', 'exit', or 'bye' to end the conversation.")
-    print("Type 'help' for assistance or 'status' to check system status.")
+    print("Type 'help' for assistance, 'status' to check system status,")
+    print("or '/feedback <positive|negative> [comment]' to rate my responses.")
     print("=" * 60)
     
     # Initialize orchestrator
@@ -408,6 +426,65 @@ def interactive_chat():
                     print("\n🔄 Conversation history cleared.")
                     continue
                 
+                elif user_input.lower().startswith('/feedback'):
+                    # Handle feedback command
+                    if len(conversation_history) == 0:
+                        print("\n🔄 No previous responses to provide feedback for.")
+                        continue
+                    
+                    # Parse feedback command
+                    feedback_parts = user_input.split(maxsplit=2)
+                    if len(feedback_parts) < 2:
+                        print("\n💡 Usage: /feedback <positive|negative> [comment]")
+                        print("   Type: positive or negative")
+                        print("   Comment: Optional feedback text")
+                        print("   Example: /feedback positive Good response with clear ESC guidelines")
+                        print("   Example: /feedback negative Missing key details about contraindications")
+                        continue
+                    
+                    feedback_type = feedback_parts[1].lower()
+                    if feedback_type not in ['positive', 'negative', 'pos', 'neg', '+', '-']:
+                        print("\n❌ Feedback type must be 'positive' or 'negative' (or 'pos'/'neg', '+'/'−')")
+                        continue
+                    
+                    is_positive = feedback_type in ['positive', 'pos', '+']
+                    comment = feedback_parts[2] if len(feedback_parts) > 2 else None
+                    
+                    # Save feedback through memory manager
+                    if orchestrator.memory:
+                        feedback_id = orchestrator.memory.save_feedback(is_positive, comment)
+                        if feedback_id:
+                            feedback_emoji = "👍" if is_positive else "👎"
+                            feedback_text = "positive" if is_positive else "negative"
+                            print(f"\n✅ Thank you for your {feedback_text} feedback! {feedback_emoji}")
+                            if comment:
+                                print(f"   Comment: {comment}")
+                            
+                            # Show session feedback stats
+                            stats = orchestrator.memory.get_feedback_stats()
+                            if stats and stats['total_feedback'] > 0:
+                                print(f"   Session: {stats['positive_count']} positive, {stats['negative_count']} negative ({stats['positive_percentage']:.1f}% positive)")
+                        else:
+                            print("\n⚠️  Feedback saved locally (database unavailable)")
+                    else:
+                        print("\n⚠️  Feedback system unavailable")
+                    continue
+                
+                elif user_input.lower() == '/stats':
+                    # Show feedback statistics
+                    if orchestrator.memory:
+                        stats = orchestrator.memory.get_feedback_stats()
+                        if stats and stats['total_feedback'] > 0:
+                            print(f"\n📊 Feedback Statistics for this session:")
+                            print(f"   Total feedback: {stats['total_feedback']}")
+                            print(f"   👍 Positive: {stats['positive_count']} ({stats['positive_percentage']:.1f}%)")
+                            print(f"   👎 Negative: {stats['negative_count']} ({100 - stats['positive_percentage']:.1f}%)")
+                        else:
+                            print("\n📊 No feedback recorded for this session yet.")
+                    else:
+                        print("\n⚠️  Feedback system unavailable")
+                    continue
+                
                 elif not user_input:
                     print("Please enter a question or command.")
                     continue
@@ -447,10 +524,15 @@ def interactive_chat():
             except Exception as e:
                 print(f"\n❌ Error: {e}")
                 print("Please try again with a different question.")
+        
+        # Clean up when conversation ends
+        orchestrator.cleanup()
     
     except Exception as e:
         print(f"❌ Failed to initialize assistant: {e}")
         print("Please check your setup and try again.")
+        if 'orchestrator' in locals():
+            orchestrator.cleanup()
 
 
 def show_menu():

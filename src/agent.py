@@ -35,9 +35,9 @@ class Agent:
     Main pipeline that manages the entire cardiology RAG workflow.
     """
     
-    def __init__(self, session_id: str = None):
+    def __init__(self, thread_id: str = None):
         """Initialize the orchestrator with empty components."""
-        self.session_id = session_id
+        self.thread_id = thread_id
         self.router = None
         self.memory = None
         self.rag = None
@@ -56,7 +56,7 @@ class Agent:
         try:
             # Initialize basic components (always available)
             self.router = Router()
-            self.memory = Memory(session_id=self.session_id)
+            self.memory = Memory(thread_id=self.thread_id)
             self.conversational_agent = ConversationalAgent()
             
             # Initialize vectorstore and Self-RAG if available
@@ -121,21 +121,14 @@ class Agent:
         
         # Compile the graph
         self.graph = workflow.compile()
-        
-        return self.graph
 
-    def process_query(self, query: str, user_id: str, conversation_id: str) -> str:
+    def process_query(self, query: str, user_id: str, thread_id: str) -> str:
         try:
-            # Initialize components and graph if not already done
-            if not self.graph:
-                self._initialize_components()
-                self._build_graph()
-            
             # Search for already existing conversations in the database (should output a state)
             # Otherwise create a new state
             initial_state = State(
                 user_id=user_id,
-                conversation_id=conversation_id,
+                thread_id=thread_id,
                 message=query,
                 previous_messages=[],
                 conversation_summary=None,
@@ -172,7 +165,7 @@ class Agent:
             return response
             
         except Exception as e:
-            return
+            return f"Sorry, I encountered an error: {str(e)}"
 
     def cleanup(self):
         """Clean up resources and close database connections"""

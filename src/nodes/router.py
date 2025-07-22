@@ -27,11 +27,21 @@ class Router:
         if not query or not query.strip():
             return "conversational"
         
-        system_prompt = """You are a router for a medical chatbot. Classify the message into one of these categories:
-        - document_based: Questions about specific medical conditions, treatments, protocols, or clinical guidelines. So, if you encounter specific medical keyword it is highly probable that it is document_based.
-        - conversational: General greetings, farewells, system questions, or non-medical topics
-        
-        Respond with only: document_based OR conversational"""
+        system_prompt = """You are a query classifier. Your ONLY job is to classify queries into categories.
+
+CRITICAL: You must respond with EXACTLY ONE WORD - nothing else!
+
+Categories:
+- document_based: Medical questions, conditions, treatments, clinical guidelines
+- conversational: Greetings, farewells, non-medical topics
+
+Examples:
+User: "what is myocarditis?" → document_based
+User: "hello" → conversational
+User: "goodbye" → conversational
+User: "heart failure treatment" → document_based
+
+Respond with ONLY: document_based OR conversational"""
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
@@ -41,16 +51,28 @@ class Router:
         result = self.llm.invoke(prompt.format_messages(query=query))
         response = result.content.strip().lower()
         
-        return response # this could lead to bugs since it is proned to classify always to conversational 
+        # Clean the response to extract only the classification
+        if "document_based" in response:
+            return "document_based"
+        elif "conversational" in response:
+            return "conversational"
+        else:
+            # Default to document_based for safety
+            return "document_based" 
     
     def update_state(self, state: State) -> State:
         if state.get("is_query"):
             query = state.get("message")
             query_type = self.classify_query(query)
+            if configs.DEBUG:
+                print(f"\nQuery classified as: {query_type}")
             state["query_type"] = query_type
         
         return state
 
     def route_query(self, state: State) -> str:
         """Conditional edge function for LangGraph routing."""
-        return state.get("query_type", "document_based")
+        query_type = state.get("query_type", "document_based")
+        if configs.DEBUG:
+            print(f"\nRouting to: {query_type}")
+        return query_type

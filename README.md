@@ -169,7 +169,7 @@ result = conv_agent.conversational_agent_node(state)
 
 ```python
 # Example usage
-memory = Memory(max_tokens=2000, session_id="user_123")
+memory = Memory(max_tokens=2000, thread_id="user_123")
 updated_state = memory.memory_management_node(state)
 ```
 
@@ -188,12 +188,12 @@ from database_manager import DatabaseManager, ConversationState
 # Async usage
 db_manager = DatabaseManager()
 await db_manager.initialize()
-conversation_id = await db_manager.save_conversation_state(conversation_state)
+thread_id = await db_manager.save_conversation_state(conversation_state)
 
 # Sync usage
 sync_db = SyncDatabaseManager()
 sync_db.initialize()
-state_id = sync_db.save_simple_state(session_id, state_data)
+state_id = sync_db.save_simple_state(thread_id, state_data)
 ```
 
 ## 🎯 State Management

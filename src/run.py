@@ -20,7 +20,7 @@ def interactive_chat():
     
     # Create admin user ID
     user_id = 'admin'
-    conversation_id = None
+    thread_id = None
     
     # Ask if user wants to resume previous conversation
     if db_manager:
@@ -28,7 +28,7 @@ def interactive_chat():
             # Check for existing conversations
             with db_manager.conn.cursor() as cur:
                 cur.execute("""
-                    SELECT session_id, conversation_summary, created_at, updated_at
+                    SELECT thread_id, conversation_summary, created_at, updated_at
                     FROM conversations 
                     ORDER BY updated_at DESC 
                     LIMIT 10;
@@ -37,9 +37,9 @@ def interactive_chat():
             
             if conversations:
                 print("Previous conversations available:")
-                for i, (session_id, summary, created_at, updated_at) in enumerate(conversations, 1):
+                for i, (thread_id, summary, created_at, updated_at) in enumerate(conversations, 1):
                     summary_preview = (summary[:50] + "...") if summary and len(summary) > 50 else (summary or "No summary")
-                    print(f"  {i}. {session_id[:8]}... - {summary_preview} (Updated: {updated_at.strftime('%Y-%m-%d %H:%M')})")
+                    print(f"  {i}. {thread_id[:8]}... - {summary_preview} (Updated: {updated_at.strftime('%Y-%m-%d %H:%M')})")
                 
                 choice = input("\nResume previous conversation? (y/n): ").strip().lower()
                 if choice == 'y':
@@ -48,19 +48,19 @@ def interactive_chat():
                         if selection.isdigit():
                             idx = int(selection) - 1
                             if 0 <= idx < len(conversations):
-                                conversation_id = conversations[idx][0]
-                                print(f"Resuming conversation: {conversation_id[:8]}...")
+                                thread_id = conversations[idx][0]
+                                print(f"Resuming conversation: {thread_id[:8]}...")
                                 
                                 # Show recent context from database
                                 with db_manager.conn.cursor() as cur:
                                     cur.execute("""
                                         SELECT message_type, content, timestamp
                                         FROM messages m
-                                        JOIN conversations c ON m.conversation_id = c.id
-                                        WHERE c.session_id = %s
+                                        JOIN conversations c ON m.thread_id = c.id
+                                        WHERE c.thread_id = %s
                                         ORDER BY timestamp DESC
                                         LIMIT 4;
-                                    """, (conversation_id,))
+                                    """, (thread_id,))
                                     recent_messages = cur.fetchall()
                                 
                                 if recent_messages:
@@ -71,21 +71,21 @@ def interactive_chat():
                                         print(f"  {role}: {content_preview}")
                                     print()
                             else:
-                                conversation_id = str(uuid.uuid4())
+                                thread_id = str(uuid.uuid4())
                         else:
-                            conversation_id = str(uuid.uuid4())
+                            thread_id = str(uuid.uuid4())
                     except:
-                        conversation_id = str(uuid.uuid4())
+                        thread_id = str(uuid.uuid4())
                 else:
-                    conversation_id = str(uuid.uuid4())
+                    thread_id = str(uuid.uuid4())
             else:
-                conversation_id = str(uuid.uuid4())
+                thread_id = str(uuid.uuid4())
                 print("No previous conversations found. Starting new conversation.")
         except Exception as e:
             print(f"⚠️  Could not load conversation history: {e}")
-            conversation_id = str(uuid.uuid4())
+            thread_id = str(uuid.uuid4())
     else:
-        conversation_id = str(uuid.uuid4())
+        thread_id = str(uuid.uuid4())
     
     print("\nI can help you with:")
     print("• Cardiology guidelines and protocols")
@@ -94,12 +94,14 @@ def interactive_chat():
     print("• General conversation")
     print("\nType 'quit' to end the conversation")
     print("Type '/feedback' for rating responses")
-    print(f"Thread ID: {conversation_id[:8]}...")
+    print(f"User ID: {user_id}")
+    print(f"Thread ID: {thread_id[:8]}...")
     print("-"*60 + "\n")
     
-    # Initialize agent with session_id
-    agent = Agent(session_id=conversation_id)
-
+    # Initialize agent with thread_id
+    agent = Agent(thread_id=thread_id)
+    agent._initialize_components()
+    agent._build_graph()
     
     try:
         while True:
@@ -138,8 +140,8 @@ def interactive_chat():
                     break
                 
                 # Process query using the updated agent
+                response = agent.process_query(query, user_id, thread_id)
                 print("\nAssistant: ", end="", flush=True)
-                response = agent.process_query(query, user_id, conversation_id)
                 print(response)
                 print()
                 

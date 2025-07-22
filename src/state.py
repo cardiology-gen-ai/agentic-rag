@@ -9,7 +9,7 @@ class State(TypedDict):
     This class represents the short-term memory of the agentic-rag.
     """
     user_id: str
-    conversation_id: str
+    thread_id: str
     
     message: str
     previous_messages: Optional[List[HumanMessage | AIMessage]]

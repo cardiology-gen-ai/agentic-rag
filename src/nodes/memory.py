@@ -24,10 +24,10 @@ class Memory:
     def __init__(self, max_tokens: int = configs.MEMORY_MAX_TOKENS,
                  llm_model: str = configs.LLM_MODEL,
                  temperature: float = configs.MEMORY_LLM_TEMPERATURE,
-                 session_id: str = None):
+                 thread_id: str = None):
         self.max_tokens = max_tokens
         self.llm = ChatOllama(model=llm_model, temperature = temperature)
-        self.session_id = session_id or str(uuid.uuid4())
+        self.thread_id = thread_id or str(uuid.uuid4())
         
         # Initialize database manager
         self.db_manager = SyncDatabaseManager()
@@ -105,7 +105,7 @@ class Memory:
         if self.db_manager:
             try:
                 conversation_state = ConversationState(
-                    session_id=self.session_id,
+                    thread_id=self.thread_id,
                     messages=previous_messages,
                     conversation_summary=summary,
                     metadata=state.get("metadata", {})
@@ -130,13 +130,13 @@ class Memory:
                 "conversation_summary": conversation_state.conversation_summary,
                 "metadata": conversation_state.metadata
             }
-            self.db_manager.save_simple_state(self.session_id, state_data)
+            self.db_manager.save_simple_state(self.thread_id, state_data)
     
     def load_from_database(self) -> Optional[Dict]:
         """Load conversation state from database"""
         if self.db_manager:
             try:
-                return self.db_manager.load_simple_state(self.session_id)
+                return self.db_manager.load_simple_state(self.thread_id)
             except Exception as e:
                 print(f"⚠️  Warning: Could not load from database: {e}")
         return None
@@ -180,7 +180,7 @@ class Memory:
         if self.db_manager:
             try:
                 return self.db_manager.save_feedback(
-                    self.session_id, 
+                    self.thread_id, 
                     is_positive, 
                     comment, 
                     message_id, 

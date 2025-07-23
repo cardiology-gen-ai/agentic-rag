@@ -135,7 +135,8 @@ Respond with only the rewritten query."""
         
         result = self.llm.invoke(prompt_text)
         return result.content.strip()
-
+    
+    def re_generate(self, answer: str) -> str:
         """Re-generate the llm response when hallucinations happen."""
         prompt_text = f"""The previous answer contained information not supported by the provided context. 
 Generate a more conservative and grounded response that only uses information directly supported by the medical documents.

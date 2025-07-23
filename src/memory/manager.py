@@ -33,7 +33,10 @@ class Memory:
         self.db_manager = SyncDatabaseManager()
         try:
             self.db_manager.initialize()
+            if configs.DEBUG:
+                print("✅ Database manager initialized successfully")
         except Exception as e:
+            print(f"❌ Failed to initialize database manager: {e}")
             self.db_manager = None
         
     def messages_to_text(self, messages: List) -> str:

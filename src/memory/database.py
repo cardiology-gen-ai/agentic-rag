@@ -17,21 +17,9 @@ import asyncpg
 import psycopg2
 from psycopg2.extras import Json
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from state import State
 
-
-@dataclass
-class ConversationState:
-    """Data class for conversation state"""
-    thread_id: str
-    messages: List[BaseMessage]
-    conversation_summary: Optional[str] = None
-    medical_context: Optional[List[str]] = None
-    metadata: Optional[Dict[str, Any]] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-
-class DatabaseManager:
+class Manager:
     """
     PostgreSQL database manager for agent state persistence.
     

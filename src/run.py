@@ -107,7 +107,7 @@ def interactive_chat():
         while True:
             try:
                 # Get user input
-                query = input("You: ").strip()
+                query = input("\033[32mYou: \033[0m").strip()
                 query_id = str(uuid.uuid4())
                 
                 if not query:
@@ -136,12 +136,12 @@ def interactive_chat():
                 
                 # Check for exit commands
                 if query.lower() in ['quit']:
-                    print("\nAssistant: Goodbye! Take care!")
+                    print("\n\033[32mAssistant:\033[0m Goodbye! Take care!")
                     break
                 
                 # Process query using the updated agent
                 response = agent.process_query(query, user_id, thread_id)
-                print("\nAssistant: ", end="", flush=True)
+                print("\n\033[32mAssistant:\033[0m ", end="", flush=True)
                 print(response)
                 print()
                 

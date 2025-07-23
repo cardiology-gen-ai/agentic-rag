@@ -4,7 +4,7 @@
 ###################
 
 # Debugging
-DEBUG = True
+DEBUG = False
 LLM_MODEL = "llama3.2:1b"
 
 ###################

@@ -17,7 +17,7 @@ from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage
 import configs
-from state import State
+from src.memory.state import State
 
 class ConversationalAgent:
     """Conversational agent for non-medical queries."""

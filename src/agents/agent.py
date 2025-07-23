@@ -50,6 +50,7 @@ class Agent:
                 secret_key = configs.LANGFUSE_SECRET_KEY,
                 host = configs.LANGFUSE_HOST
                 )
+        self.langfuse_handler = CallbackHandler()
         
     def _initialize_components(self):
         """Initialize all pipeline components."""
@@ -158,7 +159,7 @@ class Agent:
                     initial_state["conversation_summary"] = saved_state.get("conversation_summary")
                     initial_state["metadata"] = saved_state.get("metadata", {})
 
-            final_state = self.graph.invoke(initial_state)
+            final_state = self.graph.invoke(initial_state, config={"callbacks": [self.langfuse_handler]})
             
             # Extract and display results
             response = final_state.get("message", "No response generated")

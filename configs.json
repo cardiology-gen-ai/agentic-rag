@@ -1,0 +1,37 @@
+{
+  "general": {
+    "debug": false,
+    "llm_model": "llama3.2:1b"
+  },
+  "rag": {
+    "llm_temperature": 0.7,
+    "llm_generation_temperature": 0.7,
+    "llm_classification_temperature": 0.0,
+    "retrieval_k": 5,
+    "search_type": "similarity",
+    "retrieval_score_threshold": 0.5,
+    "max_retrieval_attempts": 2,
+    "max_generation_attempts": 2,
+    "max_context_length": 1000,
+    "max_docs_to_use": 3
+  },
+  "router": {
+    "llm_temperature": 0.0
+  },
+  "memory": {
+    "llm_temperature": 0.1,
+    "max_tokens": 2000
+  },
+  "conversational_llm": {
+    "temperature": 0.7
+  },
+  "agent": {
+    "langfuse_public_key": "pk-lf-9cc47b55-9453-4803-b6fb-d924cef5b62d",
+    "langfuse_secret_key": "sk-lf-ab71411b-ee15-4992-8edf-0c70d79db29f",
+    "langfuse_host": "https://cloud.langfuse.com",
+    "vectorstore_type": "qdrant",
+    "qdrant_url": "http://localhost:6333",
+    "qdrant_collection_name": "cardio_protocols",
+    "faiss_index_path": "./faiss_index"
+  }
+}

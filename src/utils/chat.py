@@ -19,3 +19,8 @@ class ConversationSchema(BaseModel):
 class ChatSchema(BaseModel):
     user: str
     conversation: ConversationSchema
+
+class ChatServiceResponse(BaseModel):
+    role: Literal["user", "assistant", "admin"]
+    content: str
+    is_faulted: bool = False

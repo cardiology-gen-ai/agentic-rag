@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
+import os,sys
+
+# Add the project root to the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, project_root)
+
 from typing import Callable
 from langchain_core.runnables import RunnableConfig # type: ignore
 from langchain_core.messages import AIMessage # type: ignore
 from langgraph.graph import StateGraph, START, END # type: ignore
 from langchain_community.chat_models import ChatOllama # type: ignore
 
-from utils.base_state import BaseState
-from utils.chat import ConversationSchema
+from src.utils.base_state import BaseState
+from src.utils.chat import ConversationSchema
 
 class BaseAgent():
     def __init__(self, agent_id: str):

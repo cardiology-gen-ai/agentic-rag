@@ -4,9 +4,9 @@ from langchain_core.messages import AnyMessage # type: ignore
 from langgraph.graph.message import add_messages # type: ignore
 from pydantic import BaseModel # type: ignore
 
-class BaseState(BaseModel):
-    """
-    This class represents the short-term memory of the agentic-rag.
-    """
-    messages: Annotated[list[AnyMessage], add_messages]
-    question: str
+class State(BaseModel):
+    messages: Annotated[List[AnyMessage], add_messages]
+    response: Optional[str]=""
+    transform_query_count: Optional[int]=0
+    generation_count: Optional[int]=0
+    documents: Optional[List[str]]=[]

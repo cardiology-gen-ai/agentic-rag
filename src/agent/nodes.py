@@ -13,7 +13,7 @@ from langchain_ollama import ChatOllama # type: ignore
 from langchain_core.messages import HumanMessage, AIMessage # type: ignore
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, project_root)
 
 from src.utils.state import State
@@ -54,7 +54,15 @@ def route_question(state: State) -> str:
         {'question': question}
     )
     response = response.strip().lower()
-    return response
+    
+    # Extract only the routing decision from the response
+    if 'conversational' in response:
+        return 'conversational'
+    elif 'document_based' in response:
+        return 'document_based'
+    else:
+        # Default to document_based for unclear responses
+        return 'document_based'
 
 def conversational_agent(state: State) -> dict:
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)

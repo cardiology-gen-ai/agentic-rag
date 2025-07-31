@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os, sys
+import logging
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -7,6 +8,7 @@ sys.path.insert(0, project_root)
 
 from langgraph.graph import START, END, StateGraph # type: ignore
 from langchain_core.messages import HumanMessage, AIMessage # type: ignore
+from langgraph.checkpoint.memory import InMemorySaver # type: ignore
 
 from datetime import datetime
 
@@ -21,10 +23,15 @@ if os.path.exists(vectorstore_dir):
 from vectorstore import load_vectorstore
 
 class Agent():
-    def __init__(self, agent_id: str):
-        self.agent_id = agent_id            
+    def __init__(self, agent_id: str, log_level: str = "INFO"):
+        self.agent_id = agent_id
+        self._setup_logging(log_level)
+        self.logger = logging.getLogger(f"{__name__}.Agent.{agent_id}")
+        self.logger.info(f"Initializing agent with ID: {agent_id}")
+        
         self.graph = self._create_graph()
-        self.compiled_graph = self.graph.compile()
+        self.checkpointer = InMemorySaver()
+        self.compiled_graph = self.graph.compile(checkpointer = self.checkpointer)
         self.vectorstore = load_vectorstore(
             collection_name="cardio_protocols",
             vectorstore_type="qdrant"
@@ -32,6 +39,15 @@ class Agent():
         self.retriever = self.vectorstore.as_retriever(
             search_type = 'similarity',
             search_kwargs = {"k": 5}
+        )
+        self.logger.info("Agent initialization completed")
+    
+    def _setup_logging(self, log_level: str):
+        """Configure logging for the agent system"""
+        logging.basicConfig(
+            level=getattr(logging, log_level.upper()),
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
         )
     
     def _retrieve(self, state: State) -> dict:
@@ -42,9 +58,12 @@ class Agent():
             question = ' '.join(str(item) for item in question)
         elif not isinstance(question, str):
             question = str(question)
+        
+        self.logger.info(f"Retrieving documents for question: {question[:100]}...")
         documents = self.retriever.invoke(question)
         # Extract content from Document objects to match State schema
         document_contents = [doc.page_content for doc in documents]
+        self.logger.info(f"Retrieved {len(document_contents)} documents")
         return {'documents': document_contents}
     
     def _create_graph(self):
@@ -86,8 +105,15 @@ class Agent():
         return graph
     
     def answer(self, question) -> str:
-        response = self.compiled_graph.invoke({'messages': [HumanMessage(content=question)]})
-        return response.get('generation') or response.get('response', '')
+        self.logger.info(f"Processing question: {question[:100]}...")
+        config = {"configurable": {"thread_id": self.agent_id}}
+        response = self.compiled_graph.invoke(
+            {'messages': [HumanMessage(content=question)]}, 
+            config=config
+        )
+        answer = response.get('generation') or response.get('response', '')
+        self.logger.info(f"Generated answer: {answer[:100]}...")
+        return answer
         
 
 # Create the agent instance for LangGraph

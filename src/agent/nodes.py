@@ -3,6 +3,7 @@
 Utility functions that act as nodes in the agent.
 """
 import sys, os
+import logging
 from datetime import datetime 
 from pydantic import BaseModel, Field # type: ignore
 
@@ -18,6 +19,9 @@ sys.path.insert(0, project_root)
 
 from src.utils.state import State
 
+# Module-level logger
+logger = logging.getLogger(__name__)
+
 class GradeDocuments(BaseModel):
     """Binary score for relevance check on retrieved documents."""
     binary_score: str = Field(description="The relevance score: 'yes' if document is relevant, 'no' if not relevant")
@@ -31,9 +35,11 @@ class GradeAnswer(BaseModel):
     binary_score: str = Field(description="The answer score: 'yes' if answer addresses the question, 'no' if it doesn't")
 
 def route_question(state: State) -> str:
+    logger.info("Starting question routing")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.1, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
     question = human_messages[-1].content
+    logger.debug(f"Question to route: {question[:100]}...")
     system_prompt = ("""
         You are a query router for a cardiology guidelines system. 
         Determine whether the user's question is a conversational inquiry, meaning it is general, casual, or social. 
@@ -57,14 +63,21 @@ def route_question(state: State) -> str:
     
     # Extract only the routing decision from the response
     if 'conversational' in response:
-        return 'document_based'
+        route = 'document_based'  # NOT USING conversational FOR TESTING PURPOSES
+        logger.info(f"Question routed to: {route} (override)")
+        return route
     elif 'document_based' in response:
-        return 'document_based'
+        route = 'document_based'
+        logger.info(f"Question routed to: {route}")
+        return route
     else:
         # Default to document_based for unclear responses
-        return 'document_based'
+        route = 'document_based'
+        logger.warning(f"Unclear routing response, defaulting to: {route}")
+        return route
 
 def conversational_agent(state: State) -> dict:
+    logger.info("Processing conversational query")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
     question = human_messages[-1].content
@@ -91,9 +104,11 @@ def conversational_agent(state: State) -> dict:
     response = runnable.invoke(
         {"question": question, "history": history}
     )
+    logger.info(f"Generated conversational response: {response[:100]}...")
     return {'response': response}
 
 def retrieval_grader(state: State):
+    logger.info(f"Grading {len(state.documents)} retrieved documents")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
     question = human_messages[-1].content
@@ -133,11 +148,14 @@ def retrieval_grader(state: State):
     state.documents = filtered_docs
     
     if len(filtered_docs) == 0:
+        logger.info("All documents marked as not relevant")
         return "all_docs_not_relevant"
     else:
+        logger.info(f"{len(filtered_docs)} documents marked as relevant")
         return "at_least_one_doc_relevant"
 
 def generate(state: State):
+    logger.info(f"Generating answer using {len(state.documents)} documents")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
     question = human_messages[-1].content 
@@ -166,15 +184,18 @@ def generate(state: State):
             'question': question,
         }
     )
+    logger.info(f"Generated response (attempt {state.generation_count + 1}): {response[:100]}...")
     return {
         'response': response,
         'generation_count': state.generation_count + 1,
     }
 
 def question_rewriter(state: State):
+    logger.info("Rewriting question for improved retrieval")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
     question = human_messages[-1].content
+    logger.debug(f"Original question: {question[:100]}...")
     system_prompt = """
     You are a question rewriter for a cardiology guidelines system.
     Your task is to rewrite the user's question to make it more suitable for retrieval.
@@ -192,12 +213,14 @@ def question_rewriter(state: State):
     )
     runnable = prompt | llm | StrOutputParser()
     response = runnable.invoke({'question': question})
+    logger.info(f"Rewritten question: {response[:100]}...")
     return {
         'question': response,
         'transform_query_count': state.transform_query_count + 1
     }
 
 def ground_validator(state: State):
+    logger.info(f"Validating generation grounding (attempt {state.generation_count})")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
     question = human_messages[-1].content
@@ -258,10 +281,13 @@ def ground_validator(state: State):
                 )
                 answer_question = answer_grade.binary_score
                 if answer_question == 'yes':
+                    logger.info("Generation is grounded and addresses the question")
                     return 'grounded_and_addressed_question'
                 else:
+                    logger.info("Generation is grounded but does not address the question")
                     return 'grounded_but_not_addressed_question'
             else:
+                logger.info("Generation is not grounded in the provided documents")
                 return 'generation_not_grounded'
 
 

@@ -37,8 +37,15 @@ class Agent():
     def _retrieve(self, state: State) -> dict:
         human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
         question = human_messages[-1].content
+        # Ensure question is a string, not a list
+        if isinstance(question, list):
+            question = ' '.join(str(item) for item in question)
+        elif not isinstance(question, str):
+            question = str(question)
         documents = self.retriever.invoke(question)
-        return {'documents': documents}
+        # Extract content from Document objects to match State schema
+        document_contents = [doc.page_content for doc in documents]
+        return {'documents': document_contents}
     
     def _create_graph(self):
         graph = StateGraph(State)

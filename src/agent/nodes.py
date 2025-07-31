@@ -113,16 +113,14 @@ def retrieval_grader(state: State):
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
     question = human_messages[-1].content
     documents = state.documents
-    parser = PydanticOutputParser(pydantic_object=GradeDocuments)
+    
     system_prompt = """
     You are a grader assessing relevance of a retrieved document to a user question.
     If the document or the document filename contain keyword(s) or semantic meaning related to the question, grade it as relevant.
     
-    You MUST respond with exactly 'yes' or 'no' for the binary_score field.
+    You MUST respond with ONLY 'yes' or 'no' - nothing else.
     - Use 'yes' if the document is relevant to the question
     - Use 'no' if the document is not relevant to the question
-    
-    {format_instructions}
     """
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -132,18 +130,21 @@ def retrieval_grader(state: State):
                 "Retrieved document filename: {document_filename} \n\n Retrieved document: {document} \n\n User question: {question}"
             )
         ]
-    ).partial(format_instructions=parser.get_format_instructions())
-    runnable = prompt | llm | parser
+    )
+    runnable = prompt | llm | StrOutputParser()
     filtered_docs = []
     for idx, d in enumerate(documents):
-        score = runnable.invoke(
-            {"question": question, "document": d, "document_filename": f"document_{idx}"}
-        )
-        grade = score.binary_score
-        if grade == "yes":
-            filtered_docs.append(d)
-        else:
-            continue
+        try:
+            response = runnable.invoke(
+                {"question": question, "document": d, "document_filename": f"document_{idx}"}
+            )
+            grade = response.strip().lower()
+            if "yes" in grade:
+                filtered_docs.append(d)
+        except Exception as e:
+            logger.warning(f"Error grading document {idx}: {e}, assuming relevant")
+            filtered_docs.append(d)  # Default to including the document
+    
     # Update the state with filtered documents
     state.documents = filtered_docs
     
@@ -228,16 +229,14 @@ def ground_validator(state: State):
     generation = state.response
     generation_count = state.generation_count
     docs_string = "\n\n".join(documents)  # documents are now strings
-    ground_validator_parser = PydanticOutputParser(pydantic_object=GradeGrounding)
+    
     ground_validator_system_prompt = """
     You are a grader assessing whether an LLM generation is grounded and supported by a set of retrieved facts.
     Given a set of facts and a generation, assess whether the generation is grounded in the facts.
     
-    You MUST respond with exactly 'yes' or 'no' for the binary_score field.
+    You MUST respond with ONLY 'yes' or 'no' - nothing else.
     - Use 'yes' if the generation is grounded in the facts
     - Use 'no' if the generation is not grounded in the facts
-    
-    {format_instructions}
     """
     ground_validator_prompt = ChatPromptTemplate.from_messages(
         [
@@ -247,17 +246,15 @@ def ground_validator(state: State):
                 'Set of facts: \n{documents}\n\n LLM generation: {generation}',
             )
         ]
-    ).partial(format_instructions=ground_validator_parser.get_format_instructions())
-    ground_validator_runnable = ground_validator_prompt | llm | ground_validator_parser
-    answer_grader_parser = PydanticOutputParser(pydantic_object=GradeAnswer)
+    )
+    ground_validator_runnable = ground_validator_prompt | llm | StrOutputParser()
+    
     answer_grader_system_prompt = """
     You are a grader assessing whether an answer addresses and resolves a question.
     
-    You MUST respond with exactly 'yes' or 'no' for the binary_score field.
+    You MUST respond with ONLY 'yes' or 'no' - nothing else.
     - Use 'yes' if the answer resolves the question
     - Use 'no' if the answer does not address or resolve the question
-    
-    {format_instructions}
     """
     answer_grader_prompt = ChatPromptTemplate.from_messages(
         [
@@ -267,28 +264,41 @@ def ground_validator(state: State):
                 'User question: \n\n {question} \n\n LLM generation: {generation}',
             )
         ]
-    ).partial(format_instructions=answer_grader_parser.get_format_instructions())
-    answer_grader_runnable = answer_grader_prompt | llm | answer_grader_parser
+    )
+    answer_grader_runnable = answer_grader_prompt | llm | StrOutputParser()
 
     if generation_count <= 3:
-            ground_validation = ground_validator_runnable.invoke(
+        try:
+            ground_validation_response = ground_validator_runnable.invoke(
                 {'documents': docs_string, 'generation': generation}
             )
-            ground_validation = ground_validation.binary_score
-            if ground_validation == 'yes':
-                answer_grade = answer_grader_runnable.invoke(
-                    {'question': question, 'generation': generation}
-                )
-                answer_question = answer_grade.binary_score
-                if answer_question == 'yes':
-                    logger.info("Generation is grounded and addresses the question")
+            ground_validation = ground_validation_response.strip().lower()
+            
+            if "yes" in ground_validation:
+                try:
+                    answer_grade_response = answer_grader_runnable.invoke(
+                        {'question': question, 'generation': generation}
+                    )
+                    answer_question = answer_grade_response.strip().lower()
+                    
+                    if "yes" in answer_question:
+                        logger.info("Generation is grounded and addresses the question")
+                        return 'grounded_and_addressed_question'
+                    else:
+                        logger.info("Generation is grounded but does not address the question")
+                        return 'grounded_but_not_addressed_question'
+                except Exception as e:
+                    logger.warning(f"Error in answer grading: {e}, assuming question is addressed")
                     return 'grounded_and_addressed_question'
-                else:
-                    logger.info("Generation is grounded but does not address the question")
-                    return 'grounded_but_not_addressed_question'
             else:
                 logger.info("Generation is not grounded in the provided documents")
                 return 'generation_not_grounded'
+        except Exception as e:
+            logger.warning(f"Error in ground validation: {e}, assuming generation is grounded")
+            return 'grounded_and_addressed_question'
+    else:
+        logger.info("Maximum generation attempts reached, accepting current generation")
+        return 'grounded_and_addressed_question'
 
 
 

@@ -24,7 +24,7 @@ if os.path.exists(vectorstore_dir):
 from vectorstore import load_vectorstore
 
 class Agent():
-    def __init__(self, agent_id: str, user_id: str, log_level: str = "INFO"):
+    def __init__(self, agent_id: str, user_id: str, log_level: str = "INFO", use_local_persistence: bool = None):
         self.agent_id = agent_id
         self.user_id = user_id
         self.thread_id = '1'
@@ -33,9 +33,20 @@ class Agent():
         self.logger.info(f"Initializing agent with ID: {agent_id}")
         
         self.graph = self._create_graph()
-        self.checkpointer = InMemorySaver()
-        self.store = InMemoryStore()
-        self.compiled_graph = self.graph.compile(checkpointer = self.checkpointer, store = self.store)
+        
+        # Determine whether to use local persistence
+        if use_local_persistence is None:
+            # Auto-detect: use local persistence if not running in LangGraph API
+            use_local_persistence = os.getenv("LANGGRAPH_API", "").lower() != "true"
+        
+        if use_local_persistence:
+            # Use local persistence for standalone/testing mode
+            self.checkpointer = InMemorySaver()
+            self.store = InMemoryStore()
+            self.compiled_graph = self.graph.compile(checkpointer=self.checkpointer, store=self.store)
+        else:
+            # For LangGraph API, let the platform handle persistence
+            self.compiled_graph = self.graph.compile()
         self.vectorstore = load_vectorstore(
             collection_name="cardio_protocols",
             vectorstore_type="qdrant"
@@ -121,7 +132,7 @@ class Agent():
         
 
 # Create the agent instance for LangGraph
-agent = Agent(agent_id="test", user_id="default").compiled_graph
+agent = Agent(agent_id="test", user_id="default", use_local_persistence=False).compiled_graph
     
 if __name__ == "__main__":
     import getpass
@@ -355,8 +366,6 @@ if __name__ == "__main__":
                 
                 # Process question with agent
                 try:
-                    print("Agent: ", end="", flush=True)
-                    
                     # Save user message
                     save_message("user", user_input)
                     
@@ -365,7 +374,8 @@ if __name__ == "__main__":
                     
                     # Save agent response
                     save_message("assistant", response)
-                    
+
+                    print("\nAgent: ", end="", flush=True)
                     print(response)
                     print()
                     

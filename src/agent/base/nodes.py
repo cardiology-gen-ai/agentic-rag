@@ -6,15 +6,19 @@ import sys, os
 import logging
 from datetime import datetime 
 from pydantic import BaseModel, Field # type: ignore
+import uuid
 
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser # type: ignore
 from langchain_core.prompts import ChatPromptTemplate # type: ignore
 from langgraph.types import Command # type: ignore
 from langchain_ollama import ChatOllama # type: ignore
-from langchain_core.messages import HumanMessage, AIMessage # type: ignore
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage # type: ignore
+from langgraph.store.base import BaseStore # type: ignore
+from langchain_core.runnables.config import RunnableConfig # type: ignore
+from typing import List, Union
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, project_root)
 
 from src.utils.state import State
@@ -34,7 +38,7 @@ class GradeAnswer(BaseModel):
     """Binary score for answer addressing question."""
     binary_score: str = Field(description="The answer score: 'yes' if answer addresses the question, 'no' if it doesn't")
 
-def route_question(state: State) -> str:
+def route_question(state: State, store: BaseStore) -> str:
     logger.info("Starting question routing")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.1, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
@@ -63,7 +67,7 @@ def route_question(state: State) -> str:
     
     # Extract only the routing decision from the response
     if 'conversational' in response:
-        route = 'document_based'  # NOT USING conversational FOR TESTING PURPOSES
+        route = 'conversational'  # DO NOT USE conversational FOR TESTING PURPOSES
         logger.info(f"Question routed to: {route} (override)")
         return route
     elif 'document_based' in response:
@@ -76,7 +80,7 @@ def route_question(state: State) -> str:
         logger.warning(f"Unclear routing response, defaulting to: {route}")
         return route
 
-def conversational_agent(state: State) -> dict:
+def conversational_agent(state: State, store: BaseStore) -> dict:
     logger.info("Processing conversational query")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
@@ -107,7 +111,7 @@ def conversational_agent(state: State) -> dict:
     logger.info(f"Generated conversational response: {response[:100]}...")
     return {'response': response}
 
-def retrieval_grader(state: State):
+def retrieval_grader(state: State, store: BaseStore):
     logger.info(f"Grading {len(state.documents)} retrieved documents")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
@@ -155,7 +159,7 @@ def retrieval_grader(state: State):
         logger.info(f"{len(filtered_docs)} documents marked as relevant")
         return "at_least_one_doc_relevant"
 
-def generate(state: State):
+def generate(state: State, store: BaseStore):
     logger.info(f"Generating answer using {len(state.documents)} documents")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
@@ -191,7 +195,7 @@ def generate(state: State):
         'generation_count': state.generation_count + 1,
     }
 
-def question_rewriter(state: State):
+def question_rewriter(state: State, store: BaseStore):
     logger.info("Rewriting question for improved retrieval")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
@@ -220,7 +224,7 @@ def question_rewriter(state: State):
         'transform_query_count': state.transform_query_count + 1
     }
 
-def ground_validator(state: State):
+def ground_validator(state: State, store: BaseStore):
     logger.info(f"Validating generation grounding (attempt {state.generation_count})")
     llm = ChatOllama(model="llama3.2:1b", temperature=0.7, verbose=False)
     human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
@@ -299,9 +303,44 @@ def ground_validator(state: State):
     else:
         logger.info("Maximum generation attempts reached, accepting current generation")
         return 'grounded_and_addressed_question'
+    
+def extract_human_to_ai_sequence(messages: List[Union[HumanMessage, AIMessage, ToolMessage]]) -> List:
+    # Step 1: Find the index of the last HumanMessage
+    start_idx = None
+    for i in reversed(range(len(messages))):
+        if isinstance(messages[i], HumanMessage):
+            start_idx = i
+            break
+    if start_idx is None:
+        return []
+    # Step 2: From that human message, collect all messages up to and including the next complete AI response
+    result = []
+    ai_message_count = 0
+    for msg in messages[start_idx:]:
+        result.append(msg)
+        if isinstance(msg, AIMessage) and msg.content.strip():
+            ai_message_count += 1
+            # Stop after a full (non-empty) AI response
+            break
+    return result
 
+def store_memory(state: State, config: RunnableConfig, store: BaseStore):
+    user_id = config['configurable']['user_id']
+    namespace = (user_id, 'memories') # shared across threads
+    memory_id = str(uuid.uuid4())
+    memory = extract_human_to_ai_sequence(state["messages"])
+    store.put(namespace, memory_id, {'memory': memory})
+    return {'memory': memory}
 
-
+def search_memory(question, config: RunnableConfig, store: BaseStore):
+    user_id = config['configurable']['user_id']
+    namespace = (user_id, 'memories') # shared across threads
+    memories = store.search(
+        namespace,
+        query = question,
+        limit=3
+    )
+    return memories
 
 
 

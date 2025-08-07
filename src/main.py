@@ -22,6 +22,7 @@ def show_help():
     print("  /feedback positive|negative [comment] - Provide feedback on last response")
     print("  /sessions  - Show available sessions")
     print("  /status    - Show current session status")
+    print("  /stats     - Show feedback statistics")
     print("\nJust type your medical questions to chat with the agent.")
 
 def show_status():
@@ -29,68 +30,105 @@ def show_status():
     logger = logging.getLogger(__name__)
     print(f"User: {current_user}")
     print(f"Current Thread ID: {current_thread_id}")
-    if current_user in user_sessions and current_thread_id in user_sessions[current_user]:
-        messages = user_sessions[current_user][current_thread_id]
-        print(f"Messages in session: {len(messages)}")
-        logger.info(f"Status check - User: {current_user}, Thread: {current_thread_id}, Messages: {len(messages)}")
+    
+    if agent and current_thread_id:
+        session = agent.data_layer.get_session(current_thread_id)
+        if session:
+            print(f"Messages in session: {session.message_count}")
+            print(f"Session created: {session.created_at}")
+            print(f"Last updated: {session.updated_at}")
+            logger.info(f"Status check - User: {current_user}, Thread: {current_thread_id}, Messages: {session.message_count}")
+        else:
+            print("Session not found in database")
+            logger.info(f"Status check - User: {current_user}, Thread: {current_thread_id}, Session not found")
     else:
-        print("No messages in current session")
-        logger.info(f"Status check - User: {current_user}, Thread: {current_thread_id}, No messages")
+        print("No active session")
+        logger.info(f"Status check - User: {current_user}, Thread: {current_thread_id}, No active session")
 
 def list_sessions():
     """List available sessions for current user"""
     logger = logging.getLogger(__name__)
-    if current_user not in user_sessions or not user_sessions[current_user]:
+    
+    if not agent:
+        print("No agent available.")
+        return None
+    
+    sessions = agent.data_layer.get_user_sessions_with_metadata(current_user)
+    
+    if not sessions:
         print("No previous sessions found.")
         logger.info(f"No previous sessions found for user: {current_user}")
-        return
+        return None
     
-    session_count = len(user_sessions[current_user])
+    session_count = len(sessions)
     logger.info(f"Listing {session_count} sessions for user: {current_user}")
     print(f"\nSessions for {current_user}:")
-    for i, thread_id in enumerate(user_sessions[current_user].keys(), 1):
-        msg_count = len(user_sessions[current_user][thread_id])
-        print(f"  {i}. {thread_id[:8]}... ({msg_count} messages)")
+    for i, session in enumerate(sessions, 1):
+        print(f"  {i}. {session.title} ({session.message_count} messages) - {session.updated_at[:10]}")
     
     choice = input("\nEnter session number to recover (or press Enter for new): ").strip()
     if choice.isdigit():
-        session_list = list(user_sessions[current_user].keys())
         idx = int(choice) - 1
-        if 0 <= idx < len(session_list):
-            selected_thread = session_list[idx]
-            logger.info(f"User selected session: {selected_thread}")
-            return selected_thread
+        if 0 <= idx < len(sessions):
+            selected_session = sessions[idx]
+            logger.info(f"User selected session: {selected_session.session_id}")
+            return selected_session.session_id
     logger.info("User chose to create new session")
     return None
 
 def create_new_session():
     """Create new session"""
     logger = logging.getLogger(__name__)
-    thread_id = str(uuid.uuid4())
-    if current_user not in user_sessions:
-        user_sessions[current_user] = {}
-    user_sessions[current_user][thread_id] = []
-    logger.info(f"Created new session {thread_id} for user {current_user}")
-    print(f"Created new session: {thread_id[:8]}...")
-    return thread_id
+    
+    if not agent:
+        logger.error("No agent available")
+        return None
+    
+    # Ensure user exists in the database
+    if not agent.data_layer.get_user(current_user):
+        agent.data_layer.create_user(current_user, current_user)
+        logger.info(f"Created new user: {current_user}")
+    
+    # Create new session
+    thread_id = agent.data_layer.create_session(current_user)
+    if thread_id:
+        logger.info(f"Created new session {thread_id} for user {current_user}")
+        print(f"Created new session: {thread_id[:8]}...")
+        return thread_id
+    else:
+        logger.error("Failed to create new session")
+        print("Failed to create new session")
+        return None
 
 def save_feedback(is_positive, comment=None):
     """Save feedback for current session"""
     logger = logging.getLogger(__name__)
-    if current_thread_id not in feedback_data:
-        feedback_data[current_thread_id] = []
     
-    feedback_data[current_thread_id].append({
-        "is_positive": is_positive,
-        "comment": comment,
-        "timestamp": datetime.now().isoformat()
-    })
-    logger.info(f"Feedback saved for session {current_thread_id}: {'positive' if is_positive else 'negative'}")
-    print("Feedback saved successfully.")
+    if not agent or not current_thread_id:
+        print("No active session to save feedback for.")
+        return
+    
+    # Generate a message_id (in a real app, you'd track the actual message ID from the AI response)
+    message_id = str(uuid.uuid4())
+    
+    feedback_id = agent.data_layer.save_feedback(
+        session_id=current_thread_id,
+        user_id=current_user,
+        message_id=message_id,
+        is_positive=is_positive,
+        comment=comment
+    )
+    
+    if feedback_id:
+        logger.info(f"Feedback saved for session {current_thread_id}: {'positive' if is_positive else 'negative'}")
+        print("Feedback saved successfully.")
+    else:
+        logger.error("Failed to save feedback")
+        print("Failed to save feedback.")
 
 def handle_command(command):
     """Handle chat commands"""
-    global current_user, current_thread_id, agent
+    global current_user, current_thread_id, agent, config
     
     command = command.strip().lower()
     
@@ -106,9 +144,9 @@ def handle_command(command):
     elif command == "/new":
         logger = logging.getLogger(__name__)
         current_thread_id = create_new_session()
-        if agent:
-            agent.thread_id = current_thread_id
-        logger.info(f"Started new session: {current_thread_id}")
+        if current_thread_id:
+            config = {"configurable": {"thread_id": current_thread_id, "user_id": current_user}}
+            logger.info(f"Started new session: {current_thread_id}")
         return "continue"
     
     elif command == "/help":
@@ -124,17 +162,10 @@ def handle_command(command):
         thread_id = list_sessions()
         if thread_id:
             current_thread_id = thread_id
-            if agent:
-                agent.thread_id = current_thread_id
+            config = {"configurable": {"thread_id": current_thread_id, "user_id": current_user}}
             logger.info(f"Switched to session: {thread_id}")
             print(f"Switched to session: {thread_id[:8]}...")
-            # Display previous messages
-            if current_user in user_sessions and current_thread_id in user_sessions[current_user]:
-                messages = user_sessions[current_user][current_thread_id]
-                print("\nPrevious messages:")
-                for msg in messages[-5:]:  # Show last 5 messages
-                    print(f"{msg['role'].title()}: {msg['content']}")
-                print()
+            print("Note: Previous messages are maintained by LangGraph checkpointer and will be available in conversation.")
         return "continue"
     
     elif command.startswith("/feedback"):
@@ -156,11 +187,34 @@ def handle_command(command):
             print("Feedback type must be 'positive' or 'negative'")
         return "continue"
     
+    elif command == "/stats":
+        logger = logging.getLogger(__name__)
+        if not agent:
+            print("No agent available.")
+            return "continue"
+        
+        # Get feedback stats for current user
+        stats = agent.data_layer.get_feedback_stats(user_id=current_user)
+        print(f"\nFeedback Statistics for {current_user}:")
+        print(f"  Total feedback: {stats['total']}")
+        print(f"  Positive: {stats['positive']}")
+        print(f"  Negative: {stats['negative']}")
+        
+        if current_thread_id:
+            session_stats = agent.data_layer.get_feedback_stats(session_id=current_thread_id)
+            print(f"\nCurrent Session Feedback:")
+            print(f"  Total feedback: {session_stats['total']}")
+            print(f"  Positive: {session_stats['positive']}")
+            print(f"  Negative: {session_stats['negative']}")
+        
+        logger.info(f"Displayed feedback stats for user: {current_user}")
+        return "continue"
+    
     return None
 
 def initialize():
     """Session selection menu"""
-    global current_thread_id, agent
+    global current_thread_id, agent, config
     logger = logging.getLogger(__name__)
     
     agent = Agent(agent_id='cardiology')
@@ -199,6 +253,11 @@ def chat_loop():
                 print(response)
                 print()
                 
+                # Update session activity and message count
+                if current_thread_id:
+                    agent.data_layer.update_session_activity(current_thread_id, increment_messages=True)
+                    agent.data_layer.update_user_activity(current_user)
+                
             except Exception as e:
                 logger.error(f"Error processing question: {e}")
                 print(f"Error processing question: {e}")
@@ -214,10 +273,7 @@ if __name__ == "__main__":
     current_user = 'admin'
     current_thread_id = None
     agent = None
-    
-    # In-memory session storage
-    user_sessions = {}  # {username: {thread_id: [messages]}}
-    feedback_data = {}  # {thread_id: [feedback]}
+    config = None
     
     try:
         config = initialize()

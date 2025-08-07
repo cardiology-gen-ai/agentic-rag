@@ -18,7 +18,6 @@ from datetime import datetime
 
 from src.utils.state import State
 from src.agent.production import nodes
-from src.persistence.data_layer import DataLayer
 
 vectorstore_dir = os.path.join(project_root, '../data-etl/src')
 if os.path.exists(vectorstore_dir):
@@ -49,7 +48,6 @@ class Agent():
         self.checkpointer.setup()
         self.store = PostgresStore(self.conn)
         self.store.setup()
-        self.data_layer = DataLayer(self.store)
         self.compiled_graph = self.graph.compile(checkpointer=self.checkpointer, store=self.store)
 
         self.vectorstore = load_vectorstore(

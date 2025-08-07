@@ -8,6 +8,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 sys.path.insert(0, project_root)
 
 from src.agent.production.graph import Agent
+from src.persistence import data_layer
 
 import uuid
 
@@ -32,7 +33,7 @@ def show_status():
     print(f"Current Thread ID: {current_thread_id}")
     
     if agent and current_thread_id:
-        session = agent.data_layer.get_session(current_thread_id)
+        session = data_layer.get_session(agent.store, current_thread_id)
         if session:
             print(f"Messages in session: {session.message_count}")
             print(f"Session created: {session.created_at}")
@@ -53,7 +54,7 @@ def list_sessions():
         print("No agent available.")
         return None
     
-    sessions = agent.data_layer.get_user_sessions_with_metadata(current_user)
+    sessions = data_layer.get_user_sessions_with_metadata(agent.store, current_user)
     
     if not sessions:
         print("No previous sessions found.")
@@ -85,12 +86,12 @@ def create_new_session():
         return None
     
     # Ensure user exists in the database
-    if not agent.data_layer.get_user(current_user):
-        agent.data_layer.create_user(current_user, current_user)
+    if not data_layer.get_user(agent.store, current_user):
+        data_layer.create_user(agent.store, current_user, current_user)
         logger.info(f"Created new user: {current_user}")
     
     # Create new session
-    thread_id = agent.data_layer.create_session(current_user)
+    thread_id = data_layer.create_session(agent.store, current_user)
     if thread_id:
         logger.info(f"Created new session {thread_id} for user {current_user}")
         print(f"Created new session: {thread_id[:8]}...")
@@ -111,7 +112,8 @@ def save_feedback(is_positive, comment=None):
     # Generate a message_id (in a real app, you'd track the actual message ID from the AI response)
     message_id = str(uuid.uuid4())
     
-    feedback_id = agent.data_layer.save_feedback(
+    feedback_id = data_layer.save_feedback(
+        store=agent.store,
         session_id=current_thread_id,
         user_id=current_user,
         message_id=message_id,
@@ -194,14 +196,14 @@ def handle_command(command):
             return "continue"
         
         # Get feedback stats for current user
-        stats = agent.data_layer.get_feedback_stats(user_id=current_user)
+        stats = data_layer.get_feedback_stats(agent.store, user_id=current_user)
         print(f"\nFeedback Statistics for {current_user}:")
         print(f"  Total feedback: {stats['total']}")
         print(f"  Positive: {stats['positive']}")
         print(f"  Negative: {stats['negative']}")
         
         if current_thread_id:
-            session_stats = agent.data_layer.get_feedback_stats(session_id=current_thread_id)
+            session_stats = data_layer.get_feedback_stats(agent.store, session_id=current_thread_id)
             print(f"\nCurrent Session Feedback:")
             print(f"  Total feedback: {session_stats['total']}")
             print(f"  Positive: {session_stats['positive']}")
@@ -255,8 +257,8 @@ def chat_loop():
                 
                 # Update session activity and message count
                 if current_thread_id:
-                    agent.data_layer.update_session_activity(current_thread_id, increment_messages=True)
-                    agent.data_layer.update_user_activity(current_user)
+                    data_layer.update_session_activity(agent.store, current_thread_id, increment_messages=True)
+                    data_layer.update_user_activity(agent.store, current_user)
                 
             except Exception as e:
                 logger.error(f"Error processing question: {e}")

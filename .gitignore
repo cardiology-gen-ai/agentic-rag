@@ -1,2 +1,4 @@
 agent/__pycache__
 agent/.chainlit*
+/build/
+/CardiologyGenAI_AgenticRAG.egg-info/

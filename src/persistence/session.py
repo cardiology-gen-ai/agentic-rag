@@ -136,25 +136,32 @@ class SessionDB(BaseDB):
             await self.session.refresh(session_info)
             return session_info
 
-    def sync_update_session_activity(self, session_id: uuid.UUID) -> SessionORM | None:
+    def sync_update_session_activity(self, session_id: uuid.UUID,
+                                     increment_messages: bool = True) -> SessionORM | None:
         session_info = self.sync_get_session(session_id)
         if session_info is None:
             self.logger.info(f"Session {session_id} was not found.")
             return None
         else:
             session_info.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            if increment_messages:
+                session_info.message_count += 1
             self.session.add(session_info)
             self.session.commit()
             self.session.refresh(session_info)
             return session_info
 
-    async def async_update_session_activity(self, session_id: uuid.UUID) -> SessionORM | None:
+    async def async_update_session_activity(self, session_id: uuid.UUID,
+                                            increment_messages: bool = True) -> SessionORM | None:
         session_info = await self.async_get_session(session_id)
         if session_info is None:
             self.logger.info(f"Session {session_id} was not found.")
             return None
         else:
             session_info.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            session_info.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            if increment_messages:
+                session_info.message_count += 1
             self.session.add(session_info)
             await self.session.commit()
             await self.session.refresh(session_info)

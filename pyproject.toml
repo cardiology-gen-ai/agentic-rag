@@ -24,7 +24,9 @@ dependencies = [
     "fastembed==0.7.2",
     "sqlalchemy==2.0.43",
     "psycopg-binary==3.2.10",
-    "asyncpg==0.30.0"
+    "asyncpg==0.30.0",
+    "langgraph==0.6.7",
+    "langgraph-checkpoint-postgres==2.0.23"
 ]
 
 [project.optional-dependencies]

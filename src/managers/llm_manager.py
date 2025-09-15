@@ -16,9 +16,9 @@ class LLMManager:
         self.logger.info("Initializing LLM..")
         self.llm = self.init_ollama() if self.config.ollama else self.init_huggingface()
         self.logger.info(f"LLM {self.config.model_name} initialized successfully")
-        self.router = self.llm.bind(temperature=self.config.router_temperature)
-        self.generator = self.llm.bind(temperature=self.config.generator_temperature)
-        self.grader = self.llm.bind(temperature=self.config.grader_temperature)
+        self.router = self.llm.bind(options={"temperature": self.config.router_temperature})
+        self.generator = self.llm.bind(options={"temperature": self.config.generator_temperature})
+        self.grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
 
     def init_ollama(self) -> ChatOllama:
         try:

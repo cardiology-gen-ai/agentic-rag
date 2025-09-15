@@ -63,6 +63,10 @@ class ExamplesConfig(BaseModel):
     input_keys: List[str] = field(default_factory=list)
 
 
+class MemoryConfig(BaseModel):
+    length: int = 0
+
+
 class AgentConfig(BaseModel):
     name: str = ""
     description: str = ""
@@ -75,6 +79,7 @@ class AgentConfig(BaseModel):
     llm: LLMConfig = field(default_factory=LLMConfig)
     context: ContextConfig = field(default_factory=ContextConfig)
     examples: ExamplesConfig = field(default_factory=ExamplesConfig)
+    memory: MemoryConfig = field(default_factory=MemoryConfig)
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "AgentConfig":

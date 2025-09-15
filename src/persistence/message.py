@@ -80,6 +80,7 @@ class AgentMemory:
         self.store = PostgresStore(self.connection)
         self.store.setup()
         self.checkpointer = PostgresSaver(self.connection)
+        self.checkpointer.setup()
 
     def save_conversation_turn(self, conversation_turn: ConversationTurn):
         try:
@@ -151,6 +152,7 @@ class AsyncAgentMemory:
         await store.setup()
         checkpointer_manager = AsyncPostgresSaver.from_conn_string(db_connection_string)
         checkpointer = await checkpointer_manager.__aenter__()
+        await checkpointer.setup()
         return cls(store, checkpointer)
 
     async def _delete_prefix(self, ns_prefix: tuple, batch_size: int = 500) -> None:

@@ -109,3 +109,4 @@ if __name__ == "__main__":
         search_config=config.search,
         embeddings=config.embeddings
     )
+    print(type(search_manager.vectorstore.retriever))

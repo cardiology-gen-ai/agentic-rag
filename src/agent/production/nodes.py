@@ -1,21 +1,12 @@
-"""
-Utility functions that act as nodes in the agent.
-"""
-import uuid
 from datetime import datetime
 
 from langchain_core.runnables import RunnableBinding
-from langchain_huggingface import ChatHuggingFace
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
-from langgraph.store.base import BaseStore
-from langchain_core.runnables.config import RunnableConfig
 from typing import List, Union
 
 from src.agent.production import output
-from src.state import State
 
 
 def contextualize_question(llm: RunnableBinding, context_prompt: str):
@@ -221,43 +212,61 @@ def answer_grader(llm: RunnableBinding):
     return grader
 
 
-def extract_human_to_ai_sequence(messages: List[Union[HumanMessage, AIMessage, ToolMessage]]) -> List:
-    # Step 1: Find the index of the last HumanMessage
-    start_idx = None
-    for i in reversed(range(len(messages))):
-        if isinstance(messages[i], HumanMessage):
-            start_idx = i
-            break
-    if start_idx is None:
-        return []
-    # Step 2: From that human message, collect all messages up to and including the next complete AI response
-    result = []
-    ai_message_count = 0
-    for msg in messages[start_idx:]:
-        result.append(msg)
-        if isinstance(msg, AIMessage) and msg.content.strip():
-            ai_message_count += 1
-            # Stop after a full (non-empty) AI response
-            break
-    return result
-
-def store_memory(state: State, config: RunnableConfig, store: BaseStore):
-    user_id = config['configurable']['user_id']
-    namespace = (user_id, 'memories') # shared across threads
-    memory_id = str(uuid.uuid4())
-    memory = extract_human_to_ai_sequence(state["messages"])
-    store.put(namespace, memory_id, {'memory': memory})
-    return {'memory': memory}
-
-def search_memory(question, config: RunnableConfig, store: BaseStore):
-    user_id = config['configurable']['user_id']
-    namespace = (user_id, 'memories') # shared across threads
-    memories = store.search(
-        namespace,
-        query = question,
-        limit=3
+def error_handler_node(llm: RunnableBinding, language: str):
+    system_prompt = f"""
+    You are an error message generator.
+    Given an exception return a friendly and helpful error message to the user.
+    Do not include technical details unless useful for the user.
+    Please use the same language of the exception, but it must be one of the following: {language}.
+    """
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            ("human", "Exception: {exception}"),
+        ]
     )
-    return memories
+    error_message_generator = prompt | llm | StrOutputParser()
+    return error_message_generator
+
+
+# TODO: still need to decide how to appropriately handling long-term memory
+# def extract_human_to_ai_sequence(messages: List[Union[HumanMessage, AIMessage, ToolMessage]]) -> List:
+#     # Step 1: Find the index of the last HumanMessage
+#     start_idx = None
+#     for i in reversed(range(len(messages))):
+#         if isinstance(messages[i], HumanMessage):
+#             start_idx = i
+#             break
+#     if start_idx is None:
+#         return []
+#     # Step 2: From that human message, collect all messages up to and including the next complete AI response
+#     result = []
+#     ai_message_count = 0
+#     for msg in messages[start_idx:]:
+#         result.append(msg)
+#         if isinstance(msg, AIMessage) and msg.content.strip():
+#             ai_message_count += 1
+#             # Stop after a full (non-empty) AI response
+#             break
+#     return result
+
+# def store_memory(state: State, config: RunnableConfig, store: BaseStore):
+#     user_id = config['configurable']['user_id']
+#     namespace = (user_id, 'memories') # shared across threads
+#     memory_id = str(uuid.uuid4())
+#     memory = extract_human_to_ai_sequence(state["messages"])
+#     store.put(namespace, memory_id, {'memory': memory})
+#     return {'memory': memory}
+#
+# def search_memory(question, config: RunnableConfig, store: BaseStore):
+#     user_id = config['configurable']['user_id']
+#     namespace = (user_id, 'memories') # shared across threads
+#     memories = store.search(
+#         namespace,
+#         query = question,
+#         limit=3
+#     )
+#     return memories
 
 
 

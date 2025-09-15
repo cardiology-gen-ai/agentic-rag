@@ -20,12 +20,14 @@
         "context": {
             "system_prompt": "Rewrite a general version of the question. Keep in mind that all the questions are related to protocols and guidelines in the context of cardiology."
         },
-        "examples":
-        {
+        "examples": {
             "file": "examples.json",
             "top_k": 3,
             "template": "input: {input}, output: {output}",
             "input_keys": ["input"]
+        },
+        "memory": {
+            "length": 3
         },
     "general": {
         "debug": false,
@@ -46,7 +48,7 @@
     "router": {
         "llm_temperature": 0.0
     },
-    "memory": {
+    "_memory": {
         "llm_temperature": 0.1,
         "max_tokens": 2000
     },

@@ -1,5 +1,6 @@
 import json
 import pathlib
+import datetime
 from typing import TypedDict, Dict, List, Annotated, Optional
 
 from langchain_community.vectorstores import FAISS
@@ -9,6 +10,7 @@ from langchain_core.prompts import PromptTemplate, FewShotPromptTemplate
 from langgraph.graph import START, END, StateGraph, add_messages
 from langchain_core.messages import HumanMessage, AnyMessage, AIMessage
 from langchain_core.runnables.config import RunnableConfig
+from langgraph.graph.state import CompiledStateGraph
 
 from cardiology_gen_ai.utils.logger import get_logger
 
@@ -16,20 +18,14 @@ from src.config.manager import AgentConfigManager
 from src.managers.llm_manager import LLMManager
 from src.managers.search_manager import SearchManager
 from src.persistence.message import AgentMemory
-from src.state import State
 from src.agent.production import nodes
 from src.agent.production import output
-
-# class State(BaseModel):
-#     messages: Annotated[List[AnyMessage], add_messages]
-#     response: Optional[str]=""
-#     transform_query_count: Optional[int]=0
-#     generation_count: Optional[int]=0
-#     documents: Optional[List[str]]=[]
+from src.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
 
 GENERATION_LIMIT = 3
 
-class GraphState(TypedDict):
+
+class GraphState(TypedDict, total=False):
     question: str
     contextual_question: str
     transform_query_count: int
@@ -48,11 +44,10 @@ class Agent:
         self.agent_name = self.config.name
         self.logger = get_logger(f"Agent {self.agent_name}")
 
-        self.llm_manager = LLMManager(self.config.llm)  # TODO: maybe should not be attribute
-        self.base_llm = self.llm_manager.llm  # TODO: maybe useless
-        self.router = self.llm_manager.router
-        self.generator = self.llm_manager.generator
-        self.grader = self.llm_manager.grader
+        llm_manager = LLMManager(self.config.llm)
+        self.router = llm_manager.router
+        self.generator = llm_manager.generator
+        self.grader = llm_manager.grader
 
         self.search_manager = SearchManager(
             index_config=self.config.indexing,
@@ -61,27 +56,27 @@ class Agent:
         )
         self.retriever = self.search_manager.vectorstore.retriever
 
-        self.examples = self.load_examples()
+        self.examples = self._load_examples()
 
         memory = AgentMemory()
         self.store = memory.store
         self.checkpointer = memory.checkpointer
         
-        self.graph = self._create_graph()
-        self.compiled_graph = self.graph.compile(checkpointer=self.checkpointer, store=self.store)
+        self.graph: StateGraph = self._create_graph()
+        self.compiled_graph: CompiledStateGraph = self.graph.compile(checkpointer=self.checkpointer, store=self.store)
 
         self.logger.info("Agent initialization completed")
 
-    def load_examples(self):
+    def _load_examples(self):
         # TODO: few shot examples should be moved in a more appropriate place
-        with open(pathlib.Path.cwd() / self.config.examples.examples) as f:
+        with open(pathlib.Path.cwd() / self.config.examples.file) as f:
             examples = json.load(f)
         return examples
 
     def draw_graph(self, filename: str = None) -> None:
         if not filename:
             filename = f"{type(self).__name__}.txt"
-        mermaid_syntax = self.graph.get_graph().draw_mermaid()
+        mermaid_syntax = self.compiled_graph.get_graph().draw_mermaid()
         with open(filename, "w") as file:
             file.write(mermaid_syntax)
 
@@ -96,9 +91,9 @@ class Agent:
         response = runnable.invoke({"question": question, "language": language, "history": history})
         return {"response": response, "messages": [AIMessage(content=response)]}
 
-    def _contextualize_question(self, state: GraphState) -> dict:
+    def _contextualize_question(self, state: GraphState) -> Dict:
         self.logger.info("Generating contextual question...")
-        self.logger.info(f"Original question: {state['question']}")
+        self.logger.info(f"Original question: {state["question"]}")
         question = state["question"]
         language = state["language"]
         messages = state["messages"]
@@ -107,11 +102,7 @@ class Agent:
             {"question": question, "language": language, "history": messages}
         )
         self.logger.info(f"Contextual question: {response}")
-        return {
-            "generation_count": 0,
-            "transform_query_count": 0,
-            "contextual_question": response
-        }
+        return {"generation_count": 0, "transform_query_count": 0, "contextual_question": response}
     
     def _retrieve(self, state: GraphState) -> Dict:
         question = state["contextual_question"]
@@ -279,7 +270,7 @@ class Agent:
             return "generate_default_response"
     
     def _create_graph(self):
-        graph = StateGraph(State)
+        graph = StateGraph(GraphState)
 
         graph.add_node("conversational_agent", self._conversational_agent)
         graph.add_node("contextualize_question", self._contextualize_question)
@@ -334,19 +325,92 @@ class Agent:
         graph.add_edge("conversational_agent", END)
 
         return graph
+
+    def error_handler(self, exception: str) -> Dict:
+        self.logger.info("Error Handler Node.")
+        runnable = nodes.error_handler_node(self.generator, self.config.allowed_languages)
+        response = runnable.invoke({"exception": exception})
+        return {"generation": response}
+
+    def _convert_conversation_to_messages(
+            self, conversation: ConversationRequest) -> List[AnyMessage]:
+        messages: List[AnyMessage] = []
+        for message in conversation.history:
+            if message.role == "user":
+                messages.append(HumanMessage(content=message.content))
+            elif message.role == "assistant":
+                messages.append(AIMessage(content=message.content))
+        if conversation.question.role == "user":
+            messages.append(HumanMessage(content=conversation.question.content))
+        elif conversation.question.role == "assistant":
+            messages.append(AIMessage(content=conversation.question.content))
+        else:
+            messages.append(AnyMessage(content=conversation.question.content))
+        return messages[- 2 * self.config.memory.length:]
     
-    def answer(self, question: str, config: RunnableConfig) -> str:
-        self.logger.info(f"Processing question: {question[:100]}...")
-        memories = nodes.search_memory(question, config, self.store)
-        context = "\\n".join([str(d.value) for d in memories])
-        response = self.compiled_graph.invoke(
-            {'messages': [HumanMessage(content=f'Context: {context}\n\nQuestion: {question}')]}, 
-            config=config
+    def answer(self, request: ChatRequest) -> ChatResponse:
+        config: RunnableConfig = \
+            {"configurable": {"user_id": request.user_id, "thread_id": request.conversation.id}}
+        # memories = nodes.search_memory(question, config, self.store)
+        input_state: GraphState = {
+                "question": request.conversation.question.content,
+                "messages": self._convert_conversation_to_messages(request.conversation),
+                "language": self.config.language,
+            }
+        self.logger.info(f"User {request.user} in conversation {request.conversation.id} sent a request:"
+                         f" {request.conversation.question.content}")
+        try:
+            is_faulted = False
+            response = self.compiled_graph.invoke(
+                input=input_state,
+                config=config
+            )
+            attachments = {"sources": []}
+            unique_sources = []
+            if response.get("documents"):
+                for document in response["documents"]:
+                    document_info = {  # TODO: maybe it wil be worth adding more info about retrieved sources
+                        "filename": document.metadata["filename"],
+                        "chunk_id": document.metadata["chunk_id"],
+                    }
+                    attachments["sources"].append(document_info)
+                seen_chunks = set()
+                for doc_info in attachments["sources"]:
+                    if (doc_info["filename"], doc_info["chunk_id"]) not in seen_chunks:
+                        unique_sources.append(doc_info)
+        except Exception as e:
+            unique_sources = []
+            self.logger.error(f"Error processing request: {str(e)}")
+            response = self.error_handler(str(e))
+            is_faulted = True
+        return ChatResponse(
+            role="assistant",
+            content=response["response"],
+            metadata={
+                "sources": unique_sources,
+                "n_gen": response.get("generation_count"),
+                "contextual_question": response.get("contextual_question"),
+            },
+            is_faulted=is_faulted
         )
-        answer = response.get('generation') or response.get('response', '')
-        self.logger.info(f"Generated answer.")
-        return answer
 
 
 if __name__ == "__main__":
     agent = Agent("cardiology_protocols")
+    chat_request = ChatRequest(
+        user="gaia",
+        user_id="2",
+        conversation=ConversationRequest(
+            id="2",
+            chatbotId="1",
+            history=[],
+            question=MessageSchema(
+                id="2",
+                role="user",
+                content="Quale è la cura per la cardiopatia?",
+                datetime=datetime.datetime.now(),
+            )
+        )
+    )
+    # metadata["chunk_idx"]
+    agent.answer(chat_request)

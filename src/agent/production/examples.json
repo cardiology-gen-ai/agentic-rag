@@ -1,0 +1,10 @@
+[
+    {
+        "input": "Come va?",
+        "output": "conversational"
+    },
+    {
+        "input": "Quali sono le cure per la tachicardia?",
+        "output": "document_based"
+    }
+]

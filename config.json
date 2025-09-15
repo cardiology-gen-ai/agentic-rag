@@ -1,8 +1,31 @@
 {
     "cardiology_protocols": {
+        "name": "cardiology_protocols_agent",
+        "description": "This is agent for answering questions about European Cardiology Protocols",
+        "system_prompt": "You are an assistant specialized in answering questions about cardiology protocols.",
+        "language": "italian",
+        "allowed_languages": ["it", "en"],
         "search": {
             "type": "similarity",
             "top_k": 3
+        },
+        "llm": {
+            "deployment": "llama3.2:1b",
+            "ollama": true,
+            "nbits": 4,
+            "generator_temperature": 0.01,
+            "router_temperature": 0.5,
+            "grader_temperature": 0.2
+        },
+        "context": {
+            "system_prompt": "Rewrite a general version of the question. Keep in mind that all the questions are related to protocols and guidelines in the context of cardiology."
+        },
+        "examples":
+        {
+            "file": "examples.json",
+            "top_k": 3,
+            "template": "input: {input}, output: {output}",
+            "input_keys": ["input"]
         },
     "general": {
         "debug": false,

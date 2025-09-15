@@ -6,7 +6,7 @@ import asyncio
 
 from psycopg import connect
 from psycopg.rows import dict_row
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from langgraph.store.postgres import PostgresStore
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.store.postgres.aio import AsyncPostgresStore
@@ -76,15 +76,15 @@ class AgentMemory:
         db_connection_string = db_connection_string or os.getenv("POSTGRES_ADMIN_DSN")
         if not db_connection_string:
             raise ValueError("No database connection string provided")
-        connection = connect(conninfo=db_connection_string, autocommit=True, row_factory=dict_row)
-        self.store = PostgresStore(connection)
+        self.connection = connect(conninfo=db_connection_string, autocommit=True, row_factory=dict_row)
+        self.store = PostgresStore(self.connection)
         self.store.setup()
-        self.checkpointer = PostgresSaver(connection)
+        self.checkpointer = PostgresSaver(self.connection)
 
     def save_conversation_turn(self, conversation_turn: ConversationTurn):
         try:
             self.store.put(("conversation", str(conversation_turn.session_id)),
-                           str(conversation_turn.turn_id),
+                           str(conversation_turn.message_id),
                            conversation_turn.model_dump(exclude_none=False))
         except Exception as e:
             logger.info(f"Failed to save conversation: {e}")
@@ -130,8 +130,8 @@ class AgentMemory:
 
     def delete_session(self, session_id: uuid.UUID) -> None:
         sid = str(session_id)
-        self._delete_prefix(("turns", sid))
-        self._delete_prefix(("retrievals", sid))
+        self._delete_prefix(("conversation", sid))
+        self._delete_prefix(("retrieval", sid))
         self._delete_prefix(("llm", sid))
         self._delete_prefix(("feedback", sid))
 
@@ -162,12 +162,12 @@ class AsyncAgentMemory:
                 await self.store.adelete(it.namespace, it.key)
 
     async def save_conversation_turn(self, conversation_turn: ConversationTurn) -> None:
-        await self.store.aput(("turns", str(conversation_turn.session_id)),
-                              str(conversation_turn.turn_id),
+        await self.store.aput(("conversation", str(conversation_turn.session_id)),
+                              str(conversation_turn.message_id),
                               conversation_turn.model_dump(exclude_none=False))
 
     async def save_retrieval_turn(self, retrieval_turn: RetrievalTurn) -> None:
-        await self.store.aput(("retrievals", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
+        await self.store.aput(("retrieval", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
                               "results", retrieval_turn.model_dump(exclude_none=False))
 
     async def save_llm_turn(self, llm_turn: LLMTurn) -> None:
@@ -185,13 +185,16 @@ class AsyncAgentMemory:
 
     async def delete_session(self, session_id: uuid.UUID) -> None:
         sid = str(session_id)
-        await self._delete_prefix(("turns", sid))
-        await self._delete_prefix(("retrievals", sid))
+        await self._delete_prefix(("conversation", sid))
+        await self._delete_prefix(("retrieval", sid))
         await self._delete_prefix(("llm", sid))
         await self._delete_prefix(("feedback", sid))
 
 
 if __name__ == "__main__":
-    # AgentMemory()
-    memory = asyncio.run(AsyncAgentMemory.create())
+    sync = True
+    if sync:
+        memory = AgentMemory()
+    else:
+        memory = asyncio.run(AsyncAgentMemory.create())
     print(type(memory.store), type(memory.checkpointer))

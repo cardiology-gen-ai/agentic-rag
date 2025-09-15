@@ -1,115 +1,336 @@
-#!/usr/bin/env python3
-import os, sys
-import logging
+import json
+import pathlib
+from typing import TypedDict, Dict, List, Annotated, Optional
 
-# Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
-sys.path.insert(0, project_root)
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+from langchain_core.example_selectors import SemanticSimilarityExampleSelector
+from langchain_core.prompts import PromptTemplate, FewShotPromptTemplate
+from langgraph.graph import START, END, StateGraph, add_messages
+from langchain_core.messages import HumanMessage, AnyMessage, AIMessage
+from langchain_core.runnables.config import RunnableConfig
 
-from langgraph.graph import START, END, StateGraph # type: ignore
-from langchain_core.messages import HumanMessage, AIMessage # type: ignore
-from langgraph.checkpoint.postgres import PostgresSaver # type: ignore
-from langgraph.store.postgres import PostgresStore # type: ignore
-from psycopg import Connection # type: ignore
-from langchain_core.runnables.config import RunnableConfig # type: ignore
+from cardiology_gen_ai.utils.logger import get_logger
 
-
-from datetime import datetime
-
-from src.utils.state import State
+from src.config.manager import AgentConfigManager
+from src.managers.llm_manager import LLMManager
+from src.managers.search_manager import SearchManager
+from src.persistence.message import AgentMemory
+from src.state import State
 from src.agent.production import nodes
+from src.agent.production import output
 
-vectorstore_dir = os.path.join(project_root, '../data-etl/src')
-if os.path.exists(vectorstore_dir):
-    sys.path.insert(0, vectorstore_dir)
+# class State(BaseModel):
+#     messages: Annotated[List[AnyMessage], add_messages]
+#     response: Optional[str]=""
+#     transform_query_count: Optional[int]=0
+#     generation_count: Optional[int]=0
+#     documents: Optional[List[str]]=[]
 
-from vectorstore import load_vectorstore
+GENERATION_LIMIT = 3
 
-class Agent():
-    def __init__(self, agent_id: str, log_level: str = "INFO", DB_URI: str = "postgresql://postgres:example@localhost:5432/postgres?sslmode=disable"):
+class GraphState(TypedDict):
+    question: str
+    contextual_question: str
+    transform_query_count: int
+    response: str
+    language: Optional[str]   # TODO: fix language (automatic detection)
+    messages: Annotated[List[AnyMessage], add_messages]
+    documents: Optional[List[Document]]
+    document_request: str
+    generation_count: int
+
+
+class Agent:
+    def __init__(self, agent_id: str):
         self.agent_id = agent_id
-        self.DB_URI = DB_URI
-        self.connection_kwargs = {
-            'autocommit': True,
-            'prepare_threshold': 0,
-        }
-        self.conn = Connection.connect(DB_URI, **self.connection_kwargs)
-        logging.basicConfig(
-            level=getattr(logging, log_level.upper()),
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+        self.config = AgentConfigManager(app_id=self.agent_id).config
+        self.agent_name = self.config.name
+        self.logger = get_logger(f"Agent {self.agent_name}")
+
+        self.llm_manager = LLMManager(self.config.llm)  # TODO: maybe should not be attribute
+        self.base_llm = self.llm_manager.llm  # TODO: maybe useless
+        self.router = self.llm_manager.router
+        self.generator = self.llm_manager.generator
+        self.grader = self.llm_manager.grader
+
+        self.search_manager = SearchManager(
+            index_config=self.config.indexing,
+            search_config=self.config.search,
+            embeddings=self.config.embeddings
         )
-        self.logger = logging.getLogger(f"{__name__}.Agent.{agent_id}")
-        self.logger.info(f"Initializing agent with ID: {agent_id}")
+        self.retriever = self.search_manager.vectorstore.retriever
+
+        self.examples = self.load_examples()
+
+        memory = AgentMemory()
+        self.store = memory.store
+        self.checkpointer = memory.checkpointer
         
         self.graph = self._create_graph()
-        
-        self.checkpointer = PostgresSaver(self.conn)
-        self.checkpointer.setup()
-        self.store = PostgresStore(self.conn)
-        self.store.setup()
         self.compiled_graph = self.graph.compile(checkpointer=self.checkpointer, store=self.store)
 
-        self.vectorstore = load_vectorstore(
-            collection_name="cardio_protocols",
-            vectorstore_type="qdrant"
-        )
-        self.retriever = self.vectorstore.as_retriever(
-            search_type = 'similarity',
-            search_kwargs = {"k": 5}
-        )
         self.logger.info("Agent initialization completed")
+
+    def load_examples(self):
+        # TODO: few shot examples should be moved in a more appropriate place
+        with open(pathlib.Path.cwd() / self.config.examples.examples) as f:
+            examples = json.load(f)
+        return examples
+
+    def draw_graph(self, filename: str = None) -> None:
+        if not filename:
+            filename = f"{type(self).__name__}.txt"
+        mermaid_syntax = self.graph.get_graph().draw_mermaid()
+        with open(filename, "w") as file:
+            file.write(mermaid_syntax)
+
+    def _conversational_agent(self, state: GraphState) -> Dict:
+        self.logger.info("Agent is ready to answer questions")
+        agent_prompt = self.config.system_prompt
+        language = state["language"] or self.config.language
+        question = state["question"]
+        messages = state["messages"]
+        history = "\n".join([f"{msg.type}: {msg.content}" for msg in messages[:-1]]) if messages else ""
+        runnable = nodes.conversational_agent(llm=self.generator, agent_prompt=agent_prompt)
+        response = runnable.invoke({"question": question, "language": language, "history": history})
+        return {"response": response, "messages": [AIMessage(content=response)]}
+
+    def _contextualize_question(self, state: GraphState) -> dict:
+        self.logger.info("Generating contextual question...")
+        self.logger.info(f"Original question: {state['question']}")
+        question = state["question"]
+        language = state["language"]
+        messages = state["messages"]
+        runnable = nodes.contextualize_question(self.generator, self.config.context.system_prompt)
+        response = runnable.invoke(
+            {"question": question, "language": language, "history": messages}
+        )
+        self.logger.info(f"Contextual question: {response}")
+        return {
+            "generation_count": 0,
+            "transform_query_count": 0,
+            "contextual_question": response
+        }
     
-    def _retrieve(self, state: State) -> dict:
-        human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
-        question = human_messages[-1].content
-        # Ensure question is a string, not a list
-        if isinstance(question, list):
-            question = ' '.join(str(item) for item in question)
-        elif not isinstance(question, str):
-            question = str(question)
-        
-        self.logger.info(f"Retrieving documents for question: {question[:100]}...")
+    def _retrieve(self, state: GraphState) -> Dict:
+        question = state["contextual_question"]
+        self.logger.info(f"Retrieving documents for contextualized question: {question}...")
         documents = self.retriever.invoke(question)
-        # Extract content from Document objects to match State schema
-        document_contents = [doc.page_content for doc in documents]
-        self.logger.info(f"Retrieved {len(document_contents)} documents")
-        return {'documents': document_contents}
+        self.logger.info(f"Retrieved {len(documents)} documents")
+        return {"documents": documents}
+
+    def _retrieval_grader(self, state: GraphState) -> Dict:
+        self.logger.info(f"Grading {len(state["documents"])} retrieved documents")
+        question = state["contextual_question"]
+        documents_content = [doc.page_content for doc in state["documents"]]
+        documents_filename = [doc.metadata["filename"] for doc in state["documents"]]  # TODO: check correctness
+        runnable = nodes.retrieval_grader(self.grader)
+        filtered_docs = []
+        for idx, d in enumerate(state["documents"]):
+            try:
+                response = runnable.invoke({"question": question, "document": documents_content[idx],
+                                            "document_filename": documents_filename[idx]})
+                assert isinstance(response, output.GradeDocuments)
+                grade = response.binary_score
+                if grade == "yes":
+                    self.logger.info(f"Document {idx + 1} ({documents_filename[idx]}) is relevant to the question.")
+                    filtered_docs.append(d)
+                else:
+                    self.logger.info(f"Document {idx + 1} ({documents_filename[idx]}) is not relevant to the question.")
+            except Exception as e:
+                self.logger.warning(f"Error grading document {idx}: {e}, assuming relevant")
+                filtered_docs.append(d)
+        return {"documents": filtered_docs}
+
+    def _document_request_detector(self, state: GraphState) -> Dict:
+        self.logger.info("Checking if user question requires a document.")
+        question = state["contextual_question"]
+        runnable = nodes.document_request_detector(self.router)
+        score = runnable.invoke({"question": question})
+        assert isinstance(score, output.DocumentRequest)
+        binary_score = score.binary_score
+        if binary_score == "yes":
+            self.logger.info("User question implies a document request.")
+        else:
+            self.logger.info("The user question does not imply a document request.")
+        return {"document_request": binary_score}
+
+    def _decide_to_generate(self, state: GraphState) -> str:
+        filtered_docs = state["documents"]
+        if len(filtered_docs) == 0:
+            self.logger.info("All documents marked as not relevant")
+            return "all_docs_not_relevant"
+        else:
+            self.logger.info(f"{len(filtered_docs)} documents marked as relevant")
+            if state["document_request"] == "no":
+                return "at_least_one_doc_relevant"
+            else:
+                return "generate_document_request_response"
+
+    def _generate_document_response(self, state: GraphState) -> Dict:
+        self.logger.info("Generating document response message.")
+        documents = state["documents"]
+        question = state["contextual_question"]
+        files = list(set([doc.metadata["filename"] for doc in documents]))
+        language = state["language"]
+        runnable = nodes.generate_document_response(self.generator)
+        response = runnable.invoke({"question": question, "documents": files, "language": language})
+        self.logger.info(f"Generated response: {response}")
+        return {"response": response}
+
+    def _generate(self, state: GraphState) -> Dict:
+        self.logger.info("Generating answer.")
+        question = state["contextual_question"]
+        documents = state["documents"]
+        language = state["language"]
+        retrieved_docs_as_context = [(f"Filename: {doc.metadata["filename"]}\n"
+                                      f"Content: {doc.page_content}") for doc in documents]
+        context = "\n\n".join([string for string in retrieved_docs_as_context])
+        runnable = nodes.generate(self.generator)
+        response = runnable.invoke({"documents": context, "question": question, "language": language})
+        return {"response": response, "generation_count": state["generation_count"] + 1,}
+
+    def _question_rewriter(self, state: GraphState) -> Dict:
+        self.logger.info("Transforming query.")
+        question = state["contextual_question"]
+        self.logger.info(f"Original question: {question}")
+        runnable = nodes.question_rewriter(self.generator)
+        response = runnable.invoke({"question": question})
+        return {
+            "contextual_question": response,
+            "transform_query_count": state["transform_query_count"] + 1,
+        }
+
+    def _generate_default_response(self, state: GraphState) -> Dict:
+        self.logger.info("Generating default response.")
+        language = state["language"]
+        question = state["question"]
+        runnable = nodes.generate_default_response(self.generator)
+        response = runnable.invoke({"language": language, "question": question})
+        return {"response": response, "documents": []}
+
+    def _router(self, state: GraphState) -> str | None:
+        self.logger.info("Routing question.")
+        example_selector = SemanticSimilarityExampleSelector.from_examples(
+            examples=self.examples,
+            embeddings=self.config.embeddings.model,
+            vectorstore_cls=FAISS,
+            k=self.config.examples.top_k,
+            input_keys=self.config.examples.input_keys,
+        )
+        prompt_template = PromptTemplate.from_template(self.config.examples.template)
+        few_shot_prompt = FewShotPromptTemplate(
+            example_selector=example_selector,
+            example_prompt=prompt_template,
+            input_variables=["question"],
+            prefix="",
+            suffix="",
+        )
+        example_prompt = few_shot_prompt.format(input=state["contextual_question"])
+        runnable = nodes.router(self.router, self.config.indexing.description, example_prompt)
+        routing = runnable.invoke({"question": state["contextual_question"]})
+        assert isinstance(routing, output.RouteQuery)
+        if routing.branch == "conversational":
+            self.logger.info("Conversational question is routed to the Agent.")
+            return "conversational_question"
+        elif routing.branch == "document_based":
+            self.logger.info("Question is routed to the RAG Architecture.")
+            return "document_based_question"
+        else:
+            self.logger.info("Question is not routed to any branch.")
+            return None
+
+    def _validator(self, state: GraphState) -> str:
+        self.logger.info("Checking hallucinations.")
+        documents = state["documents"]
+        generation = state["response"]
+        generation_count = state["generation_count"]
+        question = state["contextual_question"]
+        docs_string = "\n\n".join([doc.page_content for doc in documents])
+        ground_validator_runnable = nodes.ground_validator(self.grader)
+        answer_grader_runnable = nodes.answer_grader(self.grader)
+        if generation_count <= GENERATION_LIMIT:
+            ground_validation = ground_validator_runnable.invoke({"documents": docs_string, "response": generation})
+            ground_validation = ground_validation.binary_score
+            if ground_validation == "yes":
+                self.logger.info("Generated answer is grounded in documents.")
+                answer_grade = answer_grader_runnable.invoke({"question": question, "generation": generation})
+                assert isinstance(answer_grade, output.GradeAnswer)
+                answer_question = answer_grade.binary_score
+                if answer_question == "yes":
+                    self.logger.info(f"Generated answer addresses the question.")
+                    return "grounded_and_addresses_question"
+                else:
+                    self.logger.info(f"Generated answer does not address the question.")
+                    return "grounded_but_does_not_address_question"
+            else:
+                self.logger.info("Generated answer is not grounded in documents")
+                return "generation_not_grounded"
+        else:
+            self.logger.info("Generation count exceeds limit. Generating default response...")
+            return "generate_default_response"
+
+    @staticmethod
+    def _verify_generation_limit(state: GraphState) -> str:
+        if state["transform_query_count"] <= GENERATION_LIMIT:
+            return "retrieve"
+        else:
+            return "generate_default_response"
     
     def _create_graph(self):
         graph = StateGraph(State)
 
-        graph.add_node('conversational_agent', nodes.conversational_agent)
-        graph.add_node('retrieve', self._retrieve)
-        graph.add_node('transform_question', nodes.question_rewriter)
-        graph.add_node('generate', nodes.generate)
+        graph.add_node("conversational_agent", self._conversational_agent)
+        graph.add_node("contextualize_question", self._contextualize_question)
+        graph.add_node("retrieve", self._retrieve)
+        graph.add_node("retrieval_grader", self._retrieval_grader)
+        graph.add_node("transform_question", self._question_rewriter)
+        graph.add_node("generate", self._generate)
+        graph.add_node("document_request_detector", self._document_request_detector)
+        graph.add_node("generate_document_response", self._generate_document_response)
+        graph.add_node("generate_default_response", self._generate_default_response)
 
+        graph.add_edge(START, "contextualize_question")
         graph.add_conditional_edges(
-            START,
-            nodes.route_question,
+            "contextualize_question",
+            self._router,
             {
-                "conversational": "conversational_agent",
-                "document_based": "retrieve",
+                "conversational_question": "conversational_agent",
+                "document_based_question": "document_request_detector",
             }
         )
+        graph.add_edge("document_request_detector", "retrieve")
+        graph.add_edge("retrieve", "retrieval_grader")
         graph.add_conditional_edges(
-            "retrieve",
-            nodes.retrieval_grader,
+            "retrieval_grader",
+            self._decide_to_generate,
             {
                 "all_docs_not_relevant": "transform_question",
                 "at_least_one_doc_relevant": "generate",
+                "generate_document_request_response": "generate_document_response",
             },
         )
+        graph.add_edge("generate_document_response", END)
         graph.add_conditional_edges(
             "generate",
-            nodes.ground_validator,
+            self._validator,
             {
                 "grounded_and_addressed_question": END,
                 "generation_not_grounded": "generate",
                 "grounded_but_not_addressed_question": "transform_question",
+                "generate_default_response": "generate_default_response",
             }
         )
-        graph.add_edge("transform_question", "retrieve")
+        graph.add_conditional_edges(
+            "transform_question",
+            self._verify_generation_limit,
+            {
+                "retrieve": "retrieve",
+                "generate_default_response": "generate_default_response",
+            }
+        )
+        graph.add_edge("generate_default_response", END)
         graph.add_edge("conversational_agent", END)
 
         return graph
@@ -125,3 +346,7 @@ class Agent():
         answer = response.get('generation') or response.get('response', '')
         self.logger.info(f"Generated answer.")
         return answer
+
+
+if __name__ == "__main__":
+    agent = Agent("cardiology_protocols")

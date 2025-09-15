@@ -1,11 +1,13 @@
 import os
+from dataclasses import field
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Literal
 
-from cardiology_gen_ai import EmbeddingConfig, IndexingConfig
 from pydantic import BaseModel
 
+
 from cardiology_gen_ai.config.manager import ConfigManager
+from cardiology_gen_ai import EmbeddingConfig, IndexingConfig
 
 
 class SearchTypeNames(Enum):
@@ -35,12 +37,44 @@ class SearchConfig(BaseModel):
         return cls(type=search_type, kwargs=kwargs, **other_config_dict)
 
 
+class LLMConfig(BaseModel):
+    model_name: str
+    ollama: bool = False
+    nbits: Optional[Literal[4, 8, 16, 32]] = 8
+    generator_temperature: float
+    router_temperature: float
+    grader_temperature: float
+
+    @classmethod
+    def from_config(cls, config_dict: Dict[str, Any]) -> "LLMConfig":
+        model_name = config_dict.get("deployment")
+        other_config_dict = {k:v for k, v in config_dict.items() if k not in ["deployment"]}
+        return cls(model_name=model_name, **other_config_dict)
+
+
+class ContextConfig(BaseModel):
+    system_prompt: str = ""
+
+
+class ExamplesConfig(BaseModel):
+    file: str = ""
+    top_k: int = 0
+    template: str = ""
+    input_keys: List[str] = field(default_factory=list)
+
+
 class AgentConfig(BaseModel):
     name: str = ""
     description: str = ""
-    embeddings: EmbeddingConfig
-    search: SearchConfig
-    indexing: IndexingConfig
+    system_prompt: str = ""
+    language: str = ""
+    allowed_languages: List[str] = field(default_factory=list)
+    embeddings: EmbeddingConfig = field(default_factory=EmbeddingConfig)
+    search: SearchConfig = field(default_factory=SearchConfig)
+    indexing: IndexingConfig = field(default_factory=IndexingConfig)
+    llm: LLMConfig = field(default_factory=LLMConfig)
+    context: ContextConfig = field(default_factory=ContextConfig)
+    examples: ExamplesConfig = field(default_factory=ExamplesConfig)
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "AgentConfig":
@@ -50,9 +84,12 @@ class AgentConfig(BaseModel):
         indexing_config = IndexingConfig.from_config(indexing_dict)
         search_dict = config_dict["search"]
         search_config = SearchConfig.from_config(search_dict)
+        llm_dict = config_dict["llm"]
+        llm_config = LLMConfig.from_config(llm_dict)
         other_config_dict = \
-            {k: v for k, v in config_dict.items() if k not in ["indexing", "embeddings", "search"]}
-        return cls(embeddings=embedding_config, search=search_config, indexing=indexing_config, **other_config_dict)
+            {k: v for k, v in config_dict.items() if k not in ["indexing", "embeddings", "search", "llm"]}
+        return cls(embeddings=embedding_config, search=search_config, indexing=indexing_config, llm=llm_config,
+                   **other_config_dict)
 
 
 class AgentConfigManager(ConfigManager):

@@ -5,7 +5,8 @@ import asyncio
 
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapped, mapped_column, Session
 
 from src.persistence.orm_base import BaseORM, BaseDB
 from src.persistence.db import get_sync_db, get_async_db
@@ -33,6 +34,11 @@ class UserSchema(UserCreateSchema):
 
 
 class UserDB(BaseDB):
+    def __init__(self, session: AsyncSession | Session):
+        super().__init__(session=session)
+        engine = session.bind
+        BaseORM.metadata.create_all(engine, tables=[UserORM.__table__])
+
     def _create_user(self, user: UserCreateSchema) -> UserORM:
         user_id = uuid.uuid4()
         user_db = UserORM(
@@ -77,9 +83,7 @@ class UserDB(BaseDB):
                       user_id: Optional[uuid.UUID] = None) -> Optional[UserORM]:
         user_info_query = self._get_user_info_query(username, email, user_id)
         result = self.session.execute(user_info_query)
-        if result.scalars() is not None:
-            return result.scalars().first()
-        return None
+        return result.scalars().first()
 
     async def async_get_user(self,
                              username: Optional[str] = None,
@@ -87,9 +91,7 @@ class UserDB(BaseDB):
                              user_id: Optional[uuid.UUID] = None) -> Optional[UserORM]:
         user_info_query = self._get_user_info_query(username, email, user_id)
         result = await self.session.execute(user_info_query)
-        if result.scalars() is not None:
-            return result.scalars().first()
-        return None
+        return result.scalars().first()
 
     def sync_update_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
         user_info: UserORM | None = self.sync_get_user(user_id=user_id)
@@ -116,17 +118,17 @@ if __name__ == "__main__":
     sync = True
     if sync:
         session_generator = get_sync_db()
-        session = next(session_generator)
+        current_session = next(session_generator)
         try:
-            current_user_db = UserDB(session)
+            current_user_db = UserDB(current_session)
             my_user = current_user_db.sync_create_user(user=UserCreateSchema(username="sync_test2", email=""))
         finally:
-            session.close()
+            current_session.close()
     else:
         session_generator = get_async_db()
-        session = asyncio.run(anext(session_generator))
+        current_session = asyncio.run(anext(session_generator))
         try:
-            current_user_db = UserDB(session)
+            current_user_db = UserDB(current_session)
             my_user = asyncio.run(current_user_db.async_create_user(user=UserCreateSchema(username="async_test2", email="")))
         finally:
             session_generator.aclose()

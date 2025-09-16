@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 import ollama
 from langchain_ollama.chat_models import ChatOllama
@@ -66,6 +68,11 @@ class LLMManager:
         except Exception as e:
             self.logger.info(f"Model {self.config.model_name} could not be initialized: {e}")
             raise
+
+    def count_tokens(self, message_list: List[str]) -> int:
+        # TODO: implement
+        return 0
+
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import os
 import uuid
+from dataclasses import field
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 import asyncio
@@ -13,6 +14,9 @@ from langgraph.store.postgres.aio import AsyncPostgresStore
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from cardiology_gen_ai.utils.logger import get_logger
+
+from src.managers.llm_manager import LLMManager
+from src.utils.chat import ChatResponse, ChatRequest
 
 
 logger = get_logger("Agent memory management based on LangGraph")
@@ -31,30 +35,72 @@ class ConversationTurn(BaseModel):
         self.message_id = uuid.UUID(str(self.message_id))
         self.session_id = uuid.UUID(str(self.session_id))
 
+    @classmethod
+    def from_agent(cls, response: ChatResponse, request: ChatRequest) -> "ConversationTurn":
+        return ConversationTurn(
+            message_id=request.conversation.question.id,
+            session_id=request.conversation.id,
+            question=request.conversation.question.content,
+            metadata=response.metadata,
+            response=response.content,
+            created_at=request.conversation.question.datetime,
+        )
+
 
 class RetrievalTurn(BaseModel):
     message_id: uuid.UUID | str
     session_id: uuid.UUID | str
     question: str
-    sources: Dict[str, Any] = {}  # TODO: define ref schema (maybe taken from chunk metadata)
+    sources: List[Dict[str, Any]] = field(default_factory=list)
     embedding_name: str = ""
 
     def model_post_init(self, __context: Any):
         self.message_id = uuid.UUID(str(self.message_id))
         self.session_id = uuid.UUID(str(self.session_id))
 
+    @classmethod
+    def from_agent(cls, response: ChatResponse, request: ChatRequest, embedding_name: str) -> "RetrievalTurn":
+        return RetrievalTurn(
+            message_id=request.conversation.question.id,
+            session_id=request.conversation.id,
+            question=request.conversation.question.content,
+            sources=response.metadata["sources"],
+            embedding_name=embedding_name,
+        )
+
 
 class LLMTurn(BaseModel):
     message_id: uuid.UUID | str
     session_id: uuid.UUID | str
     model_name: str
-    model_temperature: float
+    generator_temperature: float = 0
+    router_temperature: float = 0
+    grader_temperature: float = 0
     token_used: int | None = None
     latency_ms: float | None = None
 
     def model_post_init(self, __context: Any):
         self.message_id = uuid.UUID(str(self.message_id))
         self.session_id = uuid.UUID(str(self.session_id))
+
+    @classmethod
+    def from_agent(cls, response: ChatResponse, request: ChatRequest, llm_manager: LLMManager,
+                   duration: float = None) -> "LLMTurn":
+        return LLMTurn(
+            message_id=request.conversation.question.id,
+            session_id=request.conversation.id,
+            model_name=llm_manager.config.model_name,
+            generator_temperature=llm_manager.config.generator_temperature,
+            router_temperature=llm_manager.config.router_temperature,
+            grader_temperature=llm_manager.config.grader_temperature,
+            token_used=llm_manager.count_tokens([request.conversation.question.content, response.content]),
+            latency_ms=duration
+        )
+
+
+class FeedbackRequest(BaseModel):
+    feedback_value: int
+    feedback_message: str | None = None
 
 
 class FeedbackTurn(BaseModel):
@@ -86,15 +132,38 @@ class AgentMemory:
         try:
             self.store.put(("conversation", str(conversation_turn.session_id)),
                            str(conversation_turn.message_id),
-                           conversation_turn.model_dump(exclude_none=False))
+                           conversation_turn.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
             logger.info(f"Failed to save conversation: {e}")
+
+    @staticmethod
+    def item_to_conversation_turn(item: Any) -> ConversationTurn:
+        v = item.value or {}
+        session_from_ns = item.namespace[1] if getattr(item, "namespace", None) and len(item.namespace) > 1 else None
+        payload = {
+            "message_id": v.get("message_id") or item.key,
+            "session_id": v.get("session_id") or session_from_ns,
+            "question": v.get("question") or "",
+            "metadata": v.get("metadata") or {},
+            "response": v.get("response"),
+            "created_at": v.get("created_at") or item.created_at,
+            "error": v.get("error"),
+        }
+        return ConversationTurn.model_validate(payload)
+
+    def get_history(self, session_id: uuid.UUID, limit: int) -> List[ConversationTurn]:
+        conversation_items = self.store.search(("conversation", str(session_id)), limit=1000)
+        if len(conversation_items) == 0 or conversation_items is None:
+            return []
+        conversation_items = [self.item_to_conversation_turn(item) for item in conversation_items]
+        conversation_items_sorted = sorted(conversation_items, key=lambda item: item.created_at, reverse=True)
+        return conversation_items_sorted[:limit]
 
     def save_retrieval_turn(self, retrieval_turn: RetrievalTurn):
         try:
             self.store.put(("retrieval", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
                            "results",
-                           retrieval_turn.model_dump(exclude_none=False))
+                           retrieval_turn.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
             logger.info(f"Failed to save retriever results: {e}")
 
@@ -102,7 +171,7 @@ class AgentMemory:
         try:
             self.store.put(("llm", str(llm_turn.session_id), str(llm_turn.message_id)),
                            "results",
-                           llm_turn.model_dump(exclude_none=False))
+                           llm_turn.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
             logger.info(f"Failed to save LLM information: {e}")
 
@@ -110,7 +179,7 @@ class AgentMemory:
         try:
             self.store.put(("feedback", str(feedback.session_id)),
                             str(feedback.message_id),
-                            feedback.model_dump(exclude_none=False))
+                            feedback.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
             logger.info(f"Failed to save feedback: {e}")
 
@@ -166,20 +235,20 @@ class AsyncAgentMemory:
     async def save_conversation_turn(self, conversation_turn: ConversationTurn) -> None:
         await self.store.aput(("conversation", str(conversation_turn.session_id)),
                               str(conversation_turn.message_id),
-                              conversation_turn.model_dump(exclude_none=False))
+                              conversation_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_retrieval_turn(self, retrieval_turn: RetrievalTurn) -> None:
         await self.store.aput(("retrieval", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
-                              "results", retrieval_turn.model_dump(exclude_none=False))
+                              "results", retrieval_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_llm_turn(self, llm_turn: LLMTurn) -> None:
         await self.store.aput(("llm", str(llm_turn.session_id), str(llm_turn.message_id)),
-                              "results", llm_turn.model_dump(exclude_none=False))
+                              "results", llm_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_feedback(self, feedback: FeedbackTurn) -> None:
         await self.store.aput( ("feedback", str(feedback.session_id)),
                                str(feedback.message_id),
-                               feedback.model_dump(exclude_none=False))
+                               feedback.model_dump(exclude_none=False, mode="json"))
 
     async def get_session_feedback(self, session_id: uuid.UUID) -> List[FeedbackTurn]:
         items = await self.store.asearch(("feedback", str(session_id)), limit=1000)

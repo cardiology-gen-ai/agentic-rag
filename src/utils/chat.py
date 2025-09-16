@@ -4,6 +4,10 @@ from typing import Literal, Any, List, Dict
 from pydantic import BaseModel
 
 
+class MessageRequest(BaseModel):
+    message: str
+
+
 class MessageSchema(BaseModel):
     id: str | None = None
     datetime: datetime

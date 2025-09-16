@@ -4,11 +4,11 @@ from typing import Literal, Optional, List
 
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.orm import Mapped, mapped_column
-
-from src.persistence.orm_base import BaseORM, BaseDB, engine, Session, AsyncSessionLocal
+from sqlalchemy.orm import Mapped, mapped_column, Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.persistence.orm_base import BaseORM, BaseDB
 from src.persistence.user import UserORM
-from src.agent.production.graph import Agent
+from src.agent.graph import Agent
 
 
 class SessionORM(BaseORM):
@@ -16,7 +16,7 @@ class SessionORM(BaseORM):
     __table_args__ = {"schema": "public"}
     session_id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     service_user_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
-    title: Mapped[str] = mapped_column()
+    title: Mapped[str] = mapped_column(nullable=True)
     username: Mapped[str] = mapped_column()
     user_role: Mapped[str] = mapped_column()
     model_name: Mapped[str] = mapped_column()
@@ -40,6 +40,11 @@ class SessionSchema(BaseModel):
 
 
 class SessionDB(BaseDB):
+    def __init__(self, session: AsyncSession | Session):
+        super().__init__(session=session)
+        engine = session.bind
+        BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
+
     def _create_session(self, user: UserORM, agent: Agent) -> SessionORM:
         self.logger.info("Creating agent session")
         session_db = SessionORM(
@@ -47,10 +52,11 @@ class SessionDB(BaseDB):
             service_user_id=user.user_id,
             username=user.username,
             user_role=user.user_role,
-            # model_name=agent.llm.model_name,  # TODO: change if appropriate
-            # embedding_name=agent.embeddings.model_name, # TODO: change if appropriate
+            model_name=agent.llm_manager.config.model_name,
+            embedding_name=agent.config.embeddings.model_name,
             created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            message_count=0,
         )
         self.session.add(session_db)
         return session_db
@@ -79,16 +85,12 @@ class SessionDB(BaseDB):
     def sync_get_session(self, session_id: uuid.UUID) -> Optional[SessionORM]:
         session_info_query = self._get_session_info_query(session_id=session_id)
         result = self.session.execute(session_info_query)
-        if result.scalar() is not None:
-            return result.scalars().first()
-        return None
+        return result.scalars().first()
 
     async def async_get_session(self, session_id: uuid.UUID) -> Optional[SessionORM]:
         session_info_query = self._get_session_info_query(session_id=session_id)
         result = await self.session.execute(session_info_query)
-        if result.scalar() is not None:
-            return result.scalars().first()
-        return None
+        return result.scalars().first()
 
     def sync_delete_session_by_id(self, session_id: uuid.UUID):
         self.logger.info(f"Deleting session {session_id}")

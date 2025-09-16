@@ -5,7 +5,6 @@ from typing import Optional, Dict, Any, List, Literal
 
 from pydantic import BaseModel
 
-
 from cardiology_gen_ai.config.manager import ConfigManager
 from cardiology_gen_ai import EmbeddingConfig, IndexingConfig
 

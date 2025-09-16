@@ -18,7 +18,7 @@ from src.config.manager import AgentConfigManager
 from src.managers.llm_manager import LLMManager
 from src.managers.search_manager import SearchManager
 from src.persistence.message import AgentMemory
-from src.agent.production import nodes
+from src.agent import nodes
 from src.agent import output
 from src.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
 

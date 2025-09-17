@@ -9,14 +9,20 @@ from src.agent import output
 
 def contextualize_question(llm: RunnableBinding, context_prompt: str):
     system_prompt = """
-    Given the provided history, enrich the last human message with the information from the history 
-    such that it can be understood without the chat history. 
-    Users may ask about specific topics or ask to retrieve a particular document. 
-    In both cases, the reformulated question must preserve the user's original intent.
-    Your task is to rewrite the user's question to make it more suitable for retrieval.
-    The rewritten question should be clear, concise, and focused on the key information needed to retrieve relevant documents.
-    Avoid unnecessary details or ambiguity in the question.
-    Do NOT answer the question, just reformulate it if needed, otherwise return it as is. 
+    Given the provided history, add context to the last human message ONLY if needed to make it understandable without the chat history.
+
+    IMPORTANT RULES:
+    1. If there is NO history or the history is empty, return the question EXACTLY as provided - do not modify it at all
+    2. If the question is a greeting, introduction request, or general conversational message, return it EXACTLY as provided
+    3. Only add context when the question refers to something mentioned earlier in the conversation
+    4. Always preserve the user's original intent and meaning
+    5. Do NOT rewrite questions to make them "more suitable for retrieval"
+    6. Do NOT answer the question, just add context if truly needed
+
+    Examples:
+    - "Hello" → "Hello" (return exactly as is)
+    - "Please introduce yourself" → "Please introduce yourself" (return exactly as is)
+    - "What about that condition?" (with history about diabetes) → "What about diabetes?" (add context)
     """
     system_prompt += context_prompt
     prompt = ChatPromptTemplate.from_messages(

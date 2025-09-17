@@ -78,6 +78,9 @@ class SearchManager(metaclass=Singleton):
         return self.vectorstore.get_n_documents_in_vectorstore()
 
     def load_index(self):
+        if not self.vectorstore.vectorstore_exists():
+            self.logger.info(f"Index {self.index_config.name} does not exist yet. Will be created when documents are added.")
+            return
         try:
             self.vectorstore.load_vectorstore(embeddings_model=self.embeddings,
                                               retrieval_mode=self.index_config.retrieval_mode.value)
@@ -87,6 +90,9 @@ class SearchManager(metaclass=Singleton):
             raise
 
     def get_retriever(self):
+        if not self.vectorstore.vectorstore_exists():
+            self.logger.info("No vectorstore available yet. Retriever will be created when documents are added.")
+            return
         try:
             self.vectorstore.get_retriever()
             self.logger.info("Retriever instantiated successfully.")

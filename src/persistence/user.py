@@ -14,7 +14,7 @@ from src.persistence.db import get_sync_db, get_async_db
 
 class UserORM(BaseORM):
     __tablename__ = "user"
-    __table_args__ = {"schema": "public"}  # TODO: check if needed
+    __table_args__ = {"schema": "public", "extend_existing": True}  # TODO: check if needed
     user_id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column(nullable=False)
     user_role: Mapped[str] = mapped_column()
@@ -123,7 +123,10 @@ if __name__ == "__main__":
             current_user_db = UserDB(current_session)
             my_user = current_user_db.sync_create_user(user=UserCreateSchema(username="sync_test2", email=""))
         finally:
-            current_session.close()
+            try:
+                next(session_generator)
+            except StopIteration:
+                pass
     else:
         session_generator = get_async_db()
         current_session = asyncio.run(anext(session_generator))

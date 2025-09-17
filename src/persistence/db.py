@@ -60,11 +60,14 @@ def get_engine(db_connection_string: Optional[str] = None, sync: bool = True) ->
 def get_sync_db(db_connection_string: Optional[str] = None):
     engine = get_engine(db_connection_string, sync=True)
     session_maker = sessionmaker(bind=engine, expire_on_commit=False)
-    with session_maker() as session:
-        try:
-            yield session
-        finally:
+    session = session_maker()
+    try:
+        yield session
+    finally:
+        if session:
             session.close()
+        if engine:
+            engine.dispose()
 
 
 async def get_async_db(db_connection_string: Optional[str] = None):

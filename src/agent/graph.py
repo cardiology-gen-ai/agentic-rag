@@ -55,7 +55,7 @@ class Agent:
             search_config=self.config.search,
             embeddings=self.config.embeddings
         )
-        self.retriever = self.search_manager.vectorstore.retriever
+        self.retriever = self.search_manager.vectorstore.retriever if self.search_manager.vectorstore.vectorstore_exists() else None
 
         self.examples = self._load_examples()
 
@@ -109,6 +109,11 @@ class Agent:
     def _retrieve(self, state: GraphState) -> Dict:
         question = state["contextual_question"]
         self.logger.info(f"Retrieving documents for contextualized question: {question}...")
+
+        if self.retriever is None:
+            self.logger.info("No vectorstore available. Returning empty document list.")
+            return {"documents": []}
+
         documents = self.retriever.invoke(question)
         self.logger.info(f"Retrieved {len(documents)} documents")
         return {"documents": documents}

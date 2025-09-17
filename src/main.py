@@ -3,15 +3,15 @@ from datetime import datetime, timezone
 from time import time
 from typing import Optional, cast, Literal
 
-from build.lib.persistence.db import get_sync_db
-from src.agent.graph import Agent
+from persistence.db import get_sync_db
+from agent.graph import Agent
 
 from cardiology_gen_ai.utils.logger import get_logger
 
-from src.persistence.message import ConversationTurn, RetrievalTurn, LLMTurn, FeedbackRequest, FeedbackTurn
-from src.persistence.session import SessionDB
-from src.persistence.user import UserORM, UserDB, UserCreateSchema
-from src.utils.chat import MessageSchema, ChatRequest, ConversationRequest, ChatResponse, MessageRequest
+from persistence.message import ConversationTurn, RetrievalTurn, LLMTurn, FeedbackRequest, FeedbackTurn
+from persistence.session import SessionDB
+from persistence.user import UserORM, UserDB, UserCreateSchema
+from utils.chat import MessageSchema, ChatRequest, ConversationRequest, ChatResponse, MessageRequest
 
 logger = get_logger("Agentic RAG application")
 
@@ -341,4 +341,7 @@ if __name__ == "__main__":
             session_id = create_new_session(rag_agent=agent, user=current_user, thread_repo=session_db)
         chat_loop(thread_id=session_id, user=current_user, thread_repo=session_db, rag_agent=agent)
     finally:
-        session.close()
+        try:
+            next(session_generator)
+        except StopIteration:
+            pass

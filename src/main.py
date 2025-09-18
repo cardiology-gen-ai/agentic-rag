@@ -82,13 +82,13 @@ def get_user(user_repo: UserDB, username: Optional[str] = None, email: Optional[
 
 def save_agent_turn(rag_agent: Agent, request: ChatRequest, response: ChatResponse, duration: float = None):
     conversation_turn = ConversationTurn.from_agent(response=response, request=request)
-    agent.memory.save_conversation_turn(conversation_turn)
+    rag_agent.memory.save_conversation_turn(conversation_turn)
     retrieval_turn = RetrievalTurn.from_agent(
         response=response, request=request, embedding_name=rag_agent.config.embeddings.model_name)
-    agent.memory.save_retrieval_turn(retrieval_turn)
+    rag_agent.memory.save_retrieval_turn(retrieval_turn)
     llm_turn = LLMTurn.from_agent(response=response, request=request, llm_manager=rag_agent.llm_manager,
                                   duration=duration)
-    agent.memory.save_llm_turn(llm_turn)
+    rag_agent.memory.save_llm_turn(llm_turn)
     logger.info("Saved agent interaction turn successfully.")
 
 
@@ -273,7 +273,7 @@ def message(request: MessageRequest, user: UserORM, thread_id: str, thread_repo:
         )
         result = rag_agent.answer(request=chat_request)
         duration = round(time() - start_time, 2)
-        print(result.content)
+        #print(result.content)
         if result:
             thread = thread_repo.sync_get_session(session_id=uuid.UUID(str(thread_id)))
             if thread and thread.title is None:
@@ -282,7 +282,7 @@ def message(request: MessageRequest, user: UserORM, thread_id: str, thread_repo:
         save_agent_turn(rag_agent, chat_request, result, duration = duration)
         _ = thread_repo.sync_update_session_activity(session_id=uuid.UUID(str(thread_id)),
                                                                    increment_messages=True)
-        return msg_id
+        return msg_id, result.content
     except Exception as e:
         logger.error(f"Error processing message: {e}")
         raise
@@ -312,8 +312,9 @@ def chat_loop(thread_id: str, user: UserORM, thread_repo: SessionDB, rag_agent: 
                     thread_id = result
                     continue
             message_request = MessageRequest(message=user_input)
-            msg_id = message(request=message_request, user=user, thread_id=thread_id, thread_repo=thread_repo,
+            msg_id, msg_content = message(request=message_request, user=user, thread_id=thread_id, thread_repo=thread_repo,
                         rag_agent=rag_agent)
+            print(f"Agent: {msg_content}\n")
     except KeyboardInterrupt:
         logger.info("User interrupted chat loop")
         print("\n\nReturning to main menu...")

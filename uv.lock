@@ -217,12 +217,6 @@ dependencies = [
     { name = "transformers" },
 ]
 
-[package.optional-dependencies]
-other = [
-    { name = "langchain-community" },
-    { name = "langchain-qdrant" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "accelerate", specifier = "==1.10.1" },
@@ -231,12 +225,10 @@ requires-dist = [
     { name = "faiss-cpu", specifier = "==1.12.0" },
     { name = "fastembed", specifier = "==0.7.2" },
     { name = "langchain-community", specifier = ">=0.3.25" },
-    { name = "langchain-community", marker = "extra == 'other'", specifier = "==0.3.25" },
     { name = "langchain-core", specifier = "==0.3.75" },
     { name = "langchain-huggingface", specifier = "==0.3.1" },
     { name = "langchain-ollama", specifier = "==0.3.7" },
     { name = "langchain-qdrant", specifier = ">=0.2.0" },
-    { name = "langchain-qdrant", marker = "extra == 'other'", specifier = "==0.2.0" },
     { name = "langgraph", specifier = "==0.6.7" },
     { name = "langgraph-checkpoint-postgres", specifier = "==2.0.23" },
     { name = "psycopg-binary", specifier = "==3.2.10" },

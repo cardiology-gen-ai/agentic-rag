@@ -151,12 +151,12 @@ class AgentMemory:
         }
         return ConversationTurn.model_validate(payload)
 
-    def get_history(self, session_id: uuid.UUID, limit: int) -> List[ConversationTurn]:
+    def get_history(self, session_id: uuid.UUID, limit: int, reverse: bool = True) -> List[ConversationTurn]:
         conversation_items = self.store.search(("conversation", str(session_id)), limit=1000)
         if len(conversation_items) == 0 or conversation_items is None:
             return []
         conversation_items = [self.item_to_conversation_turn(item) for item in conversation_items]
-        conversation_items_sorted = sorted(conversation_items, key=lambda item: item.created_at, reverse=True)
+        conversation_items_sorted = sorted(conversation_items, key=lambda item: item.created_at, reverse=reverse)
         return conversation_items_sorted[:limit]
 
     def save_retrieval_turn(self, retrieval_turn: RetrievalTurn):

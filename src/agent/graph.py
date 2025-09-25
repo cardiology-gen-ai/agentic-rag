@@ -31,7 +31,7 @@ class GraphState(TypedDict, total=False):
     contextual_question: str
     transform_query_count: int
     response: str
-    language: Optional[str]   # TODO: fix language (automatic detection)
+    language: Optional[str]   
     messages: Annotated[List[AnyMessage], add_messages]
     documents: Optional[List[Document]]
     document_request: str
@@ -81,6 +81,16 @@ class Agent:
         mermaid_syntax = self.compiled_graph.get_graph().draw_mermaid()
         with open(filename, "w") as file:
             file.write(mermaid_syntax)
+
+    def _detect_language(self, state: GraphState) -> Dict:
+        self.logger.info("Detecting language...")
+        question = state["question"]
+        runnable = nodes.detect_language(self.generator)
+        response = runnable.invoke({"text": question})
+        assert isinstance(response, output.DetectLanguage)
+        language = response.language
+        self.logger.info(f"Detected language: {language}")
+        return {"language": language}
 
     def _conversational_agent(self, state: GraphState) -> Dict:
         self.logger.info("Agent is ready to answer questions")
@@ -279,6 +289,7 @@ class Agent:
     def _create_graph(self):
         graph = StateGraph(GraphState)
 
+        graph.add_node("language_detector", self._detect_language)
         graph.add_node("conversational_agent", self._conversational_agent)
         graph.add_node("contextualize_question", self._contextualize_question)
         graph.add_node("retrieve", self._retrieve)
@@ -289,7 +300,8 @@ class Agent:
         graph.add_node("generate_document_response", self._generate_document_response)
         graph.add_node("generate_default_response", self._generate_default_response)
 
-        graph.add_edge(START, "contextualize_question")
+        graph.add_edge(START, "language_detector")
+        graph.add_edge("language_detector", "contextualize_question")
         graph.add_conditional_edges(
             "contextualize_question",
             self._router,

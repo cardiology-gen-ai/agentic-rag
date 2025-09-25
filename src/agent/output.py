@@ -2,6 +2,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+class DetectLanguage(BaseModel):
+    """Detect the language of the input text."""
+    language: Literal["it", "en"] = Field(description="The detected language: 'it' for Italian, 'en' for English.")
 
 class GradeDocuments(BaseModel):
     """Binary score for relevance check on retrieved documents."""

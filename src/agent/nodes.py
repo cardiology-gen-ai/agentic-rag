@@ -6,6 +6,21 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from src.agent import output
 
+def detect_language(llm: RunnableBinding):
+    structured_llm = llm.with_structured_output(output.DetectLanguage, method="function_calling")
+    system_prompt = """
+    You are a language detection model that detects if the input text is in Italian or English.\n
+    Respond with 'it' for Italian and 'en' for English. Do NOT respond with anything else.
+    If the text is in neither Italian nor English, respond with 'en' by default.
+    """
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            ("human", "Text: {text} \nLanguage:"),
+        ]
+    )
+    language_detector = prompt | structured_llm
+    return language_detector
 
 def contextualize_question(llm: RunnableBinding, context_prompt: str):
     system_prompt = """

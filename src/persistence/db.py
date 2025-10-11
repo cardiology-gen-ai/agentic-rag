@@ -1,14 +1,20 @@
 import os
 from typing import Optional
+from pathlib import Path
 
 import psycopg
 from psycopg import sql
+from dotenv import load_dotenv
 
 from cardiology_gen_ai.utils.logger import get_logger
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+# Load environment variables from .env file
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 POSTGRES_ADMIN_DSN = os.getenv("POSTGRES_ADMIN_DSN")
 DB_NAME = "cardiology_protocols"  # TODO: maybe put in config

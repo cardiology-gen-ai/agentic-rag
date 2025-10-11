@@ -1,263 +1,139 @@
-## NB 
+## How to run 
 
-To run the code the module of the repo cardiology-gen-ai MUST be installed e.g. via
+> [!IMPORTANT]
+> To run the code the module of the repo cardiology-gen-ai MUST be installed e.g. via
+> ```
+> uv pip install -e ../cardiology-gen-ai
+> ```
+> (change `../cardiology-gen-ai` with the relative path to the repo in your machine).
+
+> Other dependencies can be installed using `uv pip install .` and/or `uv pip install .[other]`
+
+To run the interactive session with the agent do the following:
+
+1. Activate the virtual environment
 ```
-uv pip install -e ../cardiology-gen-ai
+source .venv/bin/activate
 ```
-(change `../cardiology-gen-ai` with the relative path to the repo in your machine).
-
-Other dependencies can be installed using `uv pip install .` and/or `uv pip install .[other]`
-
-# Agentic RAG Pipeline for Cardiology Protocols
-
-An intelligent multi-agent system for querying European Society of Cardiology (ESC) guidelines using advanced RAG (Retrieval-Augmented Generation) techniques with self-reflection and conversational capabilities.
-
-![Cardiology Agent Architecture](images/cardiology-agent-transparent.drawio.png)
-
-## 🏥 Overview
-
-This project implements a sophisticated agentic RAG system specifically designed for medical professionals and students working with cardiology protocols. The system intelligently routes queries, retrieves relevant ESC guidelines, and provides accurate, evidence-based responses while maintaining conversational context.
-
-### Key Features
-
-- **🎯 Intelligent Query Routing**: Automatically classifies queries as conversational or medical
-- **🔍 Self-RAG Architecture**: Self-reflecting retrieval with quality assessment and regeneration
-- **💬 Conversational Agent**: Handles greetings, farewells, and general conversation naturally
-- **🧠 Memory Management**: Maintains conversation context while managing token limits
-- **📚 ESC Guidelines Integration**: Direct access to European Society of Cardiology protocols
-- **🔄 State Management**: Robust state tracking across the entire conversation flow
-- **💾 PostgreSQL Integration**: Persistent conversation storage and state management
-
-## 📁 Project Structure
-
+ 
+2. Set the INDEX_ROOT environmental variable in the root directory from which you run the script (e.g. from agentic-rag)
 ```
-agentic-rag/
-├── Makefile                    # Build automation and shortcuts
-├── README.md                   # This documentation
-├── requirements.txt            # Python dependencies
-├── docker-compose.yml          # PostgreSQL database setup
-├── init.sql                   # Database initialization script
-├── .env.example               # Environment configuration template
-├── test_database.py           # Database integration tests
-├── agent/                      # Core agent implementations
-│   ├── router.py              # Query classification agent
-│   ├── self_rag.py           # Self-reflecting RAG agent
-│   ├── conversational_agent.py # Social interaction agent
-│   ├── memory.py             # Memory management agent
-│   ├── database_manager.py   # PostgreSQL database manager
-│   ├── state.py              # Shared state definitions
-│   ├── orchestrator.py       # Main system orchestrator
-│   └── chainlit.md           # Chainlit configuration
-└── images/                    # Architecture diagrams
-    ├── cardiology-agent-dark.drawio.png
-    ├── cardiology-agent-light.drawio.png
-    └── cardiology-agent-transparent.drawio.png
+export INDEX_ROOT="abs/path/to/agentic-rag"
 ```
 
-## 🏗️ Architecture
-
-The system consists of several specialized agents working together:
-
-### Agent Details
-
-- **Router Agent** (`router.py`): Classifies incoming queries using both LLM and rule-based approaches
-- **Self-RAG Agent** (`self_rag.py`): Handles medical queries with retrieval, generation, and self-assessment
-- **Conversational Agent** (`conversational_agent.py`): Manages social interactions and system information
-- **Memory Manager** (`memory.py`): Maintains conversation context and manages token limits
-- **State Manager** (`state.py`): Defines the shared state structure across all agents
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.8+
-- Ollama with required models
-- Qdrant vector database (from data-etl pipeline)
-- ESC protocols data (processed through data-etl)
-- PostgreSQL database (for conversation persistence)
-- Docker (optional, for easy PostgreSQL setup)
-
-### Database Setup
-
-The agent uses PostgreSQL for persistent conversation storage. You can set it up using Docker:
-
-```bash
-# Start PostgreSQL database
-docker-compose up -d
-
-# Verify the database is running
-docker-compose ps
+3. Run the python script as a module
+```
+uv run python -m src.main
 ```
 
-Or use an existing PostgreSQL instance and set the `DATABASE_URL` environment variable:
+---
 
-```bash
-# Copy the environment template
-cp .env.example .env
+## System Architecture Overview
 
-# Edit .env with your database connection string
-export DATABASE_URL="postgresql://username:password@localhost:5432/database"
-```
+The project implements a three-phase pipeline for cardiology guideline processing and querying:
 
-### One-Command Setup
+1. **Data ETL Pipeline** - Converts ESC cardiology protocols from PDF to searchable vectors
+2. **Agentic RAG System** - Multi-agent framework for intelligent query processing
+3. **User Interface** - Conversational web interface built with Chainlit
 
-```bash
-# Clone and setup everything
-git clone https://github.com/your-org/agentic-rag.git
-cd agentic-rag
+### Technical Stack:
+- **Vectorstore** -> Qdrant / FAISS 
+- **Database** -> PostgreSQL with SQLAlchemy
+- **AI/ML Framework** -> LangChain/LangGraph for agent orchestration
+- **Embedding Models** -> Sentence Transformers (all-MiniLM-L6-v2)
+- **LLM** -> Ollama (llama3.2:1b) with local deployment
+- **User Interface** -> Chainlit 2.6.5 with authentication
+- **Containerization** -> Docker & Docker Compose
+- **Additional Tools** -> PyMuPDF4LLM, HuggingFace Transformers
 
-# Start database (if using Docker)
-docker-compose up -d
+---
 
-# Install dependencies and run tests
-make install
-python test_database.py  # Test database integration
+## data-etl (1st phase) 
 
-# Run the agent
-make run
-```
+The first phase implements an ETL pipeline for processing [ESC cardiology guidelines](https://www.escardio.org/Guidelines). The PDF files are stored in [Google Drive](https://drive.google.com/drive/folders/1rgaemZ4Jetyz98ivTw8fpLIndgZ2jczn?usp=sharing) for storage efficiency.
 
-This will:
-1. Start PostgreSQL database
-2. Install all dependencies
-3. Test database connectivity
-4. Run the agent in interactive mode
+### Key Technical Decisions:
 
-**Important**: remember to start the vectorstore separately for better control
+#### PDF to Markdown Conversion
+- **Tool Selection**: [PyMuPDF4LLM](https://pymupdf.readthedocs.io/en/latest/pymupdf4llm/) with custom modifications for enhanced image extraction
+- **Custom Image Algorithm**: Implemented rectangle merging algorithm with:
+  - 200 DPI extraction for high-quality images
+  - Tolerance-based rectangle merging (40.0 threshold)
+  - Intelligent image positioning based on caption detection
+  - Systematic naming: `FIG_[page]_[index].png`
+- **Post-processing**: Unicode normalization, hyphenation fixing, and pattern cleanup
 
-## 🔍 Agent Functionality
+#### Document Chunking Strategy
+- **Multi-stage Approach**: Hierarchical chunking preserving document structure
+  - Markdown header splitting (4 levels)
+  - Recursive character splitting (1000 tokens with 200 overlap)
+  - Token-aware splitting with HuggingFace tokenizers
+- **Semantic Preservation**: Maintains clinical context through header-aware segmentation
 
-### Router Agent
+#### Vector Database Implementation
+- **Dual Backend Support**:
+  - **Qdrant** (production): Docker-deployed with dense + sparse vector support
+  - **FAISS** (development): Local filesystem storage with cosine similarity
+- **Embedding Choice**: `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions)
+  - Rationale: Optimal balance of performance, speed, and medical text understanding
+- **Storage Architecture**: Persistent Docker volumes with health monitoring
 
-**Purpose**: Intelligent query classification
-- **LLM Classification**: Uses Llama models for semantic understanding
-- **Rule-based Fallback**: Medical keyword detection and pattern matching
-- **Categories**: `conversational` vs `document_based`
+---
 
-```python
-# Example usage
-router = Router()
-query_type = router.classify_query("What is the protocol for heart failure?")
-# Returns: "document_based"
-```
+## agentic-rag (2nd phase)
 
-### Self-RAG Agent
+The second phase implements a sophisticated agentic RAG architecture using LangGraph for state management and agent orchestration. The system evolved through multiple iterations to achieve the final optimized workflow.
 
-**Purpose**: Medical query processing with self-reflection
-- **Retrieval Loop**: Multiple attempts with query reformulation
-- **Generation Loop**: Self-assessment and regeneration
-- **Quality Gates**: Relevance, hallucination, and adequacy checking
+![](./images/graph.png)
 
-```python
-# Example usage
-self_rag = SelfRAG(vectorstore)
-state = {"messages": [HumanMessage(content="ESC heart failure guidelines?")]}
-result = self_rag.selfRAG_node(state)
-```
+### Agent Graph Architecture
 
-### Conversational Agent
+The system implements a **self-correcting multi-agent workflow** with the following specialized components:
 
-**Purpose**: Natural conversation handling
-- **Template Responses**: Pre-defined responses for common patterns
-- **Contextual Generation**: LLM-based responses for complex conversations
-- **Edge Case Handling**: Graceful handling of unclear or short inputs
+#### Core Agent Nodes:
+- **`contextualize_question`** -> Adds conversational context to user questions using chat history
+- **`document_request_detector`** -> Intelligent routing between conversational and document-based queries
+- **`retrieve`** -> Semantic search through cardiology protocols with configurable k-retrieval (default: 3 documents)
+- **`retrieval_grader`** -> Quality assessment of retrieved documents using LLM-based relevance scoring
+- **`generate`** -> Answer generation from relevant documents with grounding validation
+- **`transform_query`** -> Query reformulation when initial retrieval fails relevance thresholds
+- **`conversational_agent`** -> Handles greetings, social interaction, and non-medical queries
 
-```python
-# Example usage
-conv_agent = ConversationalAgent()
-state = {"messages": [HumanMessage(content="Hello!")]}
-result = conv_agent.conversational_agent_node(state)
-```
+### Technical Architecture Decisions:
 
-### Memory Manager
+#### LLM Configuration:
+- **Primary Model**: Ollama llama3.2:1b for local deployment and privacy
+- **Role-specific Temperature Settings**:
+  - Router: 0.5 (balanced creativity for classification)
+  - Generator: 0.01 (high consistency for medical responses)
+  - Grader: 0.2 (focused evaluation for quality assessment)
 
-**Purpose**: Context preservation and token management
-- **Medical Entity Extraction**: Preserves important clinical information
-- **Conversation Summarization**: LLM-based summarization of longer conversations
-- **Token Estimation**: Automatic cleanup when approaching limits
-- **Database Integration**: Automatic saving and restoration of conversation state
+#### State Management:
+- **LangGraph State Machine**: TypedDict-based state with comprehensive tracking:
+  - Message history, document context, retrieval metadata
+  - Generation attempts, validation scores, routing decisions
+- **Memory Architecture**: Dual-layer memory system:
+  - **Short-term**: LangGraph checkpointers with in-memory state
+  - **Long-term**: PostgreSQL persistence for conversation history
+  - **Medical Entity Extraction**: Preserves clinical context across sessions
 
-```python
-# Example usage
-memory = Memory(max_tokens=2000, thread_id="user_123")
-updated_state = memory.memory_management_node(state)
-```
+#### Framework Rationale:
+- **LangChain/LangGraph**: Selected for production-grade agent orchestration and state management
+- **HuggingFace Integration**: Embedding models and transformer architecture for flexibility
+- **Modular Design**: Pluggable components for different LLMs, vectorstores, and embedding models
 
-### Database Manager
+For development a command-line demo has been developed, with further Chainlit integration for a more fluid interaction with a GUI. Also in-memory checkpointers have been used at this point. For **production** instead, PostgreSQL backend has been used, with async/sync dual interfaces for scalability. Chainlit here will be the main graphical interface. 
 
-**Purpose**: Persistent conversation storage and state management
-- **Conversation Persistence**: Saves messages, summaries, and medical context
-- **Session Management**: Tracks conversations across multiple interactions
-- **Agent State Storage**: Persists internal agent states for continuity
-- **Async & Sync Support**: Both synchronous and asynchronous database operations
+---
 
-```python
-# Example usage
-from database_manager import DatabaseManager, ConversationState
+## user-interface (3rd phase) 
 
-# Async usage
-db_manager = DatabaseManager()
-await db_manager.initialize()
-thread_id = await db_manager.save_conversation_state(conversation_state)
+The third phase implements a production-ready conversational web interface using [Chainlit 2.6.5](https://docs.chainlit.io/get-started/overview), selected for its specialized conversational AI capabilities and seamless integration with the existing agentic RAG system.
 
-# Sync usage
-sync_db = SyncDatabaseManager()
-sync_db.initialize()
-state_id = sync_db.save_simple_state(thread_id, state_data)
-```
+### Architecture Integration Decisions:
 
-## 🎯 State Management
-
-The system uses a centralized state object that flows between agents:
-
-```python
-class State(TypedDict):
-    # Core conversation
-    messages: List[BaseMessage]
-    
-    # Routing information  
-    query_type: Optional[str]
-    
-    # Response generation
-    response: Optional[str]
-    
-    # Memory management
-    context: Optional[Dict[str, Any]]
-    conversation_summary: Optional[str]
-    
-    # RAG-specific
-    documents: Optional[List[Document]]
-    
-    # Metadata and tracking
-    metadata: Optional[Dict[str, Any]]
-    retrieval_attempts: Optional[int]
-    generation_attempts: Optional[int]
-```
-
-## 🧪 Testing
-
-Each agent includes comprehensive testing capabilities:
-
-```bash
-# Run all tests
-make test
-
-# Test individual components
-make test-router      # Router classification tests
-make test-selfrag     # Self-RAG pipeline tests  
-make test-conv        # Conversation tests
-make test-memory      # Memory management tests
-```
-
-**System Health Check**
-```bash
-# Complete system status
-make status
-
-# Clean up if needed
-make clean
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Chainlit allows for different benefits:
+- **Authentication and user management** -> using PostgreSQL as backend and `CHAINLIT_AUTH_SECRET` for session encryption. Users are persistent and this along with authentication allows for chat history and human feedback for later processing
+- **Fluid testing and experience** -> rich message types (text, images, files) and real-time updates
+- **Scalability** -> ready for production with async support and multi-user handling
+- **Monitoring** -> easy tracking and analytics integration using LangSmith or LangFuse

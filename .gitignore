@@ -1,0 +1,13 @@
+agent/__pycache__
+agent/.chainlit*
+/build/
+/CardiologyGenAI_AgenticRAG.egg-info/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+/.env
+/.env.leonardo
+/uv.lock

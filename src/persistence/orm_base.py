@@ -17,12 +17,12 @@ class BaseDB:
 
     Parameters
     ----------
-    session : :class:`~sqlalchemy.ext.asyncio.AsyncSession` or :class:`~sqlalchemy.orm.Session`
+    session : :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>` or :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>`
         Bound SQLAlchemy session instance.
     """
-    session: AsyncSession | Session #: :class:`~sqlalchemy.ext.asyncio.AsyncSession` or :class:`~sqlalchemy.orm.Session` : The underlying SQLAlchemy session.
+    session: AsyncSession | Session #: :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>` or :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>` : The underlying SQLAlchemy session.
     logger: logging.Logger #: :class:`logging.Logger` : Logger used for diagnostics (provided externally as ``logger``).
-    sync: bool #: :class:`bool` : ``True`` if the session is a synchronous :class:`~sqlalchemy.orm.Session`, ``False`` if it is an asynchronous :class:`~sqlalchemy.ext.asyncio.AsyncSession`.
+    sync: bool #: :class:`bool` : ``True`` if the session is a synchronous :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>`, ``False`` if it is an asynchronous :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>`.
     def __init__(self, session: AsyncSession | Session):
         self.session = session
         self.logger = logger
@@ -34,7 +34,7 @@ class BaseORM(DeclarativeBase):
 
     Attributes
     ----------
-    metadata : :class:`~sqlalchemy.schema.MetaData`
+    metadata : :sqlalchemy:`MetaData <core/metadata.html#sqlalchemy.schema.MetaData>`
         Metadata collection used by the declarative base.
     """
     metadata = MetaData()

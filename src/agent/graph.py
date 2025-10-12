@@ -29,24 +29,24 @@ GENERATION_LIMIT = 2
 
 
 class GraphState(TypedDict, total=False):
-    """Shared state passed between :mod:`langgraph` nodes."""
+    """Shared state passed between :langgraph:`LangGraph <reference/graphs>` nodes."""
     question: str #: :class:`str` : Original user question as received by the agent.
     contextual_question: str #: :class:`str` : Question enriched with context (if needed) for retrieval/generation.
     transform_query_count: int #: :class:`int` : How many times the question has been rewritten so far.
     response: str #: :class:`str` : Latest assistant response (when available).
     language: Optional[str] #: :class:`str`, optional : Language used in the conversation.
     messages: Annotated[List[AnyMessage], add_messages] #: :class:`list` of :class:`~langchain_core.messages.base.AnyMessage` : Rolling chat history used for context.
-    documents: Optional[List[Document]] #: :class:`list` of :class:`~langchain_core.documents.Document`, optional : Retrieved and filtered documents (when applicable).
-    document_request: str #: :class:`str` :  Binary flag to denote whether the user is asking for an entire document.
+    documents: Optional[List[Document]] #: :class:`list` of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`, optional : Retrieved and filtered documents (when applicable).
+    document_request: str #: :class:`str` : Binary flag to denote whether the user is asking for an entire document.
     generation_count: int #: :class:`int` : Number of generation attempts in the current turn.
 
 
 class Agent:
-    """RAG/conversational agent orchestrated with :mod:`langgraph`.
+    """RAG/conversational agent orchestrated with :langgraph:`LangGraph <reference/graphs>`.
 
     The agent connects an LLM manager (router/generator/grader), a vector store
     search manager (retriever), and a memory/checkpoint backend to compile
-    a :class:`~langgraph.graph.state.CompiledStateGraph` that handles
+    a :langgraph:`CompiledStateGraph <reference/graphs/?h=compiled#langgraph.graph.state.CompiledStateGraph>` that handles
     conversation turns end-to-end.
 
     Parameters
@@ -58,16 +58,16 @@ class Agent:
     agent_name: str #: :class:`str` : Human-friendly name from configuration.
     config: AgentConfig #: :class:`~src.config.manager.AgentConfig` : Loaded configuration (system prompt, embeddings, indexing, search, etc.).
     logger: Logger #: :class:`logging.Logger` : Logger for lifecycle and diagnostics.
-    llm_manager: LLMManager #: :class:`~src.managers.llm_manager.LLMManager` :  LLM manager exposing ``router``, ``generator``, and ``grader`` :class:`~langchain_core.runnables.Runnable`.
-    router: Runnable #: :class:`~langchain_core.runnables.Runnable` : Runnable for routing queries.
-    generator: Runnable #: :class:`~langchain_core.runnables.Runnable` : Runnable for answer generation.
-    grader: Runnable #: :class:`~langchain_core.runnables.Runnable` : Runnable for grading/validation of retrieved context and generated chunks.
+    llm_manager: LLMManager #: :class:`~src.managers.llm_manager.LLMManager` :  LLM manager exposing ``router``, ``generator``, and ``grader`` :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`.
+    router: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for routing queries.
+    generator: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for answer generation.
+    grader: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for grading/validation of retrieved context and generated chunks.
     search_manager: SearchManager #: :class:`~src.managers.search_manager.SearchManager` : Index loader and retriever factory for the vector store.
-    retriever: VectorStoreRetriever #: :class:`~langchain_core.vectorstores.VectorStoreRetriever` : Configured retriever if the vector store exists.
+    retriever: VectorStoreRetriever #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Configured retriever if the vector store exists.
     examples: Dict[str, str] #: :class:`list` : Few-shot examples loaded for the router prompt.
-    memory: AgentMemory #: :class:`~src.persistence.message.AgentMemory` : Store + checkpointer used by :mod:`langgraph`.
-    graph: StateGraph #: :class:`~langgraph.graph.StateGraph` : Declarative graph (nodes + edges) before compilation.
-    compiler: CompiledStateGraph #: :class:`~langgraph.graph.state.CompiledStateGraph` : Executable state machine with persistence.
+    memory: AgentMemory #: :class:`~src.persistence.message.AgentMemory` : Store + checkpointer used by :langgraph:`LangGraph <reference/graphs>`.
+    graph: StateGraph #: :langgraph:`StateGraph <reference/graphs/?h=state#langgraph.graph.state.StateGraph>` : Declarative graph (nodes + edges) before compilation.
+    compiler: CompiledStateGraph #: :langgraph:`CompiledStateGraph <reference/graphs/?h=compiled#langgraph.graph.state.CompiledStateGraph>` : Executable state machine with persistence.
     def __init__(self, agent_id: str):
         self.agent_id = agent_id
         self.config = AgentConfigManager(app_id=self.agent_id).config
@@ -130,7 +130,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.GraphState`
+        state : :class:`~src.agent.graph.GraphState`
             Current state; must include ``question``.
 
         Returns
@@ -151,13 +151,13 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.GraphState`
+        state : :class:`~src.agent.graph.GraphState`
             Must contain ``question``, optionally ``messages`` and ``language``.
 
         Returns
         -------
         :class:`dict`
-            Keys: ``response`` (assistant text) and ``messages`` (list with new :class:`~langchain_core.messages.AIMessage`).
+            Keys: ``response`` (assistant text) and ``messages`` (list with new :langchain_core:`AIMessage <messages/langchain_core.messages.ai.AIMessage.html>`).
         """
         self.logger.info("Agent is ready to answer questions")
         agent_prompt = self.config.system_prompt
@@ -174,7 +174,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.GraphState`
+        state : :class:`~src.agent.graph.GraphState`
             Must contain ``question``, ``language``, and ``messages``.
 
         Returns
@@ -199,13 +199,13 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.GraphState`
+        state : :class:`~src.agent.graph.GraphState`
             Must include ``contextual_question``.
 
         Returns
         -------
         :class:`dict`
-            Key ``documents`` with a list of :class:`~langchain_core.documents.Document`.
+            Key ``documents`` with a list of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`.
         """
         question = state["contextual_question"]
         self.logger.info(f"Retrieving documents for contextualized question: {question}...")
@@ -223,7 +223,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.GraphState`
+        state : :class:`~src.agent.graph.GraphState`
             Must include ``contextual_question`` and ``documents``.
 
         Returns
@@ -257,7 +257,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.GraphState`
+        state : :class:`~src.agent.graph.GraphState`
             Must include ``contextual_question``.
 
         Returns
@@ -507,8 +507,8 @@ class Agent:
 
         Returns
         -------
-        :class:`~langgraph.graph.StateGraph`
-            Graph with nodes/edges set up and terminal edges to :data:`END`.
+        :langgraph:`StateGraph <reference/graphs/?h=state#langgraph.graph.state.StateGraph>`
+            Graph with nodes/edges set up and terminal edges to :langgraph:`END <reference/constants/?h=end#langgraph.constants.END>`.
         """
         graph = StateGraph(GraphState)
 
@@ -597,7 +597,7 @@ class Agent:
         Returns
         -------
         list of :class:`~langchain_core.messages.base.AnyMessage`
-            Tail slice of messages limited by :attr:`~src.agent.Agent.config` ``.memory.length``.
+            Tail slice of messages limited by :attr:`~src.agent.graph.Agent.config` ``.memory.length``.
         """
         messages: List[AnyMessage] = []
         for message in conversation.history:

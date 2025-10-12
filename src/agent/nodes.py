@@ -22,13 +22,13 @@ def detect_language(llm: Runnable) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model to execute the detection.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
-        Runnable pipeline producing a validated :class:`output.DetectLanguage` instance.
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
+        Runnable pipeline producing a validated :class:`~src.agent.output.DetectLanguage` instance.
     """
     # schema = output.DetectLanguage.model_json_schema()
     # structured_llm = llm.with_structured_output(schema, method="json_schema")
@@ -58,14 +58,14 @@ def contextualize_question(llm: Runnable, context_prompt: str) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model to perform contextualization.
     context_prompt : str
         Additional system guidance appended to the base rules.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a context-adjusted question string.
     """
     system_prompt = """
@@ -102,7 +102,7 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model to perform routing.
     index_description : str
         Description of the vectorstore/index available to the agent.
@@ -111,7 +111,7 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.RouteQuery` instance.
     """
     # schema = output.RouteQuery.model_json_schema()
@@ -149,14 +149,14 @@ def conversational_agent(llm: Runnable, agent_prompt: str) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model to generate replies.
     agent_prompt : str
         System guidance appended to the default behavior.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline that yields an assistant message string.
     """
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -190,12 +190,12 @@ def retrieval_grader(llm: Runnable) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for grading.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.GradeDocuments` instance.
     """
     # schema = output.GradeDocuments.model_json_schema()
@@ -227,12 +227,12 @@ def document_request_detector(llm: Runnable) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for detection.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.DocumentRequest` instance.
     """
     # schema = output.DocumentRequest.model_json_schema()
@@ -264,12 +264,12 @@ def generate_document_response(llm: Runnable) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline yielding a response string.
     """
     # TODO: maybe formulate a default "document response" without letting the model formulate it itself
@@ -297,12 +297,12 @@ def generate(llm: Runnable) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline yielding a response string.
     """
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -326,12 +326,12 @@ def question_rewriter(llm: Runnable) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline yielding an improved query string.
     """
     system_prompt = """
@@ -355,12 +355,12 @@ def generate_default_response(llm: Runnable) -> Runnable:
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline yielding a default response.
     """
     # TODO: maybe formulate a default "default response" without letting the model formulate it itself
@@ -382,16 +382,16 @@ def generate_default_response(llm: Runnable) -> Runnable:
 def ground_validator(llm: Runnable):
     """Build a runnable that checks whether a generation is grounded in retrieved facts.
 
-    Produces a binary score via :class:`~src.agents.output.GradeGrounding` after JSON parsing and validation.
+    Produces a binary score via :class:`~src.agent.output.GradeGrounding` after JSON parsing and validation.
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for grading.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.GradeGrounding` instance.
     """
     # schema = output.GradeGrounding.model_json_schema()
@@ -422,12 +422,12 @@ def answer_grader(llm: Runnable):
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for grading.
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.GradeAnswer`.
     """
     # schema = output.GradeAnswer.model_json_schema()
@@ -455,14 +455,14 @@ def error_handler_node(llm: Runnable, language: str):
 
     Parameters
     ----------
-    llm : :class:`~langchain_core.runnables.Runnable`
+    llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model to generate the error message.
     language : :class:`str`
         Target language (must be one of the allowed languages provided to the prompt).
 
     Returns
     -------
-    :class:`~langchain_core.runnables.Runnable`
+    :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline yielding a concise, friendly error message.
     """
     system_prompt = f"""

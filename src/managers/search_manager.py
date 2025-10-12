@@ -15,9 +15,9 @@ from cardiology_gen_ai.utils.logger import get_logger
 
 
 class SearchableVectorstore(Vectorstore, ABC):
-    """Abstract class that adds search utilities to a :class:`Vectorstore`."""
+    """Abstract class that adds search utilities to a :class:`cardiology_gen_ai.models.Vectorstore`."""
     search_config: SearchConfig #: :class:`~src.config.manager.SearchConfig` : Configuration controlling the retrieval strategy (search type, kwargs, metadata filters, hybrid fusion).
-    retriever: VectorStoreRetriever = None #: :class:`~langchain_core.vectorstores.VectorStoreRetriever` : Retriever used by :meth:`~src.managers.search_manager.SearchableVectorstore.search`.
+    retriever: VectorStoreRetriever = None #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Retriever used by :meth:`~src.managers.search_manager.SearchableVectorstore.search`.
 
     @abstractmethod
     def get_retriever(self, **kwargs) -> VectorStoreRetriever:
@@ -25,7 +25,7 @@ class SearchableVectorstore(Vectorstore, ABC):
 
         Returns
         -------
-        :class:`~langchain_core.vectorstores.VectorStoreRetriever`
+        :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>`
             The configured retriever instance.
         """
         pass
@@ -40,21 +40,21 @@ class SearchableVectorstore(Vectorstore, ABC):
 
         Returns
         -------
-        list of :class:`~langchain_core.documents.Document`
+        list of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`
             Retrieved documents.
         """
         return self.retriver.invoke(query)
 
 
 class SearchableQdrantVectorstore(SearchableVectorstore, QdrantVectorstore):
-    """:class:`Qdrant`-backed searchable vector store.
+    """:langchain:`Qdrant <qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore>`-backed searchable vector store.
 
     Adds optional metadata filtering via :mod:`qdrant_client.models` and hybrid
     fusion (RRF) when enabled in :class:`~src.config.manager.SearchConfig`.
     """
 
     def get_retriever(self) -> VectorStoreRetriever:
-        """Build a :class:`~langchain_core.vectorstores.VectorStoreRetriever` for :class:`Qdrant`.
+        """Build a :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` for :langchain:`Qdrant <qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore>`.
 
         When :attr:`~src.config.manager.SearchConfig.metadata_filter` is provided, this method converts it into a :class:`~qdrant_client.models.Filter`
         (with a :class:`~qdrant_client.models.FieldCondition` / :class:`~qdrant_client.models.MatchValue`)
@@ -62,7 +62,7 @@ class SearchableQdrantVectorstore(SearchableVectorstore, QdrantVectorstore):
 
         Returns
         -------
-        :class:`~langchain_core.vectorstores.VectorStoreRetriever`
+        :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>`
             The configured retriever.
         """
         if self.search_config.metadata_filter is not None:
@@ -83,18 +83,18 @@ class SearchableQdrantVectorstore(SearchableVectorstore, QdrantVectorstore):
 
 
 class SearchableFaissVectorstore(SearchableVectorstore, FaissVectorstore):
-    """:class:`FAISS`-backed searchable vector store.
+    """:langchain:`FAISS <community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html>`-backed searchable vector store.
 
     Adds optional metadata filtering by turning :attr:`~src.config.manager.SearchConfig.metadata_filter`
-    into a dictionary-based filter understood by the :class:`FAISS` retriever wrapper.
+    into a dictionary-based filter understood by the :langchain:`FAISS <community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html>` retriever wrapper.
     """
 
     def get_retriever(self, **kwargs) -> VectorStoreRetriever:
-        """Build a :class:`~langchain_core.vectorstores.VectorStoreRetriever` for :class:`FAISS`.
+        """Build a :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` for :langchain:`FAISS <community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html>`.
 
         Returns
         -------
-        :class:`~langchain_core.vectorstores.VectorStoreRetriever`
+        :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>`
             The configured retriever.
         """
         if self.search_config.metadata_filter is not None:
@@ -114,22 +114,22 @@ class SearchableFaissVectorstore(SearchableVectorstore, FaissVectorstore):
 class SearchManager(metaclass=Singleton):
     """High-level orchestrator that selects and instantiates a searchable vector store.
 
-    The manager chooses between a :class:`Qdrant`-backed or :class:`FAISS`-backed implementation
-    based on :class:`IndexingConfig`, ensures the index is loaded, creates the retriever, and exposes a single ``search()`` entry point.
+    The manager chooses between a :langchain:`Qdrant <qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore>`-backed or :class:`FAISS`-backed implementation
+    based on :class:`cardiology_gen_ai.models.IndexingConfig`, ensures the index is loaded, creates the retriever, and exposes a single ``search()`` entry point.
 
     Parameters
     ----------
-    index_config : :class:`IndexingConfig`
+    index_config : :class:`cardiology_gen_ai.models.IndexingConfig`
         Configuration for index name, type, and retrieval mode.
     search_config : :class:`~src.config.manager.SearchConfig`
         Configuration for search type, kwargs, filters, and hybrid fusion.
-    embeddings : :class:`EmbeddingConfig`
+    embeddings : :class:`cardiology_gen_ai.models.EmbeddingConfig`
         Embedding model/configuration used when loading the index.
     """
     logger: logging.Logger #: :class:`logging.Logger` : Logger for lifecycle and diagnostics.
-    indexing_config: IndexingConfig #: :class:`IndexingConfig` : Indexing configuration.
+    indexing_config: IndexingConfig #: :class:`cardiology_gen_ai.models.IndexingConfig` : Indexing configuration.
     search_config: SearchConfig #: :class:`~src.config.manager.SearchConfig` : Search configuration.
-    embeddings: EmbeddingConfig #: :class:`EmbeddingConfig` : Embedding configuration.
+    embeddings: EmbeddingConfig #: :class:`cardiology_gen_ai.models.EmbeddingConfig` : Embedding configuration.
     vectorstore: SearchableVectorstore #: :class:`SearchableVectorstore` : Concrete searchable vector store.
     def __init__(self, index_config: IndexingConfig, search_config: SearchConfig, embeddings: EmbeddingConfig):
         self.logger = get_logger("Searching based on LangChain VectorStores")
@@ -202,7 +202,7 @@ class SearchManager(metaclass=Singleton):
 
         Returns
         -------
-        list of :class:`~langchain_core.documents.Document`
+        list of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`
             Retrieved documents.
         """
         return self.vectorstore.search(query)

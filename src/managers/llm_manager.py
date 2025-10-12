@@ -17,18 +17,15 @@ LOCAL_FILES = True
 
 
 class LLMManager:
-    """High-level orchestrator for an Ollama- or HuggingFace-based chat LLM.
-
-    The manager decides which backend to use based on ``config.ollama`` and then initializes the corresponding chat model.
-    It also creates three temperature-bound runnables (:attr:`~src.managers.llm_manager.router`, :attr:`~src.managers.llm_manager.generator`, :attr:`~src.managers.llm_manager.grader`).
+    """High-level orchestrator for an :ollama:`Ollama <>`- or :huggingface:`HuggingFace <>` -based chat LLM.
 
     .. rubric:: Notes
 
     - If ``config.ollama`` is ``True``, the manager calls :meth:`init_ollama` which
-      pulls the specified model from an :mod:`ollama` server before constructing
-      :class:`ChatOllama`.
-    - Otherwise, :meth:`init_huggingface` builds a :class:`ChatHuggingFace` via a :func:`~transformers.pipeline` and may configure 4/8-bit quantization depending on
-      ``config.nbits`` using :class:`~transformers.BitsAndBytesConfig`.
+      pulls the specified model from an :ollama:`Ollama <>` server before constructing
+      :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>`.
+    - Otherwise, :meth:`init_huggingface` builds a :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>` via a :transformers:`pipeline <main_classes/pipelines#transformers.Pipeline>` and may configure 4/8-bit quantization depending on
+      ``config.nbits`` using :transformers:`BitsAndBytesConfig <main_classes/quantization#transformers.BitsAndBytesConfig>`.
 
     Parameters
     ----------
@@ -37,10 +34,10 @@ class LLMManager:
     """
     config: LLMConfig #: : :class:`~src.config.manager.LLMConfig` : The configuration instance provided at construction time.
     logger: logging.Logger #: :class:`logging.Logger` : Logger used to emit lifecycle and diagnostic messages.
-    llm: ChatOllama | ChatHuggingFace #: :class:`ChatOllama` or :class:`ChatHuggingFace` : The underlying chat model, selected according to ``config.ollama``.
-    router: Runnable #: :class:`~langchain_core.runnables.Runnable` : Runnable bound with ``temperature=config.router_temperature``.
-    generator: Runnable #: :class:`~langchain_core.runnables.Runnable` : Runnable bound with ``temperature=config.generator_temperature``.
-    grader: Runnable #: :class:`~langchain_core.runnables.Runnable` : Runnable bound with ``temperature=config.grader_temperature``.
+    llm: ChatOllama | ChatHuggingFace #: :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` or :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`: The underlying chat model, selected according to ``config.ollama``.
+    router: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.router_temperature``.
+    generator: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.generator_temperature``.
+    grader: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.grader_temperature``.
     def __init__(self, config: LLMConfig):
         self.config = config
         self.logger = get_logger("LLM manager based on LangChain and either Ollama or HuggingFace")
@@ -52,14 +49,14 @@ class LLMManager:
         self.grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
 
     def init_ollama(self) -> ChatOllama:
-        """Initialize and return an :class:`ChatOllama` model.
+        """Initialize and return an :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` model.
 
-        This method pulls the model specified by ``config.model_name`` from an :mod:`ollama` server and then constructs the chat model.
+        This method pulls the model specified by ``config.model_name`` from an :ollama:`Ollama <>` server and then constructs the chat model.
 
         Returns
         -------
-        :class:`ChatOllama`
-            The initialized Ollama-backed chat model.
+        :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>`
+            The initialized :ollama:`Ollama <>`-backed chat model.
 
         Raises
         ------
@@ -76,17 +73,17 @@ class LLMManager:
             raise
 
     def init_huggingface(self) -> ChatHuggingFace:
-        """Initialize and return a :class:`ChatHuggingFace` model.
+        """Initialize and return a :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>` model.
 
-        Depending on ``config.nbits``, this method configures either 4/8-bit  quantization (via :class:`~transformers.BitsAndBytesConfig`) or full
-        precision, then builds a :func:`~transformers.pipeline` for text generation and wraps it into a
-        :class:`~langchain_community.llms.huggingface_pipeline.HuggingFacePipeline`
-        to construct :class:`ChatHuggingFace`.
+        Depending on ``config.nbits``, this method configures either 4/8-bit  quantization (via :transformers:`BitsAndBytesConfig <main_classes/quantization#transformers.BitsAndBytesConfig>`) or full
+        precision, then builds a :transformers:`pipeline <main_classes/pipelines#transformers.Pipeline>` for text generation and wraps it into a
+        :langchain:`HuggingFacePipeline <huggingface/llms/langchain_huggingface.llms.huggingface_pipeline.HuggingFacePipeline.html>`
+        to construct :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`.
 
         Returns
         -------
-        :class:`ChatHuggingFace`
-            The initialized HuggingFace-backed chat model.
+        :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`
+            The initialized :huggingface:`HuggingFace <>` -backed chat model.
 
         Raises
         ------

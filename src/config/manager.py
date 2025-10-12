@@ -44,8 +44,8 @@ class LLMConfig(BaseModel):
     Parameters
     ----------
     model_name : :class:`str` : Name or identifier of the underlying model deployment.
-    ollama : :class:`bool`, optional :  If ``True``, use :mod:`Ollama` backend; otherwise use :mod:`Hugging Face`. Default ``False``.
-    nbits : :class:`typing.Literal`[4, 8, 16, 32], optional : Precision/quantization setting (only applies to HF pipelines). Defaults to ``8``.
+    ollama : :class:`bool`, optional :  If ``True``, use :ollama:`Ollama <>` backend; otherwise use :huggingface:`HuggingFace <>`. Default ``False``.
+    nbits : :class:`typing.Literal`, optional : Precision/quantization setting (only applies to HF pipelines). Defaults to ``8``.
     generator_temperature : :class:`float` :  Temperature for the generator runnable.
     router_temperature : :class:`float` : Temperature for the router runnable.
     grader_temperature : :class:`float` : Temperature for the grader runnable.
@@ -89,9 +89,9 @@ class AgentConfig(BaseModel):
     system_prompt: str = "" #: :class:`str`, optional :  Global system prompt used by the agent.
     language: str = "" #: :class:`str`, optional : Default language, used when detection is unavailable.
     allowed_languages: List[str] = field(default_factory=list) #: :class:`list` of :class:`str`, optional : Whitelist of languages the agent may use.
-    embeddings: EmbeddingConfig = field(default_factory=EmbeddingConfig) #: :class:`EmbeddingConfig` :  Embedding model configuration.
+    embeddings: EmbeddingConfig = field(default_factory=EmbeddingConfig) #: :class:`cardiology_gen_ai.models.EmbeddingConfig` :  Embedding model configuration.
     search: SearchConfig = field(default_factory=SearchConfig) #: :class:`~src.config.manager.SearchConfig` : Retrieval/search configuration.
-    indexing: IndexingConfig = field(default_factory=IndexingConfig) #: :class:`IndexingConfig` : Index backend configuration.
+    indexing: IndexingConfig = field(default_factory=IndexingConfig) #: :class:`cardiology_gen_ai.models.IndexingConfig` : Index backend configuration.
     llm: LLMConfig = field(default_factory=LLMConfig) #: :class:`~src.config.manager.LLMConfig` : LLM backend configuration.
     context: ContextConfig = field(default_factory=ContextConfig) #: :class:`~src.config.manager.ContextConfig` : Contextual prompt settings.
     examples: ExamplesConfig = field(default_factory=ExamplesConfig) #: :class:`~src.config.manager.ExamplesConfig` : Few-shot examples settings.

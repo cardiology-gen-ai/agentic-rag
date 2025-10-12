@@ -28,8 +28,8 @@ class ConversationTurn(BaseModel):
     session_id: uuid.UUID | str #: :class:`uuid.UUID` or :class:`str` : Conversation (session) identifier.
     question: str #: :class:`str` : User question / input text.
     metadata: Dict = {} #: :class:`dict`, optional : Metadata returned by the agent; defaults to an empty dict.
-    response: str | None = "" #: class:`str`, optional : Assistant response content (may be empty or ``None`` on failure).
-    created_at: datetime #: :class:`datetime` : Timestamp of when the question was created.
+    response: str | None = "" #: :class:`str`, optional : Assistant response content (may be empty or ``None`` on failure).
+    created_at: datetime #: :class:`datetime.datetime` : Timestamp of when the question was created.
     error: str | None = None #: :class:`str`, optional : Error message if the turn failed.
 
     def model_post_init(self, __context: Any):
@@ -44,14 +44,14 @@ class ConversationTurn(BaseModel):
         Parameters
         ----------
         response : :class:`~src.utils.chat.ChatResponse`
-        Agent response envelope.
+            Agent response envelope.
         request : :class:`~src.utils.chat.ChatRequest`
-        Agent request envelope containing conversation context.
+            Agent request envelope containing conversation context.
 
         Returns
         -------
         :class:`~src.persistence.message.ConversationTurn`
-        New instance populated from the agent's request/response.
+            New instance populated from the agent's request/response.
         """
         return ConversationTurn(
             message_id=request.conversation.question.id,
@@ -68,7 +68,7 @@ class RetrievalTurn(BaseModel):
     message_id: uuid.UUID | str #: :class:`uuid.UUID` or :class:`str` : Unique identifier for the message/turn.
     session_id: uuid.UUID | str #: :class:`uuid.UUID` or :class:`str` : Conversation (session) identifier.
     question: str #: :class:`str` : The query text for which sources were retrieved.
-    sources: List[Dict[str, Any]] = field(default_factory=list) #: :class:`typing.List`[:class:`dict`] : Retrieved sources with metadata (schema defined by retriever).
+    sources: List[Dict[str, Any]] = field(default_factory=list) #: :class:`list` of :class:`dict` : Retrieved sources with metadata (schema defined by retriever).
     embedding_name: str = "" #: :class:`str` : Identifier of the embedding model/space used.
 
     def model_post_init(self, __context: Any):
@@ -83,17 +83,16 @@ class RetrievalTurn(BaseModel):
         Parameters
         ----------
         response : :class:`~src.utils.chat.ChatResponse`
-        Agent response envelope containing retrieval metadata under
-        ``metadata['sources']``.
+            Agent response envelope containing retrieval metadata under ``metadata['sources']``.
         request : :class:`~src.utils.chat.ChatRequest`
-        Agent request envelope containing conversation context.
+            Agent request envelope containing conversation context.
         embedding_name : :class:`str`
-        Name of the embedding configuration used by the retriever.
+            Name of the embedding configuration used by the retriever.
 
         Returns
         -------
         :class:`~src.persistence.message.RetrievalTurn`
-        New instance populated with question and retrieved sources.
+            New instance populated with question and retrieved sources.
         """
         return RetrievalTurn(
             message_id=request.conversation.question.id,
@@ -128,18 +127,18 @@ class LLMTurn(BaseModel):
         Parameters
         ----------
         response : :class:`~src.utils.chat.ChatResponse`
-        Agent response envelope.
+            Agent response envelope.
         request : :class:`~src.utils.chat.ChatRequest`
-        Agent request envelope.
+            Agent request envelope.
         llm_manager : :class:`~src.managers.llm_manager.LLMManager`
-        Manager providing model name, temperatures, and token counting.
+            Manager providing model name, temperatures, and token counting.
         duration : :class:`float`, optional
-        Total generation latency in milliseconds.
+            Total generation latency in milliseconds.
 
         Returns
         -------
         LLMTurn
-        New instance populated with model info and basic telemetry.
+            New instance populated with model info and basic telemetry.
         """
         return LLMTurn(
             message_id=request.conversation.question.id,
@@ -166,7 +165,7 @@ class FeedbackTurn(BaseModel):
     user_id: uuid.UUID | str #: :class:`uuid.UUID` or :class:`str` : Stable identifier for the user who provided the feedback.
     feedback_value: int | None = 0 #: :class:`int`, optional : Numeric feedback value; defaults to ``0``.
     feedback_message: str | None = None #: :class:`str`, optional : Optional free-text feedback.
-    created_at: datetime #: :class:`datetime` : Timestamp of feedback submission.
+    created_at: datetime #: :class:`datetime.datetime` : Timestamp of feedback submission.
 
     def model_post_init(self, __context: Any):
         """Normalize ids to :class:`uuid.UUID` after model initialization."""
@@ -176,24 +175,24 @@ class FeedbackTurn(BaseModel):
 
 
 class AgentMemory:
-    """Synchronous memory manager backed by :mod:`PostgreSQL`.
+    """Synchronous memory manager backed by :postgresql:`PostgreSQL <about>`.
 
-    This class owns a single :func:`psycopg.connect`-ed connection and configures both a :class:`PostgresStore` (for key-value namespaces) and a
-    :class:`PostgresSaver` (used as checkpointer).
+    This class owns a single :func:`psycopg.connect`-ed connection and configures both a :langgraph:`PostgresStore <store/?h=postgresstore#langgraph.store.postgres.PostgresStore>` (for key-value namespaces) and a
+    :langgraph:`PostgresSaver <reference/checkpoints/?h=postgressa#langgraph.checkpoint.postgres.PostgresSaver>` (used as checkpointer).
 
     Parameters
     ----------
     db_connection_string : :class:`str`, optional
-    If omitted, resolves from ``POSTGRES_ADMIN_DSN`` in the environment.
+        If omitted, resolves from ``POSTGRES_ADMIN_DSN`` in the environment.
 
     Raises
     ------
     ValueError
-    If no database connection string can be determined.
+        If no database connection string can be determined.
     """
-    connection: Connection #: :class:`psycopg.Connection` : Live PostgreSQL connection.
-    store: PostgresStore #: :class:`PostgresStore` : Key-value store abstraction layered on PostgreSQL.
-    checkpointer: PostgresSaver #: :class:`PostgresSaver` : Checkpointer for LangGraph workflows.
+    connection: Connection #: :psycopg:`Connection <connection.html#connection>` : Live :postgresql:`PostgreSQL <about>` connection.
+    store: PostgresStore #: :langgraph:`PostgresStore <store/?h=postgresstore#langgraph.store.postgres.PostgresStore>` : Key-value store abstraction layered on :postgresql:`PostgreSQL <about>`.
+    checkpointer: PostgresSaver #: :langgraph:`PostgresSaver <reference/checkpoints/?h=postgressa#langgraph.checkpoint.postgres.PostgresSaver>`  : Checkpointer for LangGraph workflows.
     def __init__(self, db_connection_string: Optional[str] = None):
         db_connection_string = db_connection_string or os.getenv("POSTGRES_ADMIN_DSN")
         if not db_connection_string:
@@ -210,7 +209,7 @@ class AgentMemory:
         Parameters
         ----------
         conversation_turn : :class:`~src.persistence.message.ConversationTurn`
-        The turn to persist.
+            The turn to persist.
         """
         try:
             self.store.put(("conversation", str(conversation_turn.session_id)),
@@ -226,12 +225,12 @@ class AgentMemory:
         Parameters
         ----------
         item : :class:`object`
-        Store item with attributes ``value``, ``key``, ``namespace``, and ``created_at`` (shape defined by the underlying store).
+            Store item with attributes ``value``, ``key``, ``namespace``, and ``created_at`` (shape defined by the underlying store).
 
         Returns
         -------
         :class:`~src.persistence.message.ConversationTurn`
-        A validated :class:`~src.persistence.message.ConversationTurn` instance.
+            A validated :class:`~src.persistence.message.ConversationTurn` instance.
         """
         v = item.value or {}
         session_from_ns = item.namespace[1] if getattr(item, "namespace", None) and len(item.namespace) > 1 else None
@@ -252,17 +251,16 @@ class AgentMemory:
         Parameters
         ----------
         session_id : :class:`uuid.UUID`
-        The conversation/session identifier.
+            The conversation/session identifier.
         limit : :class:`int`
-        Maximum number of turns to return (after sorting).
+            Maximum number of turns to return (after sorting).
         reverse : :class:`bool`, optional
-        If ``True`` (default) returns newest-first order.
-
+            If ``True`` (default) returns newest-first order.
 
         Returns
         -------
         list of :class:`~src.persistence.message.ConversationTurn`
-        The most recent ``limit`` conversation turns.
+            The most recent ``limit`` conversation turns.
         """
         conversation_items = self.store.search(("conversation", str(session_id)), limit=1000)
         if len(conversation_items) == 0 or conversation_items is None:
@@ -304,12 +302,12 @@ class AgentMemory:
         Parameters
         ----------
         session_id : :class:`uuid.UUID`
-        The conversation/session identifier.
+            The conversation/session identifier.
 
         Returns
         -------
         list of :class:`~src.persistence.message.FeedbackTurn`
-        All feedback entries stored for the session.
+            All feedback entries stored for the session.
         """
         session_items = self.store.search(("feedback", str(session_id)), limit=1000)
         session_feedback: List[FeedbackTurn] = []
@@ -323,9 +321,9 @@ class AgentMemory:
         Parameters
         ----------
         ns_prefix : :class:`tuple`
-        Namespace tuple prefix (e.g., ``("conversation", session_id)``).
+            Namespace tuple prefix (e.g., ``("conversation", session_id)``).
         batch_size : :class:`int`, optional
-        Maximum number of items to delete per batch (default ``500``).
+            Maximum number of items to delete per batch (default ``500``).
         """
         while True:
             batch = self.store.search(ns_prefix, limit=batch_size)
@@ -340,7 +338,7 @@ class AgentMemory:
         Parameters
         ----------
         session_id : :class:`uuid.UUID`
-        The conversation/session identifier to purge.
+            The conversation/session identifier to purge.
         """
         sid = str(session_id)
         self._delete_prefix(("conversation", sid))
@@ -350,13 +348,13 @@ class AgentMemory:
 
 
 class AsyncAgentMemory:
-    """Asynchronous memory manager backed by :class:`PostgreSQL`.
+    """Asynchronous memory manager backed by :postgresql:`PostgreSQL <about>`.
 
-    This class wraps :class:`AsyncPostgresStore` and :class:`AsyncPostgresSaver`
+    This class wraps :langgraph:`AsyncPostgresStore store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore` and :langgraph:`AsyncPostgresSaver <checkpoints/?h=asyncpostgressaver#langgraph.checkpoint.postgres.aio.AsyncPostgresSaver>`
     instances and exposes async helpers mirroring :class:`~src.persistence.message.AgentMemory`.
     """
-    store: AsyncPostgresStore #: :class:`AsyncPostgresStore` : Initialized asynchronous store instance.
-    checkpointer: AsyncPostgresSaver #: :class:`AsyncPostgresSaver` : Initialized asynchronous checkpointer instance.
+    store: AsyncPostgresStore #: :langgraph:`AsyncPostgresStore store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore` : Initialized asynchronous store instance.
+    checkpointer: AsyncPostgresSaver #: :langgraph:`AsyncPostgresSaver <checkpoints/?h=asyncpostgressaver#langgraph.checkpoint.postgres.aio.AsyncPostgresSaver>` : Initialized asynchronous checkpointer instance.
     def __init__(self, store: AsyncPostgresStore, checkpointer: AsyncPostgresSaver):
         self.store = store
         self.checkpointer = checkpointer
@@ -368,17 +366,17 @@ class AsyncAgentMemory:
         Parameters
         ----------
         db_connection_string : :class:`str`, optional
-        If omitted, resolves from ``POSTGRES_ADMIN_DSN`` in the environment.
+            If omitted, resolves from ``POSTGRES_ADMIN_DSN`` in the environment.
 
         Returns
         -------
         :class:`~src.persistence.message.AsyncAgentMemory`
-        A fully initialized asynchronous memory manager.
+            A fully initialized asynchronous memory manager.
 
         Raises
         ------
         ValueError
-        If no database connection string can be determined.
+            If no database connection string can be determined.
         """
         db_connection_string = db_connection_string or os.getenv("POSTGRES_ADMIN_DSN")
         if not db_connection_string:
@@ -401,23 +399,23 @@ class AsyncAgentMemory:
                 await self.store.adelete(it.namespace, it.key)
 
     async def save_conversation_turn(self, conversation_turn: ConversationTurn) -> None:
-        """Persist a :class:`~src.persistence.message.ConversationTurn` under the ``conversation`` namespace (async)."""
+        """Persist a :class:`~src.persistence.message.ConversationTurn` under the ``conversation`` namespace (asynchronous)."""
         await self.store.aput(("conversation", str(conversation_turn.session_id)),
                               str(conversation_turn.message_id),
                               conversation_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_retrieval_turn(self, retrieval_turn: RetrievalTurn) -> None:
-        """Persist a :class:`~src.persistence.message.RetrievalTurn` under the ``retrieval`` namespace (async)."""
+        """Persist a :class:`~src.persistence.message.RetrievalTurn` under the ``retrieval`` namespace (asynchronous)."""
         await self.store.aput(("retrieval", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
                               "results", retrieval_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_llm_turn(self, llm_turn: LLMTurn) -> None:
-        """Persist an :class:`~src.persistence.message.LLMTurn` under the ``llm`` namespace (async)."""
+        """Persist an :class:`~src.persistence.message.LLMTurn` under the ``llm`` namespace (asynchronous)."""
         await self.store.aput(("llm", str(llm_turn.session_id), str(llm_turn.message_id)),
                               "results", llm_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_feedback(self, feedback: FeedbackTurn) -> None:
-        """Persist a :class:`~src.persistence.message.FeedbackTurn` under the ``feedback`` namespace (async)."""
+        """Persist a :class:`~src.persistence.message.FeedbackTurn` under the ``feedback`` namespace (asynchronous)."""
         await self.store.aput( ("feedback", str(feedback.session_id)),
                                str(feedback.message_id),
                                feedback.model_dump(exclude_none=False, mode="json"))

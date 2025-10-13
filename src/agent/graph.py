@@ -579,12 +579,12 @@ class Agent:
         Returns
         -------
         :class:`dict`
-            Mapping with key ``generation`` holding the error message.
+            Mapping with key ``response`` holding the error message.
         """
         self.logger.info("Error Handler Node.")
         runnable = nodes.error_handler_node(self.generator, self.config.allowed_languages)
         response = runnable.invoke({"exception": exception})
-        return {"generation": response}
+        return {"response": response}
 
     def _convert_conversation_to_messages(self, conversation: ConversationRequest) -> List[AnyMessage]:
         """Convert a :class:`~src.utils.chat.ConversationRequest` into LangChain messages.

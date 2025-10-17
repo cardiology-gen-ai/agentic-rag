@@ -647,8 +647,8 @@ class Agent:
             if response.get("documents"):
                 for document in response["documents"]:
                     document_info = {  # TODO: maybe it wil be worth adding more info about retrieved sources
-                        "filename": document.metadata["filename"],
-                        "chunk_id": document.metadata["chunk_id"],
+                        "filename": document.metadata.get("filename", "unknown"),
+                        "chunk_id": document.metadata.get("chunk_id", "unknown"),
                     }
                     attachments["sources"].append(document_info)
                 seen_chunks = set()
@@ -656,6 +656,7 @@ class Agent:
                 for doc_info in attachments["sources"]:
                     if (doc_info["filename"], doc_info["chunk_id"]) not in seen_chunks:
                         unique_sources.append(doc_info)
+                        seen_chunks.add((doc_info["filename"], doc_info["chunk_id"]))
         except Exception as e:
             unique_sources = []
             self.logger.error(f"Error processing request: {str(e)}")

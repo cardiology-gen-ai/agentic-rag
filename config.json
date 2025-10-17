@@ -30,8 +30,8 @@
             "length": 3
         },
     "agent": {
-        "langfuse_public_key": "pk-lf-9cc47b55-9453-4803-b6fb-d924cef5b62d",
-        "langfuse_secret_key": "sk-lf-ab71411b-ee15-4992-8edf-0c70d79db29f",
+        "langfuse_public_key": "",
+        "langfuse_secret_key": "",
         "langfuse_host": "https://cloud.langfuse.com"
     }
 }

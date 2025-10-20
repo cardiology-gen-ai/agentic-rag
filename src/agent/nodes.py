@@ -344,7 +344,7 @@ def question_rewriter(llm: Runnable) -> Runnable:
             ("human", "Here is the initial question: \n\n {question} \n Formulate an improved question."),
         ]
     )
-    rewriter = prompt | llm | RunnableLambda(_strip_think) | StrOutputParser()
+    rewriter = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think)
     return rewriter
 
 def generate_default_response(llm: Runnable) -> Runnable:

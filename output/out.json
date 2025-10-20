@@ -1,0 +1,1144 @@
+{
+  "metadata": {
+    "test_date": "2025-10-17T07:58:00.152408+00:00",
+    "total_questions": 70,
+    "agent_id": "cardiology_protocols",
+    "session_id": "23d615ef-7066-4240-b674-15032a25746f"
+  },
+  "guidelines": {
+    "cardio_oncology_2022": {
+      "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+      "questions": [
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_01",
+          "question": "What are the baseline cardiovascular risk assessment categories for patients starting potentially cardiotoxic cancer therapy, and what specific factors determine each risk level?",
+          "complexity": "intermediate",
+          "expected_format": "table",
+          "sections": [
+            "risk assessment",
+            "baseline evaluation"
+          ],
+          "answer": "I'm not able to provide a comprehensive answer to your question about the baseline cardiovascular risk assessment categories for patients starting potentially cardiotoxic cancer therapy, as my knowledge on this topic is limited. I would recommend consulting a reliable medical resource or a healthcare professional for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T07:58:32.276452+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_02",
+          "question": "Describe the complete monitoring protocol including timing, tests, and biomarkers for patients receiving anthracycline chemotherapy according to their baseline risk stratification.",
+          "complexity": "advanced",
+          "expected_format": "structured protocol",
+          "sections": [
+            "monitoring",
+            "anthracyclines",
+            "biomarkers"
+          ],
+          "answer": "According to the provided guidelines, the monitoring protocol for patients receiving anthracycline chemotherapy is as follows:\n\n**Low-risk patients:**\n\n- Baseline measurement of NP and cTn is considered prior to anthracycline chemotherapy.\n- cTn and NP monitoring before every cycle during anthracycline chemotherapy is not recommended, but monitoring every two cycles during anthracycline chemotherapy and within 3 months after therapy completion is not recommended either.\n- However, if the cumulative dose of doxorubicin or equivalent is ≥250 mg/m2, cTn and NP monitoring every two cycles during anthracycline chemotherapy and within 3 months after therapy completion should be considered.\n\n**Moderate-risk patients:**\n\n- Baseline measurement of NP and cTn is considered prior to anthracycline chemotherapy.\n- cTn and NP monitoring before every cycle during anthracycline chemotherapy is not recommended.\n- However, cTn and NP monitoring every two cycles during anthracycline chemotherapy and within 3 months after therapy completion should be considered.\n- In addition, TTE (transthoracic echocardiography) should be considered after a cumulative dose of doxorubicin or equivalent.\n\n**High-risk patients:**\n\n- Baseline measurement of NP and cTn is recommended prior to anthracycline chemotherapy.\n- cTn and NP monitoring before every cycle during anthracycline chemotherapy and 3 and 12 months after therapy completion is recommended.\n- Echocardiogram is recommended within 12 months after completing treatment.\n\n**Very high-risk patients:**\n\n- Baseline measurement of NP and cTn is recommended prior to anthracycline chemotherapy.\n- cTn and NP monitoring before every cycle during anthracycline chemotherapy and 3 and 12 months after therapy completion is recommended.\n- Echocardiography is recommended every two cycles and within 3 months after completing treatment.\n\n**All patients:**\n\n- Baseline echocardiography is recommended before HER2-targeted therapies in all patients.\n\nNote: NP stands for natriuretic peptides, cTn stands for cardiac troponin, and TTE stands for transthoracic echocardiography.",
+          "answered_at": "2025-10-17T07:58:47.505401+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_03",
+          "question": "What is the definition of cancer therapy-related cardiac dysfunction (CTRCD) and how does it differ between symptomatic and asymptomatic presentations?",
+          "complexity": "basic",
+          "expected_format": "text",
+          "sections": [
+            "definitions",
+            "cardiac dysfunction"
+          ],
+          "answer": "In the context of patients undergoing potentially cardiotoxic cancer therapy and receiving anthracycline chemotherapy, cancer therapy-related cardiac dysfunction (CTRCD) is a broad term that captures the spectrum of possible presentations and the aetiological link with various cancer therapies, including chemotherapy, targeted agents, immune therapies, and radiation therapy.\n\nSymptomatic CTRCD is defined as follows:\n\n- Very severe: HF requiring inotropic support, mechanical circulatory support, or consideration of transplantation\n- Severe: HF hospitalization\n- Moderate: Need for outpatient intensification of diuretic and HF therapy\n\nAsymptomatic CTRCD, on the other hand, refers to cardiac dysfunction that is detected in patients during surveillance, even if they do not exhibit new cardiac symptoms. Early recognition of asymptomatic CTRCD allows clinicians to incorporate cardioprotective therapy before there is a significant decline in LVEF, which may or may not be reversible, and also decreases the risk of interruptions in cancer therapy, which could otherwise affect patients' survival.\n\nIn the case of anthracycline chemotherapy-related cardiac dysfunction, the diagnosis of CTRCD includes new CV symptoms, new abnormalities in cardiac function, or both. Early detection of asymptomatic CTRCD is crucial, and the preferred technique for detecting and confirming cardiac dysfunction is TTE, including 3D-LVEF and GLS assessment. GLS evaluation is particularly important in patients with low-normal LVEF to confirm or rule out asymptomatic myocardial damage.",
+          "answered_at": "2025-10-17T07:58:59.624433+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_04",
+          "question": "Compare the cardiovascular surveillance protocols for HER2-targeted therapies versus VEGF inhibitors, including frequency of monitoring and specific parameters to assess.",
+          "complexity": "advanced",
+          "expected_format": "comparative table",
+          "sections": [
+            "HER2 therapy",
+            "VEGF inhibitors",
+            "surveillance"
+          ],
+          "answer": "I'm not able to provide a detailed comparison of the cardiovascular surveillance protocols for HER2-targeted therapies versus VEGF inhibitors, including the frequency of monitoring and specific parameters to assess, as my knowledge on this topic is limited. I would recommend consulting a medical professional or a reliable medical resource for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T07:59:05.621364+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_05",
+          "question": "What are the QTc prolongation thresholds that require intervention during cancer treatment, and what is the step-by-step management algorithm when QTc exceeds 500ms?",
+          "complexity": "intermediate",
+          "expected_format": "algorithm/flowchart",
+          "sections": [
+            "QT prolongation",
+            "arrhythmias",
+            "management"
+          ],
+          "answer": "According to the retrieved information, the QTc prolongation thresholds that require intervention during cancer treatment are:\n\n- QTc ≥ 500 ms, which is associated with a two- to three-fold higher risk for Torsades de Pointes (TdP).\n- QTc ≥ 480 ms, which is considered to require closer monitoring.\n\nAs for the step-by-step management algorithm when QTc exceeds 500ms, the following steps can be considered:\n\n1. If the QTc interval changes by ≥ 60 ms from baseline, it should not routinely affect treatment decisions if the QTc remains ≤ 500 ms.\n2. If the QTc exceeds 500 ms, consider restarting the culprit QTc-prolonging cancer treatment at a reduced dose, ideally according to each drug recommendation.\n3. Perform weekly ECG monitoring during the first 4-6 weeks and then monthly thereafter in patients with cancer after restarting QTc-prolonging cancer therapy.\n4. If the patient develops TdP or sustained ventricular tachyarrhythmias during treatment, discontinue the QTc-prolonging cancer therapy.",
+          "answered_at": "2025-10-17T07:59:15.815102+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_06",
+          "question": "List all the specific cardiovascular toxicities associated with immune checkpoint inhibitors and their recommended monitoring strategies.",
+          "complexity": "intermediate",
+          "expected_format": "table",
+          "sections": [
+            "immunotherapy",
+            "checkpoint inhibitors",
+            "monitoring"
+          ],
+          "answer": "Based on the provided information, the specific cardiovascular toxicities associated with immune checkpoint inhibitors include:\n\n1. Myocarditis: This is an inflammation of the heart muscle, which can be caused by immune checkpoint inhibitors. Factors associated with immune checkpoint inhibitor-related myocarditis include age, sex, and the type of cancer being treated (Zamami et al., 2019).\n2. Cardiac adverse events: These can include a range of issues such as heart failure, arrhythmias, and cardiac arrest (Dolladille et al., 2020).\n3. Atherosclerotic plaque: There is an association between immune checkpoint inhibitors and atherosclerotic plaque, which can increase the risk of cardiovascular events (Drobni et al., 2020).\n4. Cardiotoxicity: This is a broad term that encompasses a range of cardiac issues, including heart failure, arrhythmias, and cardiac arrest (Rubio-Infante et al., 2021).\n5. Late cardiac adverse events: These can occur months or even years after treatment with immune checkpoint inhibitors (Dolladille et al., 2020).\n6. Cardiac events: These can include heart failure, arrhythmias, and cardiac arrest, and are a risk for patients receiving immune checkpoint inhibitors (D'Souza et al., 2021).\n\nAs for recommended monitoring strategies, the following are suggested:\n\n1. Regular cardiac monitoring: This should include electrocardiograms (ECGs), echocardiograms, and cardiac biomarkers such as troponin and natriuretic peptides (Zhang et al., 2021).\n2. Baseline and follow-up ECGs: These can help identify any changes in cardiac function or rhythm (Dolladille et al., 2021).\n3. Echocardiography: This can help assess cardiac function and identify any signs of cardiotoxicity (Dolladille et al., 2021).\n4. Cardiac biomarkers: These can help identify cardiac damage or stress (Zhang et al., 2021).\n5. Regular follow-up: Patients should be followed up regularly to monitor for any signs of cardiac toxicity (Dolladille et al., 2020).\n\nReferences:\n\nDolladille C, Akroun J, Morice P-M, Dompmartin A, Ezine E, Sassier M, et al. (2021). Cardiovascular immunotoxicities associated with immune checkpoint inhibitors: a safety meta-analysis. Eur",
+          "answered_at": "2025-10-17T07:59:32.332618+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_07",
+          "question": "What are the indications for primary cardiovascular prevention strategies in cancer patients, and which medications are recommended for each indication?",
+          "complexity": "advanced",
+          "expected_format": "structured list",
+          "sections": [
+            "prevention",
+            "cardioprotection",
+            "medications"
+          ],
+          "answer": "According to the provided information, the indications for primary cardiovascular prevention strategies in cancer patients are based on the history of pre-existing cardiovascular disease (CVD) and/or prior cancer therapy-related cardiovascular toxicity (CTR-CVT). The left panel of Figure 9 describes five different primary or secondary prevention strategies, but it does not explicitly list the indications for primary prevention strategies. However, it mentions that dyslipidaemia, underlying CVD, and modifiable comorbidities should be managed according to the 2021 ESC Guidelines on CVD prevention in clinical practice.\n\nThe right panel of Figure 9 describes general strategies to mitigate CTR-CVT risk in patients at high and very high risk of CTRCD, but it does not provide specific indications for primary prevention strategies.\n\nHowever, based on the general context of cancer therapy-related cardiac dysfunction (CTRCD) and the need to prevent cardiovascular toxicities associated with various cancer treatments, the following primary prevention strategies can be inferred:\n\n1.  **Pre-existing CVD**: Patients with a history of CVD should be managed according to the 2021 ESC Guidelines on CVD prevention in clinical practice.\n2.  **Dyslipidaemia**: Patients with dyslipidaemia should be managed according to the 2021 ESC Guidelines on CVD prevention in clinical practice.\n3.  **Modifiable comorbidities**: Patients with modifiable comorbidities should be managed according to the 2021 ESC Guidelines on CVD prevention in clinical practice.\n\nAs for the medications recommended for each indication, the provided information does not explicitly list specific medications. However, it mentions that ACE-I (angiotensin-converting enzyme inhibitors) and ARB (angiotensin receptor blockers) are mentioned in the context of CTR-CVT prevention, but it does not specify their use for primary prevention strategies.\n\nTherefore, the answer is that the indications for primary cardiovascular prevention strategies in cancer patients are based on pre-existing CVD, dyslipidaemia, and modifiable comorbidities, but the specific medications recommended for each indication are not explicitly listed.",
+          "answered_at": "2025-10-17T07:59:48.053585+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_08",
+          "question": "Describe the mean heart dose thresholds and associated cardiovascular risks for patients receiving thoracic radiotherapy.",
+          "complexity": "basic",
+          "expected_format": "text with thresholds",
+          "sections": [
+            "radiotherapy",
+            "cardiac dose",
+            "risk assessment"
+          ],
+          "answer": "I'm not able to provide specific information on the mean heart dose thresholds and associated cardiovascular risks for patients receiving thoracic radiotherapy. My knowledge on this topic is limited, and I cannot guarantee the accuracy of any information I might provide. If you're looking for detailed and up-to-date information on this subject, I recommend consulting a medical professional or a reliable medical resource, such as a peer-reviewed journal or a reputable health organization. Would you like to ask another question?",
+          "answered_at": "2025-10-17T07:59:54.173338+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_09",
+          "question": "What are the recommendations for managing pregnant cancer patients who require potentially cardiotoxic treatments?",
+          "complexity": "advanced",
+          "expected_format": "text",
+          "sections": [
+            "pregnancy",
+            "special populations",
+            "management"
+          ],
+          "answer": "Management by an expert multidisciplinary team (MDT), specifically a pregnancy heart team, in an expert centre is recommended for pregnant women with cancer who require cardiotoxic cancer therapy. This is to ensure that the potential risks to both the mother and the fetus are carefully assessed and managed.",
+          "answered_at": "2025-10-17T07:59:58.961581+00:00"
+        },
+        {
+          "guideline": "cardio_oncology_2022",
+          "guideline_name": "2022 ESC Guidelines on Cardio-oncology",
+          "id": "CO_10",
+          "question": "Outline the long-term cardiovascular surveillance requirements for cancer survivors in the first year and beyond, stratified by their treatment-related risk factors.",
+          "complexity": "advanced",
+          "expected_format": "timeline with milestones",
+          "sections": [
+            "survivorship",
+            "long-term monitoring",
+            "risk stratification"
+          ],
+          "answer": "Cancer survivors with high or very high risk based on the HFA-ICOS risk assessment tools, those who received cardiotoxic cancer therapy with a high risk of long-term cardiovascular complications, and those with moderate or severe cancer treatment-related cardiac dysfunction (CTR-CVT) diagnosed during treatment, require long-term cardiovascular surveillance. \n\nIn the first year after cancer treatment, the timing of the first cardiovascular assessment depends on the risk defined by baseline cardiovascular assessment, the type of cancer therapy, and whether CTR-CVT was diagnosed during treatment. \n\nFor cancer survivors with new abnormalities in cardiac function detected by echocardiography, new elevated cardiac serum biomarkers, or newly cardiovascular symptoms detected at the end-of-therapy assessment, long-term cardiovascular surveillance is also required.\n\nIn addition, cancer survivors who are pregnant and require potentially cardiotoxic treatments should be closely monitored for cardiac dysfunction. \n\nIt is essential to note that the specific surveillance requirements may vary depending on individual patient factors and the type of cancer therapy received.",
+          "answered_at": "2025-10-17T08:00:08.509437+00:00"
+        }
+      ]
+    },
+    "cardiomyopathies_2023": {
+      "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+      "questions": [
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_01",
+          "question": "What are the diagnostic criteria for hypertrophic cardiomyopathy in adults, children, and first-degree relatives, including specific wall thickness measurements?",
+          "complexity": "intermediate",
+          "expected_format": "structured criteria",
+          "sections": [
+            "HCM",
+            "diagnosis",
+            "family screening"
+          ],
+          "answer": "I'm not able to provide the specific diagnostic criteria for hypertrophic cardiomyopathy in adults, children, and first-degree relatives, including specific wall thickness measurements, as my knowledge on this topic is limited. I recommend consulting a reliable medical source or a healthcare professional for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T08:00:14.511473+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_02",
+          "question": "Describe the complete sudden cardiac death risk stratification model for patients with hypertrophic cardiomyopathy, including all risk factors and their scoring.",
+          "complexity": "advanced",
+          "expected_format": "risk calculator description",
+          "sections": [
+            "HCM",
+            "SCD risk",
+            "ICD indications"
+          ],
+          "answer": "I'm not able to provide a complete description of the sudden cardiac death risk stratification model for patients with hypertrophic cardiomyopathy, including all risk factors and their scoring. The information available to me is limited, and I cannot guarantee the accuracy or comprehensiveness of the model. \n\nIf you're looking for detailed information on this topic, I recommend consulting a recent medical textbook or a peer-reviewed article on the subject. Alternatively, you may want to try searching for online resources from reputable medical organizations or academic institutions that specialize in cardiology. They may be able to provide a more accurate and up-to-date description of the risk stratification model.",
+          "answered_at": "2025-10-17T08:00:22.135913+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_03",
+          "question": "What are the key differentiating features between dilated cardiomyopathy, non-dilated left ventricular cardiomyopathy, and arrhythmogenic right ventricular cardiomyopathy?",
+          "complexity": "intermediate",
+          "expected_format": "comparative table",
+          "sections": [
+            "DCM",
+            "NDLVC",
+            "ARVC",
+            "phenotypes"
+          ],
+          "answer": "According to the retrieved information, the key differentiating features between dilated cardiomyopathy, non-dilated left ventricular cardiomyopathy, and arrhythmogenic right ventricular cardiomyopathy are:\n\n- Dilated cardiomyopathy is characterized by left ventricular dilatation, but right ventricular dilatation and dysfunction may also be present.\n- Non-dilated left ventricular cardiomyopathy (NDLVC) is characterized by left ventricular dilatation or wall motion abnormalities that are confined or predominant to the left ventricle, without right ventricular dilatation or dysfunction.\n- Arrhythmogenic right ventricular cardiomyopathy (ARVC) is characterized by right ventricular dilatation and dysfunction, and may also involve the left ventricle, but the possibility of ARVC should be considered when dilatation or wall motion abnormalities are confined or predominant to the right ventricle.\n\nThese features are based on the ESC Guidelines and the information provided in the retrieved documents.",
+          "answered_at": "2025-10-17T08:00:30.957716+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_04",
+          "question": "List all the red flags that should prompt genetic testing in cardiomyopathy patients and the recommended genetic counseling approach.",
+          "complexity": "intermediate",
+          "expected_format": "structured list",
+          "sections": [
+            "genetics",
+            "red flags",
+            "counseling"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:00:41.085905+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_05",
+          "question": "What are the specific management recommendations for patients with cardiac amyloidosis, including both AL and ATTR types?",
+          "complexity": "advanced",
+          "expected_format": "treatment algorithm",
+          "sections": [
+            "amyloidosis",
+            "specific therapies",
+            "heart failure"
+          ],
+          "answer": "The specific management recommendations for cardiac amyloidosis include treating and preventing complications and stopping or delaying amyloid deposition by specific treatment. However, there is no evidence to support the use of standard ESC Guidelines. \n\nFor AL amyloidosis, prognosis has significantly improved with the introduction of very effective therapies capable of dramatically reducing the production of the cardiotoxic light chains. \n\nFor ATTR cardiac amyloidosis, prognosis depends on the variant, degree of cardiac involvement, and neurologic phenotype. Several multiparametric biomarker-based staging systems have been developed for AL and ATTR cardiac amyloidosis.",
+          "answered_at": "2025-10-17T08:00:49.243092+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_06",
+          "question": "Describe the recommended approach to atrial fibrillation management in different cardiomyopathy subtypes, including anticoagulation strategies.",
+          "complexity": "intermediate",
+          "expected_format": "text with subtype specifications",
+          "sections": [
+            "atrial fibrillation",
+            "anticoagulation",
+            "arrhythmias"
+          ],
+          "answer": "I'm not able to provide a comprehensive description of the recommended approach to atrial fibrillation management in different cardiomyopathy subtypes, including anticoagulation strategies, as my knowledge on this topic is limited. I would recommend consulting a medical professional or a reliable medical resource for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T08:00:55.864021+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_07",
+          "question": "What are the indications for cardiac MRI in the evaluation of cardiomyopathies and what specific features should be assessed?",
+          "complexity": "basic",
+          "expected_format": "indications list",
+          "sections": [
+            "imaging",
+            "CMR",
+            "diagnostic workup"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:01:10.396359+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_08",
+          "question": "Outline the exercise and sports participation recommendations for patients with different cardiomyopathy phenotypes.",
+          "complexity": "intermediate",
+          "expected_format": "table by phenotype",
+          "sections": [
+            "sports",
+            "exercise",
+            "lifestyle"
+          ],
+          "answer": "Based on the provided information, the exercise and sports participation recommendations for patients with different cardiomyopathy phenotypes are as follows:\n\n1. **Arrhythmogenic Right Ventricular Cardiomyopathy (ARVC):**\n   - Patients with ARVC should avoid sports that may result in fatal accidental injury or danger to others.\n   - Annual assessment is recommended to check for developing phenotypic features of the disease.\n\n2. **Hypertrophic Cardiomyopathy (HCM):**\n   - Individuals with a low-risk profile may participate in high-intensity exercise and competitive sport after comprehensive expert evaluation and shared discussion.\n   - Genotype-positive/phenotype-negative patients may engage in all competitive sports, but annual assessment is recommended to check for developing phenotypic features of the disease.\n   - More physical activity is generally associated with lower all-cause and cardiovascular mortality in adults with HCM.",
+          "answered_at": "2025-10-17T08:01:18.216523+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_09",
+          "question": "What are the specific pregnancy-related considerations and management strategies for women with cardiomyopathies?",
+          "complexity": "advanced",
+          "expected_format": "text with risk categories",
+          "sections": [
+            "pregnancy",
+            "women's health",
+            "risk assessment"
+          ],
+          "answer": "Pregnancy and the post-partum period are considered periods of increased risk of cardiovascular complications in women with cardiomyopathy. Cardiomyopathy can also be first diagnosed in pregnancy or arise during pregnancy as Peripartum Cardiomyopathy (PPCM). \n\nThe risk associated with pregnancy in a patient with cardiomyopathy is estimated using the modified World Health Organization (mWHO) classification. Pregnancy is contraindicated in women with WHO class IV, including patients with an ejection fraction (EF) less than 30% or New York Heart Association (NYHA) class III or IV symptoms.\n\nManagement strategies for women with cardiomyopathy during pregnancy should be individualized and may involve close monitoring, medication adjustments, and possibly hospitalization. It is essential for these women to be under the care of a cardiologist and an obstetrician experienced in managing high-risk pregnancies.\n\nSpecific considerations and management strategies for different cardiomyopathy subtypes include:\n\n- For women with Arrhythmogenic Right Ventricular Cardiomyopathy (ARVC), the risk of arrhythmias and sudden cardiac death during pregnancy is increased. Close monitoring and possibly implantation of an implantable cardioverter-defibrillator (ICD) may be necessary.\n- For women with Dilated Cardiomyopathy (DCM), the risk of heart failure and arrhythmias during pregnancy is increased. Close monitoring, medication adjustments, and possibly hospitalization may be necessary.\n- For women with Hypertrophic Cardiomyopathy (HCM), the risk of arrhythmias and sudden cardiac death during pregnancy is increased. Close monitoring and possibly implantation of an ICD may be necessary.\n- For women with Non-Dilated Left Ventricular Cardiomyopathy (NDLVC), the risk of heart failure and arrhythmias during pregnancy is increased. Close monitoring, medication adjustments, and possibly hospitalization may be necessary.\n- For women with Lamin A/C (LMNA) genotype-positive cardiomyopathy, the risk of progression of cardiomyopathy during pregnancy is increased. Close monitoring and possibly medication adjustments may be necessary.\n\nIt is essential for women with cardiomyopathy to discuss their individual risks and management strategies with their healthcare providers before and during pregnancy.",
+          "answered_at": "2025-10-17T08:01:33.324242+00:00"
+        },
+        {
+          "guideline": "cardiomyopathies_2023",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "id": "CM_10",
+          "question": "Describe the indications and timing for consideration of advanced heart failure therapies (LVAD, transplantation) in cardiomyopathy patients.",
+          "complexity": "advanced",
+          "expected_format": "criteria and timeline",
+          "sections": [
+            "advanced HF",
+            "LVAD",
+            "transplantation"
+          ],
+          "answer": "According to the provided information, for cardiomyopathy patients, mechanical circulatory support therapy, specifically left ventricular assist device (LVAD) therapy, should be considered in selected patients with advanced heart failure (NYHA class III-IV) despite optimal pharmacological and device treatment, who are otherwise suitable for heart transplantation. This is to improve symptoms, reduce the risk of heart failure hospitalization, and premature death while awaiting a transplant.",
+          "answered_at": "2025-10-17T08:01:38.947381+00:00"
+        }
+      ]
+    },
+    "chronic_coronary_syndromes_2024": {
+      "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+      "questions": [
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_01",
+          "question": "What is the stepwise diagnostic approach for evaluating patients with suspected chronic coronary syndrome, from initial assessment to treatment decision?",
+          "complexity": "intermediate",
+          "expected_format": "flowchart description",
+          "sections": [
+            "diagnosis",
+            "clinical evaluation",
+            "testing strategy"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:01:54.080950+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_02",
+          "question": "Compare the indications for CABG versus PCI in patients with multivessel disease, including SYNTAX score considerations.",
+          "complexity": "advanced",
+          "expected_format": "comparative table",
+          "sections": [
+            "revascularization",
+            "CABG",
+            "PCI"
+          ],
+          "answer": "According to the retrieved information, the indications for CABG (Coronary Artery Bypass Grafting) versus PCI (Percutaneous Coronary Intervention) in patients with multivessel disease, including SYNTAX score considerations, are as follows:\n\nFor patients with multivessel disease, the use of the SYNTAX score is recommended to predict death, MI (Myocardial Infarction), and revascularization. The SYNTAX score is particularly useful in complex cases and in patients with multivessel disease and diabetes, where recent evidence suggests a greater benefit of CABG over PCI.\n\nIn general, PCI is considered an appropriate alternative to CABG in patients with low-to-intermediate anatomical complexity, including those with left main (LM) disease. However, in patients with high SYNTAX scores, there is a trend towards better survival with CABG.\n\nSpecifically, the indications for CABG over PCI are:\n\n* Patients with an intermediate-to-high SYNTAX score (>22), where the benefit of CABG over PCI is greater.\n* Patients with multivessel disease involving the proximal LAD (Left Anterior Descending artery), where a higher risk of the composite of death, MI, and stroke is reported with PCI compared to CABG.\n* Patients with multivessel disease and diabetes, where recent evidence suggests a greater benefit of CABG over PCI.\n* Patients with high SYNTAX scores, where a trend towards better survival is noted with CABG.\n\nIn contrast, PCI is considered an appropriate alternative to CABG in patients with:\n\n* Low-to-intermediate anatomical complexity, including those with LM disease.\n* Low SYNTAX scores (≤22), where the risk of death is not significantly different between CABG and PCI.\n\nIt is essential to note that the recommendations are based on the current evidence and may be subject to change as new data becomes available.",
+          "answered_at": "2025-10-17T08:02:07.306597+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_03",
+          "question": "What are the specific management recommendations for patients with angina/ischemia with non-obstructive coronary arteries (ANOCA/INOCA)?",
+          "complexity": "intermediate",
+          "expected_format": "treatment algorithm",
+          "sections": [
+            "ANOCA",
+            "INOCA",
+            "microvascular disease"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:02:23.403071+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_04",
+          "question": "Describe the optimal medical therapy components for chronic coronary syndrome patients, including antiplatelet and lipid-lowering strategies.",
+          "complexity": "basic",
+          "expected_format": "medication list with targets",
+          "sections": [
+            "medical therapy",
+            "secondary prevention"
+          ],
+          "answer": "Based on the retrieved information, the optimal medical therapy components for chronic coronary syndrome patients, including antiplatelet and lipid-lowering strategies, can be described as follows:\n\nFor antiplatelet therapy, the optimal duration and type of therapy may vary depending on the individual patient's condition and risk factors. However, the retrieved information suggests that:\n\n* Dual antiplatelet therapy (DAPT) may be recommended for patients with acute coronary syndromes undergoing coronary artery bypass surgery (Mauri et al., 2014).\n* In patients with atrial fibrillation and stable coronary artery disease beyond 1 year after coronary stent implantation, antiplatelet therapy may be continued, but the optimal duration and type of therapy are not specified (Chiarito et al., 2019).\n* Monotherapy with a P2Y(12) inhibitor or aspirin may be considered for secondary prevention in patients with established atherosclerosis (Chiarito et al., 2020).\n\nRegarding lipid-lowering strategies, the retrieved information does not provide specific recommendations. However, it is well-established in the medical literature that statins are a cornerstone of lipid-lowering therapy for patients with chronic coronary syndrome, and that high-intensity statin therapy is recommended for patients with high cardiovascular risk.\n\nIn summary, the optimal medical therapy components for chronic coronary syndrome patients, including antiplatelet and lipid-lowering strategies, may include:\n\n* Dual antiplatelet therapy (DAPT) for patients with acute coronary syndromes undergoing coronary artery bypass surgery\n* Continued antiplatelet therapy beyond 1 year after coronary stent implantation in patients with atrial fibrillation and stable coronary artery disease\n* Monotherapy with a P2Y(12) inhibitor or aspirin for secondary prevention in patients with established atherosclerosis\n* High-intensity statin therapy for patients with high cardiovascular risk\n\nHowever, it is essential to note that these recommendations are based on limited information and may not be comprehensive or up-to-date. A more detailed and current review of the literature is necessary to provide a complete and accurate description of the optimal medical therapy components for chronic coronary syndrome patients.",
+          "answered_at": "2025-10-17T08:02:37.951577+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_05",
+          "question": "What are the specific considerations for managing chronic coronary syndrome in patients with heart failure, stratified by ejection fraction?",
+          "complexity": "advanced",
+          "expected_format": "stratified recommendations",
+          "sections": [
+            "heart failure",
+            "HFrEF",
+            "HFpEF"
+          ],
+          "answer": "I'm not able to provide specific considerations for managing chronic coronary syndrome in patients with heart failure, stratified by ejection fraction, as my knowledge on this topic is limited. I would recommend consulting a medical professional or a reliable medical resource for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T08:02:43.245939+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_06",
+          "question": "Outline the role and appropriate use of coronary CT angiography versus functional testing in different clinical likelihood scenarios.",
+          "complexity": "intermediate",
+          "expected_format": "decision matrix",
+          "sections": [
+            "CCTA",
+            "functional testing",
+            "diagnostic strategy"
+          ],
+          "answer": "Coronary CT angiography (CTA) and functional testing play crucial roles in evaluating patients with suspected acute coronary syndrome (ACS). The appropriate use of these modalities depends on the clinical likelihood of ACS and patient presentation.\n\n**Low-risk patients with normal troponin levels:**\n\n- Coronary CT angiography (CTA) is recommended as a first-line diagnostic tool in low-risk patients with normal high-sensitivity troponin (hs-Tn) levels at presentation. It can help identify or rule out coronary artery disease (CAD) and guide further management.\n- Functional testing, such as stress echocardiography or stress nuclear imaging, may not be necessary in this group, as CTA provides a more direct assessment of coronary anatomy.\n\n**Intermediate-risk patients with elevated troponin levels:**\n\n- In intermediate-risk patients with elevated hs-Tn levels, a combination of hs-Tn and CTCA may be used to further risk stratify patients. CTCA can help identify high-risk plaque features, which are associated with an increased risk of acute coronary events.\n- Functional testing may be considered in this group to assess myocardial perfusion and viability, particularly if CTCA findings are inconclusive or suggest significant stenosis.\n\n**High-risk patients with ST-segment elevation or significant troponin elevation:**\n\n- In high-risk patients with ST-segment elevation or significant troponin elevation, functional testing, such as stress echocardiography or stress nuclear imaging, is often preferred to assess myocardial perfusion and viability.\n- CTCA may be used to identify high-risk plaque features or guide percutaneous coronary intervention (PCI) in selected cases.\n\n**Key points:**\n\n- A diagnosis of myocardial infarction (MI) cannot be established based on CTCA alone.\n- CTCA can help reduce subsequent outpatient testing and costs by identifying or ruling out CAD in low-to-intermediate risk patients.\n- Functional testing is essential in high-risk patients to assess myocardial perfusion and viability.\n- The ROMICAT-II trial demonstrated that hs-Tn followed by CTCA improves acute coronary syndrome risk stratification accuracy and workup in acute chest pain patients.\n\nIn summary, the role of coronary CTA and functional testing in evaluating patients with suspected ACS depends on the clinical likelihood of ACS and patient presentation. CTA is recommended as a first-line diagnostic tool in low-risk patients, while functional testing is preferred in high-risk patients. A combination of hs-Tn and CTCA may be used in intermediate-risk patients to further risk stratify",
+          "answered_at": "2025-10-17T08:03:00.200633+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_07",
+          "question": "What are the recommendations for dual antiplatelet therapy duration after PCI in chronic coronary syndrome patients?",
+          "complexity": "basic",
+          "expected_format": "timeline with risk factors",
+          "sections": [
+            "DAPT",
+            "antiplatelet therapy",
+            "bleeding risk"
+          ],
+          "answer": "I'm not able to provide specific recommendations for dual antiplatelet therapy duration after PCI in chronic coronary syndrome patients as my knowledge on this topic is limited. I would recommend consulting a medical professional or a reliable medical resource for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T08:03:05.320104+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_08",
+          "question": "Describe the management approach for patients with refractory angina despite optimal medical therapy and revascularization.",
+          "complexity": "advanced",
+          "expected_format": "stepped approach",
+          "sections": [
+            "refractory angina",
+            "alternative therapies"
+          ],
+          "answer": "For patients with refractory angina despite optimal medical therapy and revascularization, the management approach may involve a combination of the following strategies:\n\n1.  Re-evaluation of medical therapy: This may include adjusting the current medication regimen to optimize angina control, or adding new medications to the treatment plan.\n2.  Optimization of revascularization: This may involve re-evaluating the effectiveness of the initial revascularization procedure and considering additional interventions, such as repeat angioplasty or coronary artery bypass grafting (CABG).\n3.  Device therapy: This may include the use of implantable cardioverter-defibrillators (ICDs) or cardiac resynchronization therapy (CRT) to manage symptoms and prevent sudden cardiac death.\n4.  Lifestyle modifications: Patients may be advised to make significant lifestyle changes, such as quitting smoking, exercising regularly, and maintaining a healthy diet, to help manage their angina symptoms.\n5.  Referral to a specialized center: In some cases, patients may be referred to a specialized center for further evaluation and management, such as a cardiac rehabilitation program or a center with expertise in managing refractory angina.\n\nIt's worth noting that the management approach for patients with refractory angina despite optimal medical therapy and revascularization should be individualized and tailored to the patient's specific needs and circumstances.",
+          "answered_at": "2025-10-17T08:03:15.534670+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_09",
+          "question": "What are the specific considerations for managing chronic coronary syndrome in elderly patients and those at high bleeding risk?",
+          "complexity": "intermediate",
+          "expected_format": "text with modifications",
+          "sections": [
+            "elderly",
+            "bleeding risk",
+            "special populations"
+          ],
+          "answer": "I'm not able to provide specific considerations for managing chronic coronary syndrome in elderly patients and those at high bleeding risk as my knowledge on this topic is limited. Would you like to ask another question?",
+          "answered_at": "2025-10-17T08:03:20.251209+00:00"
+        },
+        {
+          "guideline": "chronic_coronary_syndromes_2024",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "id": "CCS_10",
+          "question": "Compare the Canadian Cardiovascular Society angina classification with current symptom assessment approaches and their clinical applications.",
+          "complexity": "basic",
+          "expected_format": "classification table",
+          "sections": [
+            "symptom assessment",
+            "angina classification"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:03:33.745597+00:00"
+        }
+      ]
+    },
+    "hypertension_2024": {
+      "guideline_name": "2024 ESC Guidelines on Hypertension",
+      "questions": [
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_01",
+          "question": "What are the new blood pressure targets for different age groups and comorbidities according to the 2024 guidelines?",
+          "complexity": "intermediate",
+          "expected_format": "stratified targets table",
+          "sections": [
+            "BP targets",
+            "age groups",
+            "comorbidities"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:03:45.531472+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_02",
+          "question": "Describe the complete protocol for confirming hypertension diagnosis, including measurement techniques and timing.",
+          "complexity": "basic",
+          "expected_format": "step-by-step protocol",
+          "sections": [
+            "diagnosis",
+            "BP measurement",
+            "confirmation"
+          ],
+          "answer": "According to the 2024 guidelines, the complete protocol for confirming hypertension diagnosis involves the following steps:\n\n1.  **Initial Screening**: For systolic BP of >160 mmHg and/or diastolic BP of >100 mmHg, a prompt re-evaluation within days to weeks but not >1 month is advisable using out-of-office BP measurement, preferably with Ambulatory Blood Pressure Monitoring (ABPM) or Home Blood Pressure Monitoring (HBPM).\n2.  **BP of >180/110 mmHg**: Exclusion of hypertensive emergencies is required, and prompt treatment should be managed as appropriate.\n3.  **Screening BP of 160–179 mmHg systolic or 100–109 mmHg diastolic**: Prompt confirmation (within 1 month) using either office or out-of-office methods is recommended.\n4.  **BP of ≥180/110 mmHg**: Assessment for hypertensive emergency is recommended. If not a hypertensive emergency, prompt confirmation (preferably within a week) can be considered prior to commencing treatment.\n5.  **Screening BP of 140–159/90–99 mmHg**: Out-of-office BP measurement should be used to confirm the diagnosis.\n\nIn terms of measurement techniques, the preferred method for confirming cases of elevated BP or hypertension is out-of-office BP measurement, specifically using ABPM or HBPM. Office BP measurement is less desirable due to its lower specificity compared to ABPM for detecting hypertension.",
+          "answered_at": "2025-10-17T08:03:56.702175+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_03",
+          "question": "What are the indications for screening and diagnostic workup for secondary hypertension causes?",
+          "complexity": "intermediate",
+          "expected_format": "screening criteria list",
+          "sections": [
+            "secondary hypertension",
+            "screening",
+            "workup"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:04:10.651918+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_04",
+          "question": "Outline the stepwise pharmacological approach to blood pressure management, including drug combinations and sequencing.",
+          "complexity": "advanced",
+          "expected_format": "treatment algorithm",
+          "sections": [
+            "pharmacotherapy",
+            "drug combinations",
+            "treatment steps"
+          ],
+          "answer": "The stepwise pharmacological approach to blood pressure management, including drug combinations and sequencing, can be outlined as follows:\n\n1.  **Initial Assessment and Monitoring**: The first step is to assess the patient's blood pressure and monitor their condition. This involves evaluating their medical history, lifestyle, and current medications.\n2.  **Single Pill Combination Therapy**: If the patient's blood pressure is not adequately controlled, a single pill combination therapy can be initiated. This typically involves a combination of two or more medications in a single pill, such as a combination of an ACE inhibitor, angiotensin receptor blocker, calcium channel blocker, and a diuretic.\n3.  **Dual Combination Therapy**: If the single pill combination therapy is not effective, a dual combination therapy can be introduced. This involves adding a second medication to the initial single pill combination, such as adding a beta-blocker or an alpha-blocker.\n4.  **Triple Combination Therapy**: If the dual combination therapy is not effective, a triple combination therapy can be initiated. This involves adding a third medication to the dual combination, such as adding a mineralocorticoid receptor antagonist.\n5.  **Quadruple Combination Therapy**: If the triple combination therapy is not effective, a quadruple combination therapy can be considered. This involves adding a fourth medication to the triple combination, such as adding a direct renin inhibitor.\n\nIt's worth noting that the decision to move from one step to the next should be based on the patient's individual response to treatment and their overall health status. The goal is to find the most effective and tolerable combination of medications that can help achieve blood pressure control while minimizing side effects.\n\nThe algorithm in Figure 18, as mentioned in the ESC Guidelines, provides a practical approach to pharmacological blood pressure lowering, including considerations around single-pill combinations. The algorithm aims to introduce a low-dose double and then triple-combination strategy while monitoring tolerance.\n\nReferences:\n\n*   ESC Guidelines 3960\n*   ESC Guidelines 3961\n*   Zhang ZY, Yu YL, Asayama K, Hansen TW, Maestre GE, Staessen JA. Starting antihypertensive drug treatment with combination therapy: controversies in hypertension—con side of the argument. Hypertension 2021; 77: 788–98. doi: 10.1161/hypertensionaha.120.12858\n*   Chow CK, Atkins ER, Hillis GS, Nelson MR, Reid CM, Schlaich MP, et",
+          "answered_at": "2025-10-17T08:04:37.767488+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_05",
+          "question": "What are the definitions and management strategies for resistant hypertension?",
+          "complexity": "intermediate",
+          "expected_format": "definition and management plan",
+          "sections": [
+            "resistant HTN",
+            "management",
+            "interventions"
+          ],
+          "answer": "Resistant hypertension is defined as blood pressure (BP) remaining above goal despite three or more BP-lowering drugs of different classes at maximally tolerated doses, of which one is a diuretic. It is not a disease per se, but rather a condition where patients have a worse prognosis, with a higher risk of myocardial infarction, stroke, end-stage renal disease, and death.\n\nManagement of resistant hypertension involves both non-pharmacological and pharmacological interventions. Non-pharmacological interventions include lifestyle modifications such as diet and exercise, which have been shown to reduce BP in patients with resistant hypertension. Pharmacological interventions include the use of single-pill combinations to reduce the pill burden and increase drug adherence and persistence.\n\nIt is essential to exclude pseudo-resistance, which is often caused by poor adherence to BP-lowering treatment, and secondary causes of hypertension. This can be done by verifying adherence through careful questioning of the patient, objective evaluation of adherence, and excluding white-coat hypertension. The work-up of patients with resistant hypertension is complex and often requires specialized centers with expertise and resources.",
+          "answered_at": "2025-10-17T08:04:47.040645+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_06",
+          "question": "Describe the approach to blood pressure management in frail elderly patients, including assessment tools and modified targets.",
+          "complexity": "advanced",
+          "expected_format": "frailty-based approach",
+          "sections": [
+            "elderly",
+            "frailty",
+            "individualized care"
+          ],
+          "answer": "According to the 2024 guidelines, the approach to blood pressure management in frail elderly patients should prioritize personalized decision making. Very old and frail patients with hypertension should not be denied the potential benefits of blood pressure-lowering treatment, with a target of 120–129/70–79 mmHg. However, a major consideration should also be whether reversible causes of frailty can be addressed, such as treating underlying comorbidities or undergoing supervised muscle-strengthening physiotherapy or supervised exercise and coordination and balance training.\n\nBefore starting blood pressure-lowering treatment, all patients must be fully informed about the benefits and risks, so that their preference is considered. In the case of frail and/or older patients, 18 out of 34 hypertension guidelines recommended a systolic goal of 150 mmHg.\n\nThe guidelines also suggest that frailty should be assessed, and the HYpertension in the Very Elderly Trial (HYVET) study is a relevant reference in this context. The study found that antihypertensives can be beneficial for people with hypertension aged 80 and over.\n\nIn terms of assessment tools, frailty can be assessed using various methods, such as the Council for Cardiology Practice (CCP) consensus document, which provides a definition, assessment, and clinical implications for general cardiology. Additionally, the Association for Acute Cardio Vascular Care (ACVC) and the Association of Cardiovascular Nursing and Allied Professions (ACNAP) may also provide relevant information.\n\nIt is also worth noting that the association between blood pressure and mortality in older adults may be different with frailty, as suggested by a systematic review and meta-analysis published in Age and Ageing.",
+          "answered_at": "2025-10-17T08:04:59.472978+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_07",
+          "question": "What lifestyle interventions are recommended for blood pressure reduction and what is their expected impact?",
+          "complexity": "basic",
+          "expected_format": "intervention list with BP reduction",
+          "sections": [
+            "lifestyle",
+            "non-pharmacological",
+            "diet"
+          ],
+          "answer": "Lifestyle interventions are recommended for blood pressure reduction, including weight reduction, as per the meta-analysis by Neter et al. (2003) which found that weight reduction can lower blood pressure. \n\nAdditionally, lifestyle modification, as studied in the TRIUMPH randomized clinical trial by Blumenthal et al. (2021), can also be effective in reducing blood pressure in patients with resistant hypertension. \n\nHowever, the specific impact of these interventions can vary depending on individual factors and the severity of hypertension.",
+          "answered_at": "2025-10-17T08:05:05.025783+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_08",
+          "question": "Compare the three phases of medication adherence assessment and interventions to improve compliance.",
+          "complexity": "intermediate",
+          "expected_format": "phases table",
+          "sections": [
+            "adherence",
+            "compliance",
+            "interventions"
+          ],
+          "answer": "I'm not familiar with the specific details regarding the three phases of medication adherence assessment and interventions to improve compliance. My knowledge on this topic is limited, and I wouldn't want to provide any potentially inaccurate information. If you're looking for a comprehensive comparison of the phases, I recommend consulting a reliable medical or healthcare resource for the most accurate and up-to-date information. Is there another question I can assist you with?",
+          "answered_at": "2025-10-17T08:05:10.623793+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_09",
+          "question": "What are the specific blood pressure management considerations for patients with chronic kidney disease?",
+          "complexity": "intermediate",
+          "expected_format": "CKD-specific recommendations",
+          "sections": [
+            "CKD",
+            "organ damage",
+            "special populations"
+          ],
+          "answer": "According to the KDIGO recommendations on blood pressure management in chronic kidney disease, as mentioned in Subbiah A, Bhowmik D. KDIGO recommendations on blood pressure management in chronic kidney disease. Kidney Int 2022; 101:1299, the specific blood pressure management considerations for patients with chronic kidney disease include:\n\n- For patients with CKD and proteinuria, the target blood pressure is less than 130/80 mmHg.\n- For patients with CKD and no proteinuria, the target blood pressure is less than 140/90 mmHg.\n- For patients with CKD and diabetes, the target blood pressure is less than 130/80 mmHg.\n- For patients with CKD and heart failure, the target blood pressure is less than 130/80 mmHg.\n- For patients with CKD and coronary artery disease, the target blood pressure is less than 130/80 mmHg.\n\nIt is also recommended to use ACE inhibitors or ARBs as the preferred initial therapy for patients with CKD and proteinuria, and to use calcium channel blockers or diuretics as alternative options.\n\nIt is also worth noting that the blood pressure management should be individualized and tailored to the patient's specific needs and comorbidities, and that the goal is to achieve a blood pressure that is as close to normal as possible while minimizing the risk of adverse effects.",
+          "answered_at": "2025-10-17T08:05:21.146259+00:00"
+        },
+        {
+          "guideline": "hypertension_2024",
+          "guideline_name": "2024 ESC Guidelines on Hypertension",
+          "id": "HTN_10",
+          "question": "Describe the criteria and tests for defining hypertension-mediated organ damage and their clinical implications.",
+          "complexity": "advanced",
+          "expected_format": "organ damage assessment table",
+          "sections": [
+            "HMOD",
+            "target organ damage",
+            "assessment"
+          ],
+          "answer": "Hypertension-mediated organ damage (HMOD) is a critical consequence of uncontrolled hypertension, leading to various adverse cardiovascular disease (CVD) outcomes. The criteria and tests for defining HMOD are multifaceted and involve both clinical and pathological assessments.\n\nAccording to the provided information, the following criteria and tests are used to define HMOD:\n\n1.  **Target organ damage**: HMOD is characterized by the presence of target organ damage, which can include left ventricular hypertrophy, heart failure, kidney disease, retinopathy, and cerebrovascular disease.\n2.  **Arterial stiffness**: Increased arterial stiffness, as measured by pulse wave velocity, is a marker of HMOD and a predictor of CVD outcomes.\n3.  **Prevalence and correlates**: Studies have shown that HMOD is prevalent in the community and is associated with various risk factors, including age, sex, and comorbidities.\n4.  **Prognosis**: HMOD is a strong predictor of adverse CVD outcomes, including cardiovascular events and mortality.\n\nThe clinical implications of HMOD are significant, as it highlights the need for early detection and management of hypertension to prevent or delay the progression of organ damage. The management of HMOD involves a comprehensive approach, including lifestyle modifications, pharmacological interventions, and monitoring of blood pressure and organ function.\n\nIn conclusion, the criteria and tests for defining HMOD are essential for identifying individuals at risk of CVD outcomes and guiding clinical decision-making.",
+          "answered_at": "2025-10-17T08:05:32.011695+00:00"
+        }
+      ]
+    },
+    "peripheral_arterial_aortic_2024": {
+      "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+      "questions": [
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_01",
+          "question": "What are the screening recommendations for abdominal aortic aneurysm, including target populations and timing?",
+          "complexity": "basic",
+          "expected_format": "screening criteria table",
+          "sections": [
+            "AAA screening",
+            "risk groups",
+            "surveillance"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:05:58.342977+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_02",
+          "question": "Describe the comprehensive approach to managing patients with peripheral arterial disease, from diagnosis to intervention.",
+          "complexity": "advanced",
+          "expected_format": "management pathway",
+          "sections": [
+            "PAD",
+            "diagnosis",
+            "treatment",
+            "interventions"
+          ],
+          "answer": "Based on the provided information, a comprehensive approach to managing patients with peripheral arterial disease (PAD) involves the following steps from diagnosis to intervention:\n\n1.  **Diagnosis**: Peripheral arterial disease is diagnosed through various methods, including ankle-brachial index (ABI) testing, imaging studies such as Doppler ultrasound, and computed tomography angiography (CTA) or magnetic resonance angiography (MRA).\n2.  **Assessment of Health-Related Quality of Life**: Studies, such as the PARTNERS program, have shown that PAD significantly impacts health-related quality of life. This aspect should be considered during the management of PAD patients.\n3.  **Risk Stratification**: Patients with PAD are at increased risk of cardiovascular events, including heart attacks and strokes. Risk stratification is essential to determine the severity of the disease and the need for intervention.\n4.  **Medical Management**: Medical management of PAD includes lifestyle modifications, such as smoking cessation, exercise, and dietary changes, as well as pharmacological interventions like antiplatelet therapy and statins to manage risk factors.\n5.  **Follow-up and Monitoring**: Regular follow-up and monitoring are crucial to assess the progression of the disease and the effectiveness of the treatment plan. This is in line with the recommendations outlined in Recommendation Table 17.\n6.  **Interventional Treatment**: Interventional treatment options, as outlined in Recommendation Table 16, include endovascular procedures such as angioplasty and stenting, and surgical interventions like bypass grafting. The choice of intervention depends on the severity and location of the disease, as well as the patient's overall health status.\n7.  **Endovascular vs. Medical Management of Atherosclerotic Renovascular Disease**: In some cases, patients with PAD may also have atherosclerotic renovascular disease. Studies, such as the one by Pappaccogli et al., have compared endovascular and medical management of this condition, highlighting the importance of a comprehensive approach to managing patients with PAD.\n\nIn summary, managing patients with peripheral arterial disease requires a comprehensive approach that involves diagnosis, risk stratification, medical management, follow-up, and interventional treatment.",
+          "answered_at": "2025-10-17T08:06:13.836765+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_03",
+          "question": "What are the indications and thresholds for intervention in thoracic and abdominal aortic aneurysms?",
+          "complexity": "intermediate",
+          "expected_format": "size criteria and risk factors",
+          "sections": [
+            "aneurysm",
+            "intervention timing",
+            "risk assessment"
+          ],
+          "answer": "I'm not able to provide a comprehensive answer to your question about the indications and thresholds for intervention in thoracic and abdominal aortic aneurysms. My knowledge on this topic is limited, and I wouldn't want to provide any potentially misleading information. If you're looking for accurate and up-to-date information, I recommend consulting a medical professional or a reliable medical resource, such as a peer-reviewed journal or a reputable medical website. Would you like to ask another question?",
+          "answered_at": "2025-10-17T08:06:37.079017+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_04",
+          "question": "Compare the ankle-brachial index, toe-brachial index, and other diagnostic methods for peripheral arterial disease.",
+          "complexity": "intermediate",
+          "expected_format": "diagnostic comparison table",
+          "sections": [
+            "ABI",
+            "TBI",
+            "diagnostic methods"
+          ],
+          "answer": "The ankle-brachial index (ABI) and toe-brachial index (TBI) are two commonly used diagnostic methods for peripheral arterial disease (PAD). \n\nThe ankle-brachial index is calculated by dividing the systolic blood pressure at the ankle by the systolic blood pressure in the arm. A value of 0.9 or less is often used to indicate the presence of PAD. \n\nThe toe-brachial index is calculated similarly, but using the systolic blood pressure at the toe instead of the ankle. \n\nAccording to the studies mentioned, the accuracy of these indices in diagnosing PAD varies. A systematic review and meta-analysis by Herraiz-Adillo Á et al. (2020) found that the ABI had a sensitivity of 83% and specificity of 93% for PAD, while the TBI had a sensitivity of 85% and specificity of 92%. \n\nAnother study by Tehan PE et al. (2016) found that the TBI had a sensitivity of 92% and specificity of 95% for PAD. \n\nA study by Hashimoto T et al. (2016) found that combining pulse volume recording (PVR) parameters with ABI improved diagnostic accuracy for PAD compared to ABI alone. \n\nA study by Tehan PE et al. (2013) found that the post-exercise index had a sensitivity of 93% and specificity of 95% for PAD. \n\nA study by Aday AW et al. (2018) compared different exercise ankle pressure indices and found that the post-exercise ABI had the highest sensitivity and specificity for PAD. \n\nOverall, while both ABI and TBI are useful diagnostic tools for PAD, the TBI may be more sensitive and specific in some cases. However, the choice of diagnostic method may depend on individual patient factors and clinical context.",
+          "answered_at": "2025-10-17T08:06:50.195654+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_05",
+          "question": "What are the optimal medical therapy components for patients with peripheral arterial and aortic diseases?",
+          "complexity": "basic",
+          "expected_format": "medication categories list",
+          "sections": [
+            "medical therapy",
+            "risk reduction",
+            "pharmacotherapy"
+          ],
+          "answer": "I'm not able to provide a comprehensive answer to that question as my knowledge on the optimal medical therapy components for patients with peripheral arterial and aortic diseases is limited. I would recommend consulting a medical professional or a reliable medical resource for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T08:06:55.083007+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_06",
+          "question": "Describe the exercise training recommendations and expected benefits for patients with claudication.",
+          "complexity": "intermediate",
+          "expected_format": "exercise protocol",
+          "sections": [
+            "exercise",
+            "claudication",
+            "rehabilitation"
+          ],
+          "answer": "Based on the retrieved information, exercise training is recommended for patients with intermittent claudication. The benefits of exercise training for these patients include improved health-related quality of life and management of peripheral arterial disease. \n\nA systematic review and meta-analysis by Parmenter et al. (2015) found that exercise training can improve health-related quality of life in patients with peripheral artery disease. Another systematic review and meta-analysis by Parmenter et al. (2015) found that exercise training can also manage peripheral arterial disease.\n\nA study by Lane et al. (2021) focused on the standardization and reporting quality of exercise testing in patients with intermittent claudication in randomized controlled trials of exercise interventions. \n\nA narrative review by Harwood et al. (2020) provided a summary of guidelines for practitioners on exercise training for intermittent claudication. \n\nA 20-year review by Harwood et al. (2010) found that exercise training can improve outcomes for patients with intermittent claudication. \n\nA study by Parmenter et al. (2012) found that supervised walking therapy can be beneficial for patients with intermittent claudication.",
+          "answered_at": "2025-10-17T08:07:04.480823+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_07",
+          "question": "What are the specific considerations for managing aortic diseases in patients with genetic syndromes like Marfan?",
+          "complexity": "advanced",
+          "expected_format": "syndrome-specific guidelines",
+          "sections": [
+            "genetic syndromes",
+            "Marfan",
+            "familial screening"
+          ],
+          "answer": "Managing aortic diseases in patients with genetic syndromes like Marfan requires a multidisciplinary team approach with integration of clinical and genetic findings. The diagnosis of Marfan syndrome is based on the Ghent criteria, with aortic root aneurysm/dissection and ectopia lentis as cardinal features. Gene panel testing is meaningful for confirmation of the diagnosis and to guide management. \n\nSpecifically, echocardiographic assessment of the aortic root should include measurements at the annulus, sinus, sinotubyl junction, distal ascending, arch, and descending thoracic aortic levels, corrected for the individual's age, sex, and body surface area. \n\nProphylactic surgery can prevent aortic dissection and rupture, and early identification and establishment of the correct diagnosis is critical. Presymptomatic genetic screening of family members is also mandatory to allow early and appropriate management once a pathogenic variant is identified.",
+          "answered_at": "2025-10-17T08:07:12.617504+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_08",
+          "question": "Outline the antithrombotic strategies for different peripheral arterial disease presentations and interventions.",
+          "complexity": "advanced",
+          "expected_format": "stratified antithrombotic table",
+          "sections": [
+            "antithrombotic",
+            "antiplatelet",
+            "anticoagulation"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:07:31.929373+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_09",
+          "question": "What are the blood pressure targets and management strategies specific to patients with aortic diseases?",
+          "complexity": "intermediate",
+          "expected_format": "BP management protocol",
+          "sections": [
+            "hypertension",
+            "aortic disease",
+            "BP control"
+          ],
+          "answer": "I'm not able to provide specific blood pressure targets and management strategies for patients with aortic diseases as my knowledge on this topic is limited. I would recommend consulting a medical professional or a reliable health resource for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T08:07:36.925960+00:00"
+        },
+        {
+          "guideline": "peripheral_arterial_aortic_2024",
+          "guideline_name": "2024 ESC Guidelines on Peripheral Arterial and Aortic Diseases",
+          "id": "PAAD_10",
+          "question": "Describe the surveillance protocols after endovascular and surgical interventions for aortic aneurysms.",
+          "complexity": "intermediate",
+          "expected_format": "follow-up timeline",
+          "sections": [
+            "post-intervention",
+            "surveillance",
+            "imaging follow-up"
+          ],
+          "answer": "After reviewing the retrieved information, I can provide an overview of the surveillance protocols after endovascular and surgical interventions for aortic aneurysms.\n\nAccording to the studies, the surveillance protocols can be stratified based on the first postoperative imaging. For example, a study by Baderkhan et al. suggests that follow-up after endovascular aortic aneurysm repair can be stratified based on the first postoperative imaging, indicating that the intensity of surveillance may vary depending on the initial imaging results.\n\nIn terms of the tools used for surveillance, color Doppler ultrasound is considered a primary tool for monitoring patients after endovascular aneurysm repair, as mentioned in the study by Iscan et al. However, computed tomography-aortography is also used for surveillance, as compared in a prospective multicenter study by Jean-Baptiste et al.\n\nRegarding the duration of surveillance, a study by Troutman et al. suggests that endovascular aortic aneurysm repair surveillance may not be necessary for the first 3 years after an initially normal duplex postoperative study.\n\nIt's worth noting that the frequency and intensity of surveillance may also depend on the specific guidelines and recommendations from international organizations, which can have financial implications, as discussed in the study by Baderkhan et al.\n\nIn summary, the surveillance protocols after endovascular and surgical interventions for aortic aneurysms involve a combination of imaging modalities, including color Doppler ultrasound and computed tomography-aortography, and the intensity and duration of surveillance may vary depending on the initial imaging results and specific guidelines.",
+          "answered_at": "2025-10-17T08:07:48.723441+00:00"
+        }
+      ]
+    },
+    "ventricular_arrhythmias_2022": {
+      "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+      "questions": [
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_01",
+          "question": "What are the indications for ICD implantation for primary prevention in different cardiomyopathy types?",
+          "complexity": "intermediate",
+          "expected_format": "indication table by etiology",
+          "sections": [
+            "ICD",
+            "primary prevention",
+            "cardiomyopathies"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:08:05.645854+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_02",
+          "question": "Describe the acute management algorithm for sustained ventricular tachycardia in hemodynamically stable versus unstable patients.",
+          "complexity": "advanced",
+          "expected_format": "emergency algorithm",
+          "sections": [
+            "VT management",
+            "acute treatment",
+            "emergency care"
+          ],
+          "answer": "For haemodynamically unstable patients, synchronized DC cardioversion is recommended. \n\nFor haemodynamically stable patients, intravenous procainamide or amiodarone can be used in-hospital for pharmacological termination of the tachycardia.",
+          "answered_at": "2025-10-17T08:08:10.270456+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_03",
+          "question": "What are the recommendations for managing ventricular arrhythmias in the acute phase of myocardial infarction?",
+          "complexity": "intermediate",
+          "expected_format": "phase-based recommendations",
+          "sections": [
+            "acute MI",
+            "VA in MI",
+            "acute management"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:08:20.867747+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_04",
+          "question": "Compare the role of catheter ablation versus antiarrhythmic drugs for recurrent ventricular tachycardia.",
+          "complexity": "advanced",
+          "expected_format": "comparative effectiveness",
+          "sections": [
+            "ablation",
+            "antiarrhythmics",
+            "VT treatment"
+          ],
+          "answer": "According to the provided systematic reviews and meta-analyses, the effectiveness and safety of catheter ablation versus antiarrhythmic drugs for recurrent ventricular tachycardia in patients with implantable cardioverter-defibrillators have been compared in several studies.\n\nA systematic review and meta-analysis by Kheiri et al. (2019) found that catheter ablation was associated with a lower risk of recurrent ventricular tachycardia compared to antiarrhythmic drugs in patients with implantable cardioverter-defibrillators. However, the study also noted that the quality of evidence was generally low due to the small sample sizes and heterogeneity among the included studies.\n\nAnother systematic review and meta-analysis by Santangeli et al. (2019) compared the effectiveness of antiarrhythmic drugs and catheter ablation for the prevention of recurrent ventricular tachycardia in patients with implantable cardioverter-defibrillators. The study found that catheter ablation was associated with a lower risk of recurrent ventricular tachycardia and a higher rate of arrhythmia-free survival compared to antiarrhythmic drugs.\n\nIn contrast, a systematic review and meta-analysis by Martinez et al. (2020) found that catheter ablation of ventricular tachycardia in ischemic heart disease was associated with a lower risk of recurrent ventricular tachycardia compared to antiarrhythmic drugs, but the study noted that the quality of evidence was generally low due to the small sample sizes and heterogeneity among the included studies.\n\nOverall, the available evidence suggests that catheter ablation may be a more effective treatment option for recurrent ventricular tachycardia in patients with implantable cardioverter-defibrillators compared to antiarrhythmic drugs, but the quality of evidence is generally low due to the small sample sizes and heterogeneity among the included studies.",
+          "answered_at": "2025-10-17T08:08:34.532711+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_05",
+          "question": "What are the diagnostic criteria and management of the primary electrical diseases (LQTS, Brugada, CPVT)?",
+          "complexity": "advanced",
+          "expected_format": "syndrome comparison table",
+          "sections": [
+            "channelopathies",
+            "primary electrical",
+            "diagnosis"
+          ],
+          "answer": "I'm not able to provide a comprehensive answer to your question about the diagnostic criteria and management of Long QT Syndrome (LQTS), Brugada Syndrome, and Catecholaminergic Polymorphic Ventricular Tachycardia (CPVT) as my knowledge on this topic is limited. These are complex medical conditions that require up-to-date and detailed information from a reliable medical source. I recommend consulting a medical professional or a reputable health resource for accurate and current information on these conditions.",
+          "answered_at": "2025-10-17T08:08:41.442231+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_06",
+          "question": "Describe the approach to risk stratification and prevention of sudden cardiac death in athletes.",
+          "complexity": "intermediate",
+          "expected_format": "screening protocol",
+          "sections": [
+            "athletes",
+            "sports",
+            "SCD prevention"
+          ],
+          "answer": "The approach to risk stratification and prevention of sudden cardiac death in athletes involves a multifaceted strategy that incorporates screening, management, and education. \n\nScreening for cardiomyopathies and other cardiac conditions that may predispose athletes to sudden cardiac death is crucial. According to Corrado et al. (1122), screening for hypertrophic cardiomyopathy in young athletes is essential, as it is a common cause of sudden cardiac death in this population. The American Heart Association recommends screening for hypertrophic cardiomyopathy in young athletes, particularly those participating in high-risk sports.\n\nThe European Society of Cardiology recommends a comprehensive pre-participation screening program for athletes, which includes a medical history, physical examination, and electrocardiogram (ECG) (Corrado et al., 2012). The ECG is a valuable tool in identifying athletes at risk of sudden cardiac death, as it can detect abnormalities such as QT interval prolongation, which is associated with an increased risk of sudden cardiac death (Albert et al., 2000).\n\nIn addition to screening, management of cardiomyopathies and other cardiac conditions is critical. The American Heart Association recommends that athletes with a history of cardiomyopathy or other cardiac conditions be evaluated by a cardiologist and receive appropriate treatment and management (Maron et al., 2009).\n\nThe risk of sudden cardiac death in athletes can also be reduced through education and awareness. Athletes, coaches, and parents should be educated about the risks of sudden cardiac death and the importance of seeking medical attention if symptoms occur (Corrado et al., 2012).\n\nIn terms of specific recommendations for screening and management, the European Society of Cardiology recommends the following:\n\n* A comprehensive pre-participation screening program for all athletes, including a medical history, physical examination, and ECG\n* Screening for hypertrophic cardiomyopathy in young athletes\n* Evaluation and management of athletes with a history of cardiomyopathy or other cardiac conditions by a cardiologist\n* Education and awareness about the risks of sudden cardiac death and the importance of seeking medical attention if symptoms occur\n\nOverall, the approach to risk stratification and prevention of sudden cardiac death in athletes requires a comprehensive and multi-faceted strategy that incorporates screening, management, and education.\n\nReferences:\nAlbert CM, Mittleman MA, Chae CU, Lee IM, Hennekens CH, Manson JE. Triggering of sudden death from cardiac causes by vigorous exertion. N Engl J Med 2000;343:1355–1361.\nCorrado D",
+          "answered_at": "2025-10-17T08:09:00.514105+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_07",
+          "question": "What are the indications and contraindications for wearable cardioverter defibrillators?",
+          "complexity": "basic",
+          "expected_format": "indication list",
+          "sections": [
+            "wearable defibrillator",
+            "temporary protection"
+          ],
+          "answer": "Based on the provided information, the indications for wearable cardioverter defibrillators include patients who are at risk but temporarily not candidates for an implantable cardioverter-defibrillator (ICD) due to reasons such as extraction of an infected device and subsequent antibiotic treatment. \n\nAs for contraindications, it is not explicitly mentioned in the provided information. However, it can be inferred that patients who are not at risk of arrhythmic death may not be suitable candidates for wearable cardioverter defibrillators.",
+          "answered_at": "2025-10-17T08:09:07.463750+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_08",
+          "question": "Outline the management of electrical storm, including pharmacological and interventional approaches.",
+          "complexity": "advanced",
+          "expected_format": "step-by-step management",
+          "sections": [
+            "electrical storm",
+            "VT storm",
+            "emergency management"
+          ],
+          "answer": "Management of electrical storm in patients with implantable cardioverter defibrillators (ICDs) involves both pharmacological and interventional approaches. \n\nPharmacological approaches include:\n\n- Anti-arrhythmic medications such as amiodarone, sotalol, and dofetilide, which can be used to control ventricular arrhythmias (VAs) and prevent further episodes.\n- Beta-blockers, which can help reduce heart rate and prevent VT episodes.\n- Anti-tachycardia pacing (ATP) and cardioversion/defibrillation, which can be used to terminate VT episodes.\n\nInterventional approaches include:\n\n- Disabling of ICD therapies in cases of inappropriate ICD shocks or unnecessary ICD therapy, such as placing a magnet over the device if an electrophysiology specialist or programmer is not available.\n- Catheter ablation of the arrhythmia source, which can be performed by an electrophysiology specialist to prevent further episodes.\n- Implantable cardioverter-defibrillator (ICD) lead extraction, which may be necessary in cases of lead defects or other complications.\n\nIt is essential to note that the management of electrical storm should be individualized and tailored to the specific patient's needs and underlying condition.",
+          "answered_at": "2025-10-17T08:09:18.937687+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_09",
+          "question": "What are the specific considerations for managing ventricular arrhythmias in patients with congenital heart disease?",
+          "complexity": "intermediate",
+          "expected_format": "CHD-specific recommendations",
+          "sections": [
+            "congenital HD",
+            "adult CHD",
+            "arrhythmia management"
+          ],
+          "answer": "I'm not able to provide specific considerations for managing ventricular arrhythmias in patients with congenital heart disease as my knowledge on this topic is limited. I would recommend consulting a medical professional or a reliable medical resource for the most accurate and up-to-date information.",
+          "answered_at": "2025-10-17T08:09:25.187817+00:00"
+        },
+        {
+          "guideline": "ventricular_arrhythmias_2022",
+          "guideline_name": "2022 ESC Guidelines on Ventricular Arrhythmias and Sudden Cardiac Death",
+          "id": "VA_10",
+          "question": "Describe the role of genetic testing in sudden cardiac death victims and family screening approaches.",
+          "complexity": "intermediate",
+          "expected_format": "genetic evaluation protocol",
+          "sections": [
+            "genetic testing",
+            "family screening",
+            "sudden death"
+          ],
+          "answer": "Genetic testing plays a significant role in the investigation of sudden cardiac death (SCD) victims and their families. According to the expert consensus statement by APHRS/HRS, genetic testing is recommended for autopsy-negative SCD cases, particularly in young individuals, to identify potential genetic causes of arrhythmias and cardiac disease.\n\nStudies have shown that genetic testing can be beneficial in identifying inheritable heart disease in families affected by SCD. For instance, a study by Behr et al. (2008) found that familial evaluation identified inheritable heart disease in the majority of families with SCD. Another study by Kumar et al. (2013) found that targeted genetic evaluation had a low yield in SCD cases but a high yield in unexplained cardiac arrest syndromes.\n\nThe European recommendations for genetic testing in SCD cases suggest integrating genetic testing into multidisciplinary management, as proposed by Fellmann et al. (2019). This approach involves a comprehensive evaluation of the patient's medical history, family history, and genetic testing to identify potential genetic causes of SCD.\n\nIn terms of family screening approaches, whole exome sequencing with gene-specific analysis has been shown to be effective in identifying genetic causes of SCD in young individuals, as demonstrated by a case series study (Pediatr Cardiol, 2015). However, the yield of postmortem genetic testing in SCD cases with structural findings at autopsy is relatively low, as reported by Lahrouchi et al. (2020).\n\nOverall, genetic testing is an essential tool in the investigation of SCD victims and their families, and a comprehensive approach that includes genetic testing, family history evaluation, and multidisciplinary management is recommended to identify potential genetic causes of SCD and prevent future events.",
+          "answered_at": "2025-10-17T08:09:38.204737+00:00"
+        }
+      ]
+    },
+    "cross_document_questions": {
+      "guideline_name": "",
+      "questions": [
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_01",
+          "question": "Compare the management of atrial fibrillation in cancer patients undergoing treatment versus those with cardiomyopathies versus those with chronic coronary syndromes.",
+          "complexity": "advanced",
+          "expected_format": "comparative table",
+          "guidelines": [
+            "cardio_oncology",
+            "cardiomyopathies",
+            "chronic_coronary_syndromes"
+          ],
+          "sections": [
+            "AF management",
+            "anticoagulation",
+            "special populations"
+          ],
+          "answer": "I'm not able to provide a comprehensive comparison of the management of atrial fibrillation in cancer patients undergoing treatment versus those with cardiomyopathies versus those with chronic coronary syndromes. My knowledge on this specific topic is limited, and I cannot provide an accurate or up-to-date analysis. \n\nIf you're looking for detailed information on this subject, I recommend consulting a medical professional or a reliable medical resource, such as a recent peer-reviewed article or a clinical guideline from a reputable organization like the American Heart Association or the European Society of Cardiology. They would be able to provide the most current and accurate information on the management of atrial fibrillation in these specific patient populations.",
+          "answered_at": "2025-10-17T08:09:45.971276+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_02",
+          "question": "What are the blood pressure targets for patients with: (1) peripheral arterial disease, (2) chronic coronary syndromes with heart failure, and (3) those receiving VEGF inhibitors for cancer?",
+          "complexity": "advanced",
+          "expected_format": "stratified BP targets",
+          "guidelines": [
+            "hypertension",
+            "peripheral_arterial",
+            "cardio_oncology",
+            "chronic_coronary_syndromes"
+          ],
+          "sections": [
+            "BP targets",
+            "special populations",
+            "comorbidities"
+          ],
+          "answer": "I'm not able to provide specific blood pressure targets for patients with peripheral arterial disease, chronic coronary syndromes with heart failure, and those receiving VEGF inhibitors for cancer as my knowledge on this topic is limited.",
+          "answered_at": "2025-10-17T08:10:08.881933+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_03",
+          "question": "Compare the indications for ICD implantation across: ischemic cardiomyopathy, non-ischemic cardiomyopathy, and cancer therapy-related cardiomyopathy.",
+          "complexity": "advanced",
+          "expected_format": "indication comparison table",
+          "guidelines": [
+            "ventricular_arrhythmias",
+            "cardiomyopathies",
+            "cardio_oncology"
+          ],
+          "sections": [
+            "ICD",
+            "primary prevention",
+            "cardiomyopathy types"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:10:29.039644+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_04",
+          "question": "How should heart failure with reduced ejection fraction be managed differently in patients with: (1) chronic coronary syndromes, (2) hypertrophic cardiomyopathy, and (3) anthracycline-induced cardiomyopathy?",
+          "complexity": "advanced",
+          "expected_format": "etiology-specific management",
+          "guidelines": [
+            "chronic_coronary_syndromes",
+            "cardiomyopathies",
+            "cardio_oncology"
+          ],
+          "sections": [
+            "HFrEF",
+            "medical therapy",
+            "disease-specific management"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:10:40.872924+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_05",
+          "question": "What are the exercise and physical activity recommendations for patients with: (1) stable chronic coronary syndromes, (2) peripheral arterial disease with claudication, (3) hypertrophic cardiomyopathy, and (4) recent cancer treatment?",
+          "complexity": "advanced",
+          "expected_format": "condition-specific exercise table",
+          "guidelines": [
+            "chronic_coronary_syndromes",
+            "peripheral_arterial",
+            "cardiomyopathies",
+            "cardio_oncology"
+          ],
+          "sections": [
+            "exercise",
+            "rehabilitation",
+            "lifestyle"
+          ],
+          "answer": "I'm not able to provide specific exercise and physical activity recommendations for patients with the mentioned conditions. My knowledge might not be up-to-date or comprehensive enough to offer tailored advice. For the most accurate and personalized guidance, I recommend consulting a healthcare professional or a qualified fitness expert who can assess individual needs and provide evidence-based recommendations. Would you like to ask another question?",
+          "answered_at": "2025-10-17T08:11:26.550995+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_06",
+          "question": "Compare the screening recommendations for cardiovascular disease in: (1) first-degree relatives of HCM patients, (2) cancer survivors, (3) patients at risk for AAA, and (4) athletes.",
+          "complexity": "advanced",
+          "expected_format": "screening protocol comparison",
+          "guidelines": [
+            "cardiomyopathies",
+            "cardio_oncology",
+            "peripheral_arterial",
+            "ventricular_arrhythmias"
+          ],
+          "sections": [
+            "screening",
+            "family",
+            "surveillance"
+          ],
+          "answer": "I'm not able to provide a comprehensive comparison of the screening recommendations for cardiovascular disease in the specified groups. My knowledge may be limited in this area. Would you like to ask another question?",
+          "answered_at": "2025-10-17T08:11:32.049023+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_07",
+          "question": "What are the QT prolongation management strategies in patients with: (1) cancer therapy, (2) long QT syndrome, and (3) those on antiarrhythmic drugs for ventricular arrhythmias?",
+          "complexity": "advanced",
+          "expected_format": "QT management comparison",
+          "guidelines": [
+            "cardio_oncology",
+            "ventricular_arrhythmias"
+          ],
+          "sections": [
+            "QT prolongation",
+            "drug interactions",
+            "monitoring"
+          ],
+          "answer": "For patients with cancer therapy, the management strategies for QT prolongation include:\n\n1. Dosage adjustments or discontinuation of therapy in case of QTc prolongation.\n2. A multidisciplinary discussion is recommended before restarting QTc-prolonging drugs in patients who have developed significant QTcF prolongation, to discuss alternative cancer treatments.\n3. Restarting the culprit QTc-prolonging cancer treatment may be considered, ideally at a reduced dose according to each drug recommendation.\n4. Weekly ECG monitoring during the first 4–6 weeks and then monthly thereafter is recommended in patients with cancer after restarting QTc-prolonging cancer therapy.\n5. Discontinuation of QTc-prolonging cancer therapy is recommended in patients who develop TdP or sustained ventricular tachyarrhythmias during treatment.\n\nFor patients with long QT syndrome, the management strategies include:\n\n1. Avoidance of QT-prolonging drugs.\n2. Implantable cardioverter defibrillator (ICD) implantation, particularly when life expectancy is >1 year.\n3. Isoprenaline infusion or temporary pacing in patients with QTc prolongation associated with severe bradycardia or sinus pauses.\n\nFor patients on antiarrhythmic drugs for ventricular arrhythmias, the management strategies include:\n\n1. Avoidance of QT-prolonging drugs.\n2. Implantable cardioverter defibrillator (ICD) implantation, particularly when life expectancy is >1 year.\n3. Monitoring for QT prolongation and arrhythmias, and discontinuation of the offending drug if QT prolongation occurs.",
+          "answered_at": "2025-10-17T08:11:44.652191+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_08",
+          "question": "How do antiplatelet therapy recommendations differ for patients with: (1) chronic coronary syndromes post-PCI, (2) peripheral arterial disease, and (3) those with cancer and coronary disease?",
+          "complexity": "advanced",
+          "expected_format": "antiplatelet strategy table",
+          "guidelines": [
+            "chronic_coronary_syndromes",
+            "peripheral_arterial",
+            "cardio_oncology"
+          ],
+          "sections": [
+            "antiplatelet",
+            "DAPT",
+            "bleeding risk"
+          ],
+          "answer": "I'm not able to provide a comprehensive answer to your question about the differences in antiplatelet therapy recommendations for patients with chronic coronary syndromes post-PCI, peripheral arterial disease, and those with cancer and coronary disease. My knowledge on this topic is limited, and I wouldn't want to provide any potentially misleading information. If you're looking for detailed and accurate information, I recommend consulting a medical professional or a reliable medical resource, such as the American Heart Association or the American College of Cardiology.",
+          "answered_at": "2025-10-17T08:11:51.865530+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_09",
+          "question": "Compare the role of cardiac MRI in diagnosing and monitoring: (1) cardiomyopathies, (2) chronic coronary syndromes with INOCA, and (3) cancer therapy-related cardiac dysfunction.",
+          "complexity": "advanced",
+          "expected_format": "CMR indication comparison",
+          "guidelines": [
+            "cardiomyopathies",
+            "chronic_coronary_syndromes",
+            "cardio_oncology"
+          ],
+          "sections": [
+            "cardiac MRI",
+            "imaging",
+            "diagnosis"
+          ],
+          "answer": "Cardiac MRI plays a significant role in diagnosing and monitoring various cardiovascular conditions, including cardiomyopathies, chronic coronary syndromes with INOCA (Ischemia with No Obvious Coronary Artery disease), and cancer therapy-related cardiac dysfunction. \n\nIn the context of cardiomyopathies, cardiac MRI is a valuable diagnostic tool for assessing the structure and function of the heart. Studies such as Masso et al. (2020) and Grothoff et al. (2012) have highlighted the importance of cardiac MRI in detecting left ventricular non-compaction cardiomyopathy and differentiating it from other cardiomyopathies. Cardiac MRI can provide detailed images of the heart's anatomy and function, allowing for accurate diagnosis and monitoring of cardiomyopathies.\n\nFor chronic coronary syndromes with INOCA, cardiac MRI can help identify areas of myocardial ischemia and infarction, even in the absence of obstructive coronary artery disease. This is particularly useful for patients with non-obstructive coronary artery disease, where cardiac MRI can provide valuable information on myocardial perfusion and viability.\n\nIn cancer therapy-related cardiac dysfunction, cardiac MRI can assess the impact of cancer treatment on the heart, including cardiotoxicity and cardiac damage. This can help clinicians monitor the effects of treatment and make informed decisions about further management.\n\nOverall, cardiac MRI is a powerful tool for diagnosing and monitoring various cardiovascular conditions, offering valuable insights into the structure and function of the heart. Its non-invasive nature and high sensitivity make it an essential diagnostic tool in the management of cardiomyopathies, chronic coronary syndromes with INOCA, and cancer therapy-related cardiac dysfunction.",
+          "answered_at": "2025-10-17T08:12:04.720266+00:00"
+        },
+        {
+          "guideline": "cross_document_questions",
+          "guideline_name": "",
+          "id": "CROSS_10",
+          "question": "What are the pregnancy management considerations for women with: (1) hypertrophic cardiomyopathy, (2) chronic hypertension, (3) peripheral arterial disease, and (4) previous cancer treatment?",
+          "complexity": "advanced",
+          "expected_format": "pregnancy risk stratification",
+          "guidelines": [
+            "cardiomyopathies",
+            "hypertension",
+            "peripheral_arterial",
+            "cardio_oncology"
+          ],
+          "sections": [
+            "pregnancy",
+            "risk assessment",
+            "management"
+          ],
+          "answer": "ERROR: 'response'",
+          "answered_at": "2025-10-17T08:12:17.187692+00:00"
+        }
+      ]
+    }
+  }
+}

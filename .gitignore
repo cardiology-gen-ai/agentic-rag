@@ -11,3 +11,4 @@ __pycache__/
 /.env
 /.env.leonardo
 /uv.lock
+/docs/build/

@@ -39,23 +39,13 @@ class SearchConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
-    """Configuration for the chat LLM backend.
-
-    Parameters
-    ----------
-    model_name : :class:`str` : Name or identifier of the underlying model deployment.
-    ollama : :class:`bool`, optional :  If ``True``, use :ollama:`Ollama <>` backend; otherwise use :huggingface:`HuggingFace <>`. Default ``False``.
-    nbits : :class:`typing.Literal`, optional : Precision/quantization setting (only applies to HF pipelines). Defaults to ``8``.
-    generator_temperature : :class:`float` :  Temperature for the generator runnable.
-    router_temperature : :class:`float` : Temperature for the router runnable.
-    grader_temperature : :class:`float` : Temperature for the grader runnable.
-    """
-    model_name: str #:
-    ollama: bool = False #:
-    nbits: Optional[Literal[4, 8, 16, 32]] = 8 #:
-    generator_temperature: float #:
-    router_temperature: float #:
-    grader_temperature: float #:
+    """Configuration for the chat LLM backend."""
+    model_name: str #: :class:`str` : Name or identifier of the underlying model deployment.
+    ollama: bool = False #: :class:`bool`, optional :  If ``True``, use :ollama:`Ollama <>` backend; otherwise use :huggingface:`HuggingFace <>`. Default ``False``.
+    nbits: Optional[Literal[4, 8, 16, 32]] = 8 #: :class:`typing.Literal`\[{``4``,``8``,``16``,``32``}\], optional : Precision/quantization setting (only applies to HF pipelines). Defaults to ``8``.
+    generator_temperature: float #: :class:`float` :  Temperature for the generator runnable.
+    router_temperature: float #: :class:`float` : Temperature for the router runnable.
+    grader_temperature: float #: :class:`float` : Temperature for the grader runnable.
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "LLMConfig":

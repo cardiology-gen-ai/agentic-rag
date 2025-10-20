@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,10 +21,10 @@ class BaseDB:
     session : :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>` or :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>`
         Bound SQLAlchemy session instance.
     """
-    session: AsyncSession | Session #: :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>` or :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>` : The underlying SQLAlchemy session.
+    session: Union[AsyncSession, Session] #: :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>` or :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>` : The underlying SQLAlchemy session.
     logger: logging.Logger #: :class:`logging.Logger` : Logger used for diagnostics (provided externally as ``logger``).
     sync: bool #: :class:`bool` : ``True`` if the session is a synchronous :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>`, ``False`` if it is an asynchronous :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>`.
-    def __init__(self, session: AsyncSession | Session):
+    def __init__(self, session: Union[AsyncSession, Session]):
         self.session = session
         self.logger = logger
         self.sync = not isinstance(self.session, AsyncSession)

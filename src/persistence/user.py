@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 import asyncio
 
 from pydantic import BaseModel
@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, Session
 
 from src.persistence.orm_base import BaseORM, BaseDB
-from src.persistence.db import get_sync_db, get_async_db
+from src.persistence.db import get_sync_db, get_async_db, ensure_database
 
 
 class UserORM(BaseORM):
@@ -24,7 +24,6 @@ class UserORM(BaseORM):
     created_at: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Creation timestamp (stored as naive UTC).
     last_active: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Last activity timestamp (stored as naive UTC).
 
-
 class UserCreateSchema(BaseModel):
     """Pydantic input schema with the minimal information necessary to create a user."""
     username: str #: :class:`str` : Desired username.
@@ -34,14 +33,14 @@ class UserCreateSchema(BaseModel):
 class UserSchema(UserCreateSchema):
     """Pydantic schema mirroring :class:`~src.persistence.user.UserORM` for I/O and validation."""
     user_id: uuid.UUID #: :class:`uuid.UUID` : Primary key of the user.
-    user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`[{\"user\", \"admin\", \"assistant\"}] : Role assigned to the user.
+    user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`\[{``user``, ``admin``, ``assistant``}\] : Role assigned to the user.
 
 
 class UserDB(BaseDB):
     """User DataBase CRUD (Create-Read-Update-Delete), sync and async, backed by SQLAlchemy.
 
     On construction, this class ensures that the :class:`~src.persistence.user.UserORM` table exists
-    by calling :meth:`~sqlalchemy.schema.MetaData.create_all` for that table only.
+    by calling :sqlalchemy:`sqlalchemy.MetaData.create_all <core/metadata.html#sqlalchemy.schema.MetaData.create_all>` for that table only.
 
     .. rubric:: Notes
 
@@ -50,12 +49,13 @@ class UserDB(BaseDB):
 
     Parameters
     ----------
-    session : :class:`~sqlalchemy.ext.asyncio.AsyncSession` or :class:`~sqlalchemy.orm.Session`
+    session : :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>` or :sqlalchemy:`Session </orm/session_api.html#sqlalchemy.orm.Session>`
         SQLAlchemy session used for all operations.
 
     """
-    def __init__(self, session: AsyncSession | Session):
+    def __init__(self, session: Union[AsyncSession, Session]):
         super().__init__(session=session)
+        ensure_database()
         engine = session.bind
         BaseORM.metadata.create_all(engine, tables=[UserORM.__table__])
 
@@ -139,8 +139,8 @@ class UserDB(BaseDB):
 
         Returns
         -------
-        :class:`~sqlalchemy.sql.Select`
-            A SQLAlchemy 2.0 ``select()`` over :class:`~src.persistence.user.UserORM`.
+        sqlalchemy:`Select <core/selectable.html#sqlalchemy.sql.expression.Select>`
+            A select operator over :class:`~src.persistence.user.UserORM`.
 
         Raises
         ------

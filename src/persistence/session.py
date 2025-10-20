@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Literal, Optional, List
+from typing import Literal, Optional, List, Union
 
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Mapped, mapped_column, Session
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.persistence.orm_base import BaseORM, BaseDB
 from src.persistence.user import UserORM
 from src.agent.graph import Agent
@@ -19,7 +20,7 @@ class SessionORM(BaseORM):
     service_user_id: Mapped[uuid.UUID] = mapped_column(nullable=False) #: :class:`~sqlalchemy.orm.Mapped`[:class:`uuid.UUID`] : Identifier of the owning service user.
     title: Mapped[str] = mapped_column(nullable=True) #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Optional human-readable session title.
     username: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Username associated with the session.
-    user_role: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Role of the user.
+    user_role: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`\[:class:`str`\] : Role of the user.
     model_name: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Name of the LLM model deployment used in the session.
     embedding_name: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Name of the embedding model deployment used in the session.
     created_at: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Creation timestamp (stored as naive UTC).
@@ -33,7 +34,7 @@ class SessionSchema(BaseModel):
     service_user_id: uuid.UUID #: :class:`uuid.UUID` : Identifier of the current user.
     title: str #: :class:`str` : Human-readable session title.
     username: str #: :class:`str` : Username associated with the session.
-    user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`[{\"user\", \"admin\", \"assistant\"}] : Role of the user for this session.
+    user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`\[{``user``, ``admin``, ``assistant``}\] : Role of the user for this session.
     model_name: str #: :class:`str` : Name of the LLM model deployment used in the session.
     embedding_name: str #: :class:`str` : Name of the embedding model deployment used in the session.
     created_at: datetime #: :class:`datetime.datetime` : Creation timestamp (naive UTC).
@@ -42,10 +43,10 @@ class SessionSchema(BaseModel):
 
 
 class SessionDB(BaseDB):
-    """Session DataBase CRUD (Create-Read-Update-Delete), sync and async, backed by SQLAlchemy.
+    """Session DataBase CRUD (Create-Read-Update-Delete), sync and async, backed by :sqlalchemy:`SQLAlchemy <>`.
 
     On construction, this class ensures that the :class:`~src.persistence.session.SessionORM` table exists
-    by calling :meth:`~sqlalchemy.schema.MetaData.create_all` for that table only.
+    by calling :sqlalchemy:`sqlalchemy.MetaData.create_all <core/metadata.html#sqlalchemy.schema.MetaData.create_all>` for that table only.
 
     .. rubric:: Notes
 
@@ -54,11 +55,11 @@ class SessionDB(BaseDB):
 
     Parameters
     ----------
-    session : :class:`~sqlalchemy.ext.asyncio.AsyncSession` or :class:`~sqlalchemy.orm.Session`
+    session : :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>` or :sqlalchemy:`Session </orm/session_api.html#sqlalchemy.orm.Session>`
         Bound SQLAlchemy session used for all operations.
     """
 
-    def __init__(self, session: AsyncSession | Session):
+    def __init__(self, session: Union[AsyncSession, Session]):
         super().__init__(session=session)
         engine = session.bind
         BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
@@ -148,8 +149,8 @@ class SessionDB(BaseDB):
 
         Returns
         -------
-        :class:`~sqlalchemy.sql.Select`
-            A SQLAlchemy 2.0 ``select()`` over :class:`~src.persistence.session.SessionORM`.
+        :sqlalchemy:`Select <core/selectable.html#sqlalchemy.sql.expression.Select>`
+            A select operator over :class:`~src.persistence.session.SessionORM`.
 
         Raises
         ------

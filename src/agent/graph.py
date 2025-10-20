@@ -30,15 +30,15 @@ GENERATION_LIMIT = 2
 
 class GraphState(TypedDict, total=False):
     """Shared state passed between :langgraph:`LangGraph <reference/graphs>` nodes."""
-    question: str #: :class:`str` : Original user question as received by the agent.
-    contextual_question: str #: :class:`str` : Question enriched with context (if needed) for retrieval/generation.
-    transform_query_count: int #: :class:`int` : How many times the question has been rewritten so far.
-    response: str #: :class:`str` : Latest assistant response (when available).
-    language: Optional[str] #: :class:`str`, optional : Language used in the conversation.
-    messages: Annotated[List[AnyMessage], add_messages] #: :class:`list` of :class:`~langchain_core.messages.base.AnyMessage` : Rolling chat history used for context.
-    documents: Optional[List[Document]] #: :class:`list` of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`, optional : Retrieved and filtered documents (when applicable).
-    document_request: str #: :class:`str` : Binary flag to denote whether the user is asking for an entire document.
-    generation_count: int #: :class:`int` : Number of generation attempts in the current turn.
+    question: str #: Original user question as received by the agent.
+    contextual_question: str #: Question enriched with context (if needed) for retrieval/generation.
+    transform_query_count: int #: How many times the question has been rewritten so far.
+    response: str #: Latest assistant response (when available).
+    language: str #: Language used in the conversation, optional.
+    messages: Annotated[List[AnyMessage], add_messages] #: Rolling chat history used for context (:class:`list` of :class:`~langchain_core.messages.base.AnyMessage` ).
+    documents: List[Document] #: Retrieved and filtered documents (:class:`list` of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`), optional (when applicable).
+    document_request: str #: Binary flag to denote whether the user is asking for an entire document.
+    generation_count: int #: Number of generation attempts in the current turn.
 
 
 class Agent:
@@ -691,6 +691,7 @@ if __name__ == "__main__":
             )
         )
     )
+    agent.draw_graph()
     # metadata["chunk_idx"]
-    agent_response = agent.answer(chat_request)
-    print(agent_response.content)
+    # agent_response = agent.answer(chat_request)
+    # print(agent_response.content)

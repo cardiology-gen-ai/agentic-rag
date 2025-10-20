@@ -1,10 +1,8 @@
 import os
-from typing import Optional
-from pathlib import Path
+from typing import Optional, Union
 
 import psycopg
 from psycopg import sql
-from dotenv import load_dotenv
 
 from cardiology_gen_ai.utils.logger import get_logger
 from sqlalchemy import Engine
@@ -12,52 +10,48 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Load environment variables from .env file
-env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
 
 POSTGRES_ADMIN_DSN = os.getenv("POSTGRES_ADMIN_DSN")
 DB_NAME = "cardiology_protocols"  # TODO: maybe put in config
 
 logger = get_logger("Database creation")
 
-with psycopg.connect(POSTGRES_ADMIN_DSN, autocommit=True) as conn:
-    with conn.cursor() as cur:
-        cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DB_NAME,))
-        exists = cur.fetchone() is not None
 
-        if not exists:
-            # Crea in modo sicuro (quotando l'identificatore)
-            stmt = sql.SQL(
-                "CREATE DATABASE {} WITH ENCODING 'UTF8' TEMPLATE template1 {}"
-            ).format(
-                sql.Identifier(DB_NAME), sql.SQL("")
-            )
-            cur.execute(stmt)
-            logger.info(f"Database {DB_NAME} successfully created")
-        else:
-            logger.info(f"Database {DB_NAME} already exists")
+def ensure_database():
+    with psycopg.connect(POSTGRES_ADMIN_DSN, autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DB_NAME,))
+            exists = cur.fetchone() is not None
+
+            if not exists:
+                stmt = sql.SQL(
+                    "CREATE DATABASE {} WITH ENCODING 'UTF8' TEMPLATE template1 {}"
+                ).format(
+                    sql.Identifier(DB_NAME), sql.SQL("")
+                )
+                cur.execute(stmt)
+                logger.info(f"Database {DB_NAME} successfully created")
+            else:
+                logger.info(f"Database {DB_NAME} already exists")
 
 
 class DatabaseConnection:
     """Construct the connection string according to sync/async mode.
 
-    If ``db_connection_string`` is not provided, the string is built from the
-    ``DB_CONNECTION_STRING`` environment variable with the appropriate driver
+    If ``db_connection_string`` is not provided, the string is built from the ``DB_CONNECTION_STRING`` environment variable with the appropriate driver
     prefix for the requested connection type.
 
     Parameters
     ----------
     db_connection_string : str, optional
-    Full application DSN. If ``None``, it is constructed dynamically.
+        Full application DSN. If ``None``, it is constructed dynamically.
     sync : bool, optional
-    If ``True`` (default) uses the synchronous driver (:class:`psycopg`);
-    if ``False`` uses the asynchronous driver (:class:`asyncpg`).
+        If ``True`` (default) uses the synchronous driver (:psycopg:`Psycopg <>`); if ``False`` uses the asynchronous driver (:asyncpg:`asyncpg <index.html>`).
 
     Raises
     ------
     ValueError
-    If no connection string is available.
+        If no connection string is available.
     """
     db_connection_str: str #: str : The SQLAlchemy/psycopg connection string.
     def __init__(self, db_connection_string: Optional[str] = None, sync: Optional[bool] = True):
@@ -76,36 +70,32 @@ def get_db_connection(db_connection_string: Optional[str] = None, sync: Optional
     Parameters
     ----------
     db_connection_string : str, optional
-    Full application DSN. If ``None``, it is built based on ``sync`` and the
-    ``DB_CONNECTION_STRING`` environment variable.
+        Full application DSN. If ``None``, it is built based on ``sync`` and the ``DB_CONNECTION_STRING`` environment variable.
     sync : bool, optional
-    ``True`` to create a connection for a synchronous context, otherwise for an
-    asynchronous context.
-
+        ``True`` to create a connection for a synchronous context, otherwise for an asynchronous context.
 
     Returns
     -------
     :class:`~src.persistence.db.DatabaseConnection`
-    The configured connection object.
+        The configured connection object.
     """
     return DatabaseConnection(db_connection_string, sync)
 
 
-def get_engine(db_connection_string: Optional[str] = None, sync: bool = True) -> AsyncEngine | Engine:
-    """Create a :class:`SQLAlchemy engine` (sync) or async engine (async).
+def get_engine(db_connection_string: Optional[str] = None, sync: bool = True) -> Union[AsyncEngine, Engine]:
+    """Create a :sqlalchemy:`Engine <connections.html#sqlalchemy.engine.Engine>` (sync) or :sqlalchemy:`AsyncEngine <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncEngine>` (async).
 
     Parameters
     ----------
     db_connection_string : str, optional
-    Full DSN. If ``None``, it is derived from :class:`DatabaseConnection`.
+        Full DSN. If ``None``, it is derived from :class:`DatabaseConnection`.
     sync : bool, optional
-    ``True`` for :class:`sqlalchemy.engine.Engine`, ``False`` for  :class:`sqlalchemy.ext.asyncio.AsyncEngine`.
-
+        ``True`` for :sqlalchemy:`Engine <connections.html#sqlalchemy.engine.Engine>`, ``False`` for  :sqlalchemy:`AsyncEngine <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncEngine>`.
 
     Returns
     -------
-     :class:`sqlalchemy.ext.asyncio.AsyncEngine` or :class:`sqlalchemy.engine.Engine`
-    The created engine.
+    :sqlalchemy:`AsyncEngine <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncEngine>` or :sqlalchemy:`Engine <connections.html#sqlalchemy.engine.Engine>`
+        The created engine.
     """
     db_connection = get_db_connection(db_connection_string, sync)
     if sync:
@@ -121,12 +111,12 @@ def get_sync_db(db_connection_string: Optional[str] = None):
     Parameters
     ----------
     db_connection_string : str, optional
-    Full DSN. If ``None``, it is derived automatically.
+        Full DSN. If ``None``, it is derived automatically.
 
     Yields
     ------
-    :class:`sqlalchemy.orm.Session`
-    The synchronous ORM session.
+    :sqlalchemy:`Session <orm/session_api.html#sqlalchemy.orm.Session>`
+        The synchronous ORM session.
     """
     engine = get_engine(db_connection_string, sync=True)
     session_maker = sessionmaker(bind=engine, expire_on_commit=False)
@@ -146,12 +136,12 @@ async def get_async_db(db_connection_string: Optional[str] = None):
     Parameters
     ----------
     db_connection_string : str, optional
-    Full DSN. If ``None``, it is derived automatically.
+        Full DSN. If ``None``, it is derived automatically.
 
     Yields
     ------
-    :class:`sqlalchemy.ext.asyncio.AsyncSession`
-    The asynchronous ORM session.
+    :sqlalchemy:`AsyncSession <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession>`
+        The asynchronous ORM session.
     """
     engine = get_engine(db_connection_string, sync=False)
     session_maker = async_sessionmaker(bind=engine, expire_on_commit=False)

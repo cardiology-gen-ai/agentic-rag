@@ -49,16 +49,16 @@ class SearchableVectorstore(Vectorstore, ABC):
 class SearchableQdrantVectorstore(SearchableVectorstore, QdrantVectorstore):
     """:langchain:`Qdrant <qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore>`-backed searchable vector store.
 
-    Adds optional metadata filtering via :mod:`qdrant_client.models` and hybrid
+    Adds optional metadata filtering via :qdrant_client:`Qdrant Filtering <filtering>` and hybrid
     fusion (RRF) when enabled in :class:`~src.config.manager.SearchConfig`.
     """
 
     def get_retriever(self) -> VectorStoreRetriever:
         """Build a :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` for :langchain:`Qdrant <qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore>`.
 
-        When :attr:`~src.config.manager.SearchConfig.metadata_filter` is provided, this method converts it into a :class:`~qdrant_client.models.Filter`
-        (with a :class:`~qdrant_client.models.FieldCondition` / :class:`~qdrant_client.models.MatchValue`)
-        If :attr:`~src.config.manager.SearchConfig.fusion` is enabled, it sets ``hybrid_fusion`` to :class:`~qdrant_client.models.FusionQuery` with RRF.
+        When :attr:`~src.config.manager.SearchConfig.metadata_filter` is provided, this method converts it into a :qdrant_client:`Filter <filtering/?q=Filter>`
+        (with a :qdrant_client:`FieldCondition <filtering/?q=FieldCondition>` / :qdrant_client:`MatchValue <filtering/?q=MatchValue>`)
+        If :attr:`~src.config.manager.SearchConfig.fusion` is enabled, it sets ``hybrid_fusion`` to :qdrant_client:`FusionQuery <hybrid-queries>` with RRF.
 
         Returns
         -------
@@ -114,7 +114,7 @@ class SearchableFaissVectorstore(SearchableVectorstore, FaissVectorstore):
 class SearchManager(metaclass=Singleton):
     """High-level orchestrator that selects and instantiates a searchable vector store.
 
-    The manager chooses between a :langchain:`Qdrant <qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore>`-backed or :class:`FAISS`-backed implementation
+    The manager chooses between a :langchain:`Qdrant <qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore>`-backed or :langchain:`FAISS <community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html>-backed implementation
     based on :class:`cardiology_gen_ai.models.IndexingConfig`, ensures the index is loaded, creates the retriever, and exposes a single ``search()`` entry point.
 
     Parameters

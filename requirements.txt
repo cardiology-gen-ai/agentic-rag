@@ -1,6 +1,0 @@
-# LangGraph PostgreSQL persistence
-langgraph-checkpoint-postgres
-
-# Database drivers
-psycopg2-binary
-asyncpg

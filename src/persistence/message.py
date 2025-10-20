@@ -177,7 +177,7 @@ class FeedbackTurn(BaseModel):
 class AgentMemory:
     """Synchronous memory manager backed by :postgresql:`PostgreSQL <about>`.
 
-    This class owns a single :func:`psycopg.connect`-ed connection and configures both a :langgraph:`PostgresStore <store/?h=postgresstore#langgraph.store.postgres.PostgresStore>` (for key-value namespaces) and a
+    This class owns a single :psycopg:`psycopg.connect <module.html#psycopg2.connect>`-ed connection and configures both a :langgraph:`PostgresStore <store/?h=postgresstore#langgraph.store.postgres.PostgresStore>` (for key-value namespaces) and a
     :langgraph:`PostgresSaver <reference/checkpoints/?h=postgressa#langgraph.checkpoint.postgres.PostgresSaver>` (used as checkpointer).
 
     Parameters
@@ -350,10 +350,10 @@ class AgentMemory:
 class AsyncAgentMemory:
     """Asynchronous memory manager backed by :postgresql:`PostgreSQL <about>`.
 
-    This class wraps :langgraph:`AsyncPostgresStore store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore` and :langgraph:`AsyncPostgresSaver <checkpoints/?h=asyncpostgressaver#langgraph.checkpoint.postgres.aio.AsyncPostgresSaver>`
+    This class wraps :langgraph:`AsyncPostgresStore <store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore>` and :langgraph:`AsyncPostgresSaver <checkpoints/?h=asyncpostgressaver#langgraph.checkpoint.postgres.aio.AsyncPostgresSaver>`
     instances and exposes async helpers mirroring :class:`~src.persistence.message.AgentMemory`.
     """
-    store: AsyncPostgresStore #: :langgraph:`AsyncPostgresStore store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore` : Initialized asynchronous store instance.
+    store: AsyncPostgresStore #: :langgraph:`AsyncPostgresStore <store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore>` : Initialized asynchronous store instance.
     checkpointer: AsyncPostgresSaver #: :langgraph:`AsyncPostgresSaver <checkpoints/?h=asyncpostgressaver#langgraph.checkpoint.postgres.aio.AsyncPostgresSaver>` : Initialized asynchronous checkpointer instance.
     def __init__(self, store: AsyncPostgresStore, checkpointer: AsyncPostgresSaver):
         self.store = store

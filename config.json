@@ -10,8 +10,8 @@
             "top_k": 3
         },
         "llm": {
-            "deployment": "meta-llama/Llama-3.1-8B-Instruct",
-            "ollama": false,
+            "deployment": "llama3.2:1b",
+            "ollama": true,
             "nbits": 16,
             "generator_temperature": 0.01,
             "router_temperature": 0.5,

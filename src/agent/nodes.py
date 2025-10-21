@@ -9,8 +9,17 @@ from src.agent import output
 
 
 def _strip_think(s: str) -> str:
+    # useful for parsing Qwens' model output
     s = re.sub(r"<think>.*?</think>", "", s, flags=re.DOTALL|re.IGNORECASE)
     s = s.strip().strip("").strip()
+    return s
+
+
+def _get_final(s: str) -> str:
+    match = re.search(r"assistantfinal\s*(.*)$", s, re.DOTALL)
+    if match:
+        content = match.group(1).strip()
+        return content
     return s
 
 
@@ -30,8 +39,6 @@ def detect_language(llm: Runnable) -> Runnable:
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.DetectLanguage` instance.
     """
-    # schema = output.DetectLanguage.model_json_schema()
-    # structured_llm = llm.with_structured_output(schema, method="json_schema")
     parser = JsonOutputParser(pydantic_object=output.DetectLanguage)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'language' whose value is either 'it' or 'en'."
     system_prompt = f"""
@@ -46,8 +53,7 @@ def detect_language(llm: Runnable) -> Runnable:
         ]
     )
     to_model = RunnableLambda(lambda d: output.DetectLanguage.model_validate(d))
-    # language_detector = prompt | structured_llm | StrOutputParser() | RunnableLambda(_strip_think) | to_model
-    language_detector = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | parser | to_model
+    language_detector = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
     return language_detector
 
 
@@ -91,7 +97,7 @@ def contextualize_question(llm: Runnable, context_prompt: str) -> Runnable:
             ("human", " Language: {language} \nHistory: \n {history} \nQuestion: {question}"),
         ]
     )
-    contextualizer = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) # | StrOutputParser()
+    contextualizer = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) |  RunnableLambda(_get_final)
     return contextualizer
 
 
@@ -114,10 +120,8 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.RouteQuery` instance.
     """
-    # schema = output.RouteQuery.model_json_schema()
-    # structured_llm = llm.with_structured_output(schema, method="json_schema")
     parser = JsonOutputParser(pydantic_object=output.RouteQuery)
-    format_instructions = "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document-based'."
+    format_instructions = "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document_based'."
     system_prompt = f"""
     You are an expert at routing a human message to a document-based branch or conversational branch. 
     This is the vectorstore description: {index_description}\n
@@ -138,7 +142,7 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
         ]
     )
     to_model = RunnableLambda(lambda d: output.RouteQuery.model_validate(d))
-    question_router = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | parser | to_model
+    question_router = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
     return question_router
 
 
@@ -179,7 +183,7 @@ def conversational_agent(llm: Runnable, agent_prompt: str) -> Runnable:
             ("human", "Question: {question}, \nChat history: {history} \nLanguage: {language}"),
         ]
     )
-    conversational_agent_runnable = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think)  # | StrOutputParser()
+    conversational_agent_runnable = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
     return conversational_agent_runnable
 
 
@@ -198,8 +202,6 @@ def retrieval_grader(llm: Runnable) -> Runnable:
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.GradeDocuments` instance.
     """
-    # schema = output.GradeDocuments.model_json_schema()
-    # structured_llm = llm.with_structured_output(schema, method="json_schema")
     parser = JsonOutputParser(pydantic_object=output.GradeDocuments)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
@@ -216,7 +218,7 @@ def retrieval_grader(llm: Runnable) -> Runnable:
         ]
     )
     to_model = RunnableLambda(lambda d: output.GradeDocuments.model_validate(d))
-    grader = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | parser | to_model
+    grader = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
     return grader
 
 
@@ -235,8 +237,6 @@ def document_request_detector(llm: Runnable) -> Runnable:
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.DocumentRequest` instance.
     """
-    # schema = output.DocumentRequest.model_json_schema()
-    # structured_llm = llm.with_structured_output(schema, method="json_schema")
     parser = JsonOutputParser(pydantic_object=output.DocumentRequest)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
@@ -253,7 +253,7 @@ def document_request_detector(llm: Runnable) -> Runnable:
         ]
     )
     to_model = RunnableLambda(lambda d: output.DocumentRequest.model_validate(d))
-    document_detector = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | parser | to_model
+    document_detector = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
     return document_detector
 
 
@@ -287,7 +287,7 @@ def generate_document_response(llm: Runnable) -> Runnable:
             ("human", "Question: {question} \nAvailable documents: {documents} \nLanguage: {language}"),
         ]
     )
-    document_response = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think)   # | StrOutputParser()
+    document_response = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
     return document_response
 
 def generate(llm: Runnable) -> Runnable:
@@ -317,7 +317,7 @@ def generate(llm: Runnable) -> Runnable:
             ("human", "Retrieved information: \n{documents} \nQuestion: \n{question} \nLanguage:{language} \nAnswer:")
         ]
     )
-    generator = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) # | StrOutputParser()
+    generator = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) |  RunnableLambda(_get_final)
     return generator
 
 
@@ -344,7 +344,7 @@ def question_rewriter(llm: Runnable) -> Runnable:
             ("human", "Here is the initial question: \n\n {question} \n Formulate an improved question."),
         ]
     )
-    rewriter = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think)
+    rewriter = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
     return rewriter
 
 def generate_default_response(llm: Runnable) -> Runnable:
@@ -375,7 +375,7 @@ def generate_default_response(llm: Runnable) -> Runnable:
             ("human", "Question: {question} \nLanguage: {language}\n"),
         ]
     )
-    default_response = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think)  # | StrOutputParser()
+    default_response = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
     return default_response
 
 
@@ -394,8 +394,6 @@ def ground_validator(llm: Runnable):
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.GradeGrounding` instance.
     """
-    # schema = output.GradeGrounding.model_json_schema()
-    # structured_llm = llm.with_structured_output(schema, method="json_schema")
     parser = JsonOutputParser(pydantic_object=output.GradeGrounding)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
@@ -411,7 +409,7 @@ def ground_validator(llm: Runnable):
         ]
     )
     to_model = RunnableLambda(lambda d: output.GradeGrounding.model_validate(d))
-    groundedness_validator = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | parser | to_model
+    groundedness_validator = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
     return groundedness_validator
 
 
@@ -430,8 +428,6 @@ def answer_grader(llm: Runnable):
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agent.output.GradeAnswer`.
     """
-    # schema = output.GradeAnswer.model_json_schema()
-    # structured_llm = llm.with_structured_output(schema, method="json_schema")
     parser = JsonOutputParser(pydantic_object=output.GradeAnswer)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
@@ -446,7 +442,7 @@ def answer_grader(llm: Runnable):
         ]
     )
     to_model = RunnableLambda(lambda d: output.GradeAnswer.model_validate(d))
-    grader = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | parser | to_model
+    grader = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
     return grader
 
 

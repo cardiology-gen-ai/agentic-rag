@@ -10,8 +10,8 @@
             "top_k": 3
         },
         "llm": {
-            "deployment": "llama3.2:1b",
-            "ollama": true,
+            "deployment": "openai/gpt-oss-20b",
+            "ollama": false,
             "nbits": 16,
             "generator_temperature": 0.01,
             "router_temperature": 0.5,

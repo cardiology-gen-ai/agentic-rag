@@ -24,6 +24,11 @@ mkdir -p "$PGDATA" "$PGSOCK"
 mkdir -p "$PGDATA" "$PGSOCK"
 chmod 700 "$PGDATA" || true
 
+if [[ -f "$PGDATA/postmaster.pid" ]]; then
+  echo "⚠️ Removing stale Postgres lock file"
+  rm -f "$PGDATA/postmaster.pid"
+fi
+
 PG_BIN="$(
   singularity exec -B "$WORK" -B "$TMPDIR" "$SIF" \
     bash -lc 'ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -n1'
@@ -52,17 +57,11 @@ if [[ ! -s "$PGDATA/PG_VERSION" ]]; then
   chmod 700 -R "$PGDATA"
 fi
 
-
 cleanup() {
   singularity exec -B "$WORK" -B "$TMPDIR" "$SIF" \
     pg_ctl -D "$PGDATA" stop || true
 }
 trap cleanup EXIT
-
-
-singularity exec -B "$WORK" -B "$TMPDIR" "$SIF" \
-  bash -lc "export PATH='$PG_BIN':\$PATH; \
-            postgres -D '$PGDATA' -c unix_socket_directories='$PGSOCK' -c listen_addresses='' -c port=$PGPORT"
 
 singularity exec -B "$WORK" -B "$TMPDIR" "$SIF" \
   pg_ctl -D "$PGDATA" \

@@ -113,11 +113,14 @@ class LLMManager:
                     low_cpu_mem_usage=True,
                     # attn_implementation="flash_attention_2"
                 )
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
+                model.config.pad_token_id = model.config.eos_token_id
             pip = pipeline(
                 "text-generation",
                 model=model,
                 tokenizer=tokenizer,
-                max_new_tokens=512,
+                max_new_tokens=1024,
                 do_sample=True,
                 temperature=0.01,
                 return_full_text=False,

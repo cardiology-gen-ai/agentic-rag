@@ -21,7 +21,6 @@ fi
 
 python -m pip install --upgrade pip setuptools wheel build ninja packaging
 pip install -e .
-pip uninstall "triton==3.4.0"
 
 # python -m pip install --no-cache-dir --force-reinstall --upgrade "cardiologygenai-coordo @ git+https://github.com/cardiology-gen-ai/cardiology-gen-ai.git@main"
 

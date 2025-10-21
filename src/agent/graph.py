@@ -64,7 +64,7 @@ class Agent:
     grader: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for grading/validation of retrieved context and generated chunks.
     search_manager: SearchManager #: :class:`~src.managers.search_manager.SearchManager` : Index loader and retriever factory for the vector store.
     retriever: VectorStoreRetriever #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Configured retriever if the vector store exists.
-    examples: Dict[str, str] #: :class:`list` : Few-shot examples loaded for the router prompt.
+    examples: List[Dict[str, str]] #: :class:`list` : Few-shot examples loaded for the router prompt.
     memory: AgentMemory #: :class:`~src.persistence.message.AgentMemory` : Store + checkpointer used by :langgraph:`LangGraph <reference/graphs>`.
     graph: StateGraph #: :langgraph:`StateGraph <reference/graphs/?h=state#langgraph.graph.state.StateGraph>` : Declarative graph (nodes + edges) before compilation.
     compiler: CompiledStateGraph #: :langgraph:`CompiledStateGraph <reference/graphs/?h=compiled#langgraph.graph.state.CompiledStateGraph>` : Executable state machine with persistence.
@@ -98,7 +98,7 @@ class Agent:
 
         self.logger.info("Agent initialization completed")
 
-    def _load_examples(self):
+    def _load_examples(self) -> List[Dict[str, str]]:
         """Load few-shot examples for router prompting.
 
         Returns
@@ -691,7 +691,6 @@ if __name__ == "__main__":
             )
         )
     )
-    agent.draw_graph()
     # metadata["chunk_idx"]
-    # agent_response = agent.answer(chat_request)
-    # print(agent_response.content)
+    agent_response = agent.answer(chat_request)
+    print(agent_response.content)

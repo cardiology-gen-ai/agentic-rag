@@ -15,8 +15,8 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from cardiology_gen_ai.utils.logger import get_logger
 
-from src.agentic_rag.managers.llm_manager import LLMManager
-from src.agentic_rag.utils.chat import ChatResponse, ChatRequest
+from agentic_rag.managers.llm_manager import LLMManager
+from agentic_rag.utils.chat import ChatResponse, ChatRequest
 
 
 logger = get_logger("Agent memory management based on LangGraph")
@@ -39,18 +39,18 @@ class ConversationTurn(BaseModel):
 
     @classmethod
     def from_agent(cls, response: ChatResponse, request: ChatRequest) -> "ConversationTurn":
-        """Build a :class:`~src.persistence.message.ConversationTurn` from agent I/O payloads.
+        """Build a :class:`~src.agentic_rag.persistence.message.ConversationTurn` from agent I/O payloads.
 
         Parameters
         ----------
-        response : :class:`~src.utils.chat.ChatResponse`
+        response : :class:`~src.agentic_rag.utils.chat.ChatResponse`
             Agent response envelope.
-        request : :class:`~src.utils.chat.ChatRequest`
+        request : :class:`~src.agentic_rag.utils.chat.ChatRequest`
             Agent request envelope containing conversation context.
 
         Returns
         -------
-        :class:`~src.persistence.message.ConversationTurn`
+        :class:`~src.agentic_rag.persistence.message.ConversationTurn`
             New instance populated from the agent's request/response.
         """
         return ConversationTurn(
@@ -78,20 +78,20 @@ class RetrievalTurn(BaseModel):
 
     @classmethod
     def from_agent(cls, response: ChatResponse, request: ChatRequest, embedding_name: str) -> "RetrievalTurn":
-        """Build a :class:`~src.persistence.message.RetrievalTurn` from agent I/O plus embedding name.
+        """Build a :class:`~src.agentic_rag.persistence.message.RetrievalTurn` from agent I/O plus embedding name.
 
         Parameters
         ----------
-        response : :class:`~src.utils.chat.ChatResponse`
+        response : :class:`~src.agentic_rag.utils.chat.ChatResponse`
             Agent response envelope containing retrieval metadata under ``metadata['sources']``.
-        request : :class:`~src.utils.chat.ChatRequest`
+        request : :class:`~src.agentic_rag.utils.chat.ChatRequest`
             Agent request envelope containing conversation context.
         embedding_name : :class:`str`
             Name of the embedding configuration used by the retriever.
 
         Returns
         -------
-        :class:`~src.persistence.message.RetrievalTurn`
+        :class:`~src.agentic_rag.persistence.message.RetrievalTurn`
             New instance populated with question and retrieved sources.
         """
         return RetrievalTurn(
@@ -107,10 +107,10 @@ class LLMTurn(BaseModel):
     """Telemetry about the LLM call associated with a user-assistant interaction turn."""
     message_id: uuid.UUID | str #: :class:`uuid.UUID` or :class:`str` : Unique identifier for the message/turn.
     session_id: uuid.UUID | str #: :class:`uuid.UUID` or :class:`str` : Conversation (session) identifier.
-    model_name: str #: :class:`str` : The underlying model reported by :class:`~src.managers.llm_manager.LLMManager`.
-    generator_temperature: float = 0 #: :class:`float`, optional : Temperature used for the :attr:`~src.managers.llm_manager.LLMManager.generator` runnable.
-    router_temperature: float = 0 #: :class:`float`, optional : Temperature used for the :attr:`~src.managers.llm_manager.LLMManager.router` runnable.
-    grader_temperature: float = 0 #: :class:`float`, optional : Temperature used for the :attr:`~src.managers.llm_manager.LLMManager.grader` runnable.
+    model_name: str #: :class:`str` : The underlying model reported by :class:`~src.agentic_rag.managers.llm_manager.LLMManager`.
+    generator_temperature: float = 0 #: :class:`float`, optional : Temperature used for the :attr:`~src.agentic_rag.managers.llm_manager.LLMManager.generator` runnable.
+    router_temperature: float = 0 #: :class:`float`, optional : Temperature used for the :attr:`~src.agentic_rag.managers.llm_manager.LLMManager.router` runnable.
+    grader_temperature: float = 0 #: :class:`float`, optional : Temperature used for the :attr:`~src.agentic_rag.managers.llm_manager.LLMManager.grader` runnable.
     token_used: int | None = None #: :class:`int`, optional : Number of tokens consumed by the model for the turn.
     latency_ms: float | None = None #: :class:`float`, optional : Total wall-clock latency in milliseconds for model generation.
 
@@ -122,15 +122,15 @@ class LLMTurn(BaseModel):
     @classmethod
     def from_agent(cls, response: ChatResponse, request: ChatRequest, llm_manager: LLMManager,
                    duration: float = None) -> "LLMTurn":
-        """Build an :class:`~src.persistence.message.LLMTurn` from agent I/O and a :class:`~src.managers.llm_manager.LLMManager`.
+        """Build an :class:`~src.agentic_rag.persistence.message.LLMTurn` from agent I/O and a :class:`~src.agentic_rag.managers.llm_manager.LLMManager`.
 
         Parameters
         ----------
-        response : :class:`~src.utils.chat.ChatResponse`
+        response : :class:`~src.agentic_rag.utils.chat.ChatResponse`
             Agent response envelope.
-        request : :class:`~src.utils.chat.ChatRequest`
+        request : :class:`~src.agentic_rag.utils.chat.ChatRequest`
             Agent request envelope.
-        llm_manager : :class:`~src.managers.llm_manager.LLMManager`
+        llm_manager : :class:`~src.agentic_rag.managers.llm_manager.LLMManager`
             Manager providing model name, temperatures, and token counting.
         duration : :class:`float`, optional
             Total generation latency in milliseconds.
@@ -204,11 +204,11 @@ class AgentMemory:
         self.checkpointer.setup()
 
     def save_conversation_turn(self, conversation_turn: ConversationTurn) -> None:
-        """Persist a :class:`~src.persistence.message.ConversationTurn` under the ``conversation`` namespace.
+        """Persist a :class:`~src.agentic_rag.persistence.message.ConversationTurn` under the ``conversation`` namespace.
 
         Parameters
         ----------
-        conversation_turn : :class:`~src.persistence.message.ConversationTurn`
+        conversation_turn : :class:`~src.agentic_rag.persistence.message.ConversationTurn`
             The turn to persist.
         """
         try:
@@ -220,7 +220,7 @@ class AgentMemory:
 
     @staticmethod
     def item_to_conversation_turn(item: Any) -> ConversationTurn:
-        """Convert a raw store item into a :class:`~src.persistence.message.ConversationTurn`.
+        """Convert a raw store item into a :class:`~src.agentic_rag.persistence.message.ConversationTurn`.
 
         Parameters
         ----------
@@ -229,8 +229,8 @@ class AgentMemory:
 
         Returns
         -------
-        :class:`~src.persistence.message.ConversationTurn`
-            A validated :class:`~src.persistence.message.ConversationTurn` instance.
+        :class:`~src.agentic_rag.persistence.message.ConversationTurn`
+            A validated :class:`~src.agentic_rag.persistence.message.ConversationTurn` instance.
         """
         v = item.value or {}
         session_from_ns = item.namespace[1] if getattr(item, "namespace", None) and len(item.namespace) > 1 else None
@@ -259,7 +259,7 @@ class AgentMemory:
 
         Returns
         -------
-        list of :class:`~src.persistence.message.ConversationTurn`
+        list of :class:`~src.agentic_rag.persistence.message.ConversationTurn`
             The most recent ``limit`` conversation turns.
         """
         conversation_items = self.store.search(("conversation", str(session_id)), limit=1000)
@@ -270,7 +270,7 @@ class AgentMemory:
         return conversation_items_sorted[:limit]
 
     def save_retrieval_turn(self, retrieval_turn: RetrievalTurn) -> None:
-        """Persist a :class:`~src.persistence.message.RetrievalTurn` under the ``retrieval`` namespace."""
+        """Persist a :class:`~src.agentic_rag.persistence.message.RetrievalTurn` under the ``retrieval`` namespace."""
         try:
             self.store.put(("retrieval", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
                            "results",
@@ -279,7 +279,7 @@ class AgentMemory:
             logger.info(f"Failed to save retriever results: {e}")
 
     def save_llm_turn(self, llm_turn: LLMTurn) -> None:
-        """Persist an :class:`~src.persistence.message.LLMTurn` under the ``llm`` namespace."""
+        """Persist an :class:`~src.agentic_rag.persistence.message.LLMTurn` under the ``llm`` namespace."""
         try:
             self.store.put(("llm", str(llm_turn.session_id), str(llm_turn.message_id)),
                            "results",
@@ -288,7 +288,7 @@ class AgentMemory:
             logger.info(f"Failed to save LLM information: {e}")
 
     def save_feedback(self, feedback: FeedbackTurn):
-        """Persist a :class:`~src.persistence.message.FeedbackTurn` under the ``feedback`` namespace."""
+        """Persist a :class:`~src.agentic_rag.persistence.message.FeedbackTurn` under the ``feedback`` namespace."""
         try:
             self.store.put(("feedback", str(feedback.session_id)),
                             str(feedback.message_id),
@@ -306,7 +306,7 @@ class AgentMemory:
 
         Returns
         -------
-        list of :class:`~src.persistence.message.FeedbackTurn`
+        list of :class:`~src.agentic_rag.persistence.message.FeedbackTurn`
             All feedback entries stored for the session.
         """
         session_items = self.store.search(("feedback", str(session_id)), limit=1000)
@@ -351,7 +351,7 @@ class AsyncAgentMemory:
     """Asynchronous memory manager backed by :postgresql:`PostgreSQL <about>`.
 
     This class wraps :langgraph:`AsyncPostgresStore <store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore>` and :langgraph:`AsyncPostgresSaver <checkpoints/?h=asyncpostgressaver#langgraph.checkpoint.postgres.aio.AsyncPostgresSaver>`
-    instances and exposes async helpers mirroring :class:`~src.persistence.message.AgentMemory`.
+    instances and exposes async helpers mirroring :class:`~src.agentic_rag.persistence.message.AgentMemory`.
     """
     store: AsyncPostgresStore #: :langgraph:`AsyncPostgresStore <store/?h=asyncpostgresstore#langgraph.store.postgres.AsyncPostgresStore>` : Initialized asynchronous store instance.
     checkpointer: AsyncPostgresSaver #: :langgraph:`AsyncPostgresSaver <checkpoints/?h=asyncpostgressaver#langgraph.checkpoint.postgres.aio.AsyncPostgresSaver>` : Initialized asynchronous checkpointer instance.
@@ -361,7 +361,7 @@ class AsyncAgentMemory:
 
     @classmethod
     async def create(cls, db_connection_string: Optional[str] = None) -> "AsyncAgentMemory":
-        """Factory that creates and sets up an :class:`~src.persistence.message.AsyncAgentMemory`.
+        """Factory that creates and sets up an :class:`~src.agentic_rag.persistence.message.AsyncAgentMemory`.
 
         Parameters
         ----------
@@ -370,7 +370,7 @@ class AsyncAgentMemory:
 
         Returns
         -------
-        :class:`~src.persistence.message.AsyncAgentMemory`
+        :class:`~src.agentic_rag.persistence.message.AsyncAgentMemory`
             A fully initialized asynchronous memory manager.
 
         Raises
@@ -399,23 +399,23 @@ class AsyncAgentMemory:
                 await self.store.adelete(it.namespace, it.key)
 
     async def save_conversation_turn(self, conversation_turn: ConversationTurn) -> None:
-        """Persist a :class:`~src.persistence.message.ConversationTurn` under the ``conversation`` namespace (asynchronous)."""
+        """Persist a :class:`~src.agentic_rag.persistence.message.ConversationTurn` under the ``conversation`` namespace (asynchronous)."""
         await self.store.aput(("conversation", str(conversation_turn.session_id)),
                               str(conversation_turn.message_id),
                               conversation_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_retrieval_turn(self, retrieval_turn: RetrievalTurn) -> None:
-        """Persist a :class:`~src.persistence.message.RetrievalTurn` under the ``retrieval`` namespace (asynchronous)."""
+        """Persist a :class:`~src.agentic_rag.persistence.message.RetrievalTurn` under the ``retrieval`` namespace (asynchronous)."""
         await self.store.aput(("retrieval", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
                               "results", retrieval_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_llm_turn(self, llm_turn: LLMTurn) -> None:
-        """Persist an :class:`~src.persistence.message.LLMTurn` under the ``llm`` namespace (asynchronous)."""
+        """Persist an :class:`~src.agentic_rag.persistence.message.LLMTurn` under the ``llm`` namespace (asynchronous)."""
         await self.store.aput(("llm", str(llm_turn.session_id), str(llm_turn.message_id)),
                               "results", llm_turn.model_dump(exclude_none=False, mode="json"))
 
     async def save_feedback(self, feedback: FeedbackTurn) -> None:
-        """Persist a :class:`~src.persistence.message.FeedbackTurn` under the ``feedback`` namespace (asynchronous)."""
+        """Persist a :class:`~src.agentic_rag.persistence.message.FeedbackTurn` under the ``feedback`` namespace (asynchronous)."""
         await self.store.aput( ("feedback", str(feedback.session_id)),
                                str(feedback.message_id),
                                feedback.model_dump(exclude_none=False, mode="json"))

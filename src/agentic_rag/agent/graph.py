@@ -17,12 +17,12 @@ from langgraph.graph.state import CompiledStateGraph
 
 from cardiology_gen_ai.utils.logger import get_logger
 
-from src.agentic_rag.config.manager import AgentConfigManager, AgentConfig
-from src.agentic_rag.managers.llm_manager import LLMManager
-from src.agentic_rag.managers.search_manager import SearchManager
-from src.agentic_rag.persistence.message import AgentMemory
-from src.agentic_rag.agent import nodes
-from src.agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
+from agentic_rag.config.manager import AgentConfigManager, AgentConfig
+from agentic_rag.managers.llm_manager import LLMManager
+from agentic_rag.managers.search_manager import SearchManager
+from agentic_rag.persistence.message import AgentMemory
+from agentic_rag.agent import nodes
+from agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
 
 
 GENERATION_LIMIT = 2
@@ -52,20 +52,20 @@ class Agent:
     Parameters
     ----------
     agent_id : :class:`str`
-        Identifier used to load configuration via :class:`~src.config.manager.AgentConfigManager`.
+        Identifier used to load configuration via :class:`~src.agentic_rag.config.manager.AgentConfigManager`.
     """
     agent_id: str #: :class:`str` : Identifier of this agent instance.
     agent_name: str #: :class:`str` : Human-friendly name from configuration.
-    config: AgentConfig #: :class:`~src.config.manager.AgentConfig` : Loaded configuration (system prompt, embeddings, indexing, search, etc.).
+    config: AgentConfig #: :class:`~src.agentic_rag.config.manager.AgentConfig` : Loaded configuration (system prompt, embeddings, indexing, search, etc.).
     logger: Logger #: :class:`logging.Logger` : Logger for lifecycle and diagnostics.
-    llm_manager: LLMManager #: :class:`~src.managers.llm_manager.LLMManager` :  LLM manager exposing ``router``, ``generator``, and ``grader`` :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`.
+    llm_manager: LLMManager #: :class:`~src.agentic_rag.managers.llm_manager.LLMManager` :  LLM manager exposing ``router``, ``generator``, and ``grader`` :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`.
     router: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for routing queries.
     generator: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for answer generation.
     grader: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for grading/validation of retrieved context and generated chunks.
-    search_manager: SearchManager #: :class:`~src.managers.search_manager.SearchManager` : Index loader and retriever factory for the vector store.
+    search_manager: SearchManager #: :class:`~src.agentic_rag.managers.search_manager.SearchManager` : Index loader and retriever factory for the vector store.
     retriever: VectorStoreRetriever #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Configured retriever if the vector store exists.
     examples: List[Dict[str, str]] #: :class:`list` : Few-shot examples loaded for the router prompt.
-    memory: AgentMemory #: :class:`~src.persistence.message.AgentMemory` : Store + checkpointer used by :langgraph:`LangGraph <reference/graphs>`.
+    memory: AgentMemory #: :class:`~src.agentic_rag.persistence.message.AgentMemory` : Store + checkpointer used by :langgraph:`LangGraph <reference/graphs>`.
     graph: StateGraph #: :langgraph:`StateGraph <reference/graphs/?h=state#langgraph.graph.state.StateGraph>` : Declarative graph (nodes + edges) before compilation.
     compiler: CompiledStateGraph #: :langgraph:`CompiledStateGraph <reference/graphs/?h=compiled#langgraph.graph.state.CompiledStateGraph>` : Executable state machine with persistence.
     def __init__(self, agent_id: str):
@@ -130,7 +130,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Current state; must include ``question``.
 
         Returns
@@ -151,7 +151,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must contain ``question``, optionally ``messages`` and ``language``.
 
         Returns
@@ -174,7 +174,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must contain ``question``, ``language``, and ``messages``.
 
         Returns
@@ -199,7 +199,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``contextual_question``.
 
         Returns
@@ -223,7 +223,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``contextual_question`` and ``documents``.
 
         Returns
@@ -257,7 +257,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``contextual_question``.
 
         Returns
@@ -281,7 +281,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``documents`` and ``document_request``.
 
         Returns
@@ -308,7 +308,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``documents``, ``contextual_question``, and ``language``.
 
         Returns
@@ -331,7 +331,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``contextual_question``, ``documents``, and ``language``.
 
         Returns
@@ -356,7 +356,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``contextual_question`` and ``transform_query_count``.
 
         Returns
@@ -379,7 +379,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``language`` and ``question``.
 
         Returns
@@ -399,7 +399,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``contextual_question``.
 
         Returns
@@ -443,7 +443,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``documents``, ``response``, ``generation_count``, and ``contextual_question``.
 
         Returns
@@ -489,7 +489,7 @@ class Agent:
 
         Parameters
         ----------
-        state : :class:`~src.agent.graph.GraphState`
+        state : :class:`~src.agentic_rag.agent.graph.GraphState`
             Must include ``transform_query_count``.
 
         Returns
@@ -587,17 +587,17 @@ class Agent:
         return {"response": response}
 
     def _convert_conversation_to_messages(self, conversation: ConversationRequest) -> List[AnyMessage]:
-        """Convert a :class:`~src.utils.chat.ConversationRequest` into LangChain messages.
+        """Convert a :class:`~src.agentic_rag.utils.chat.ConversationRequest` into LangChain messages.
 
         Parameters
         ----------
-        conversation : :class:`~src.utils.chat.ConversationRequest`
+        conversation : :class:`~src.agentic_rag.utils.chat.ConversationRequest`
             Container with history and the current question.
 
         Returns
         -------
         list of :class:`~langchain_core.messages.base.AnyMessage`
-            Tail slice of messages limited by :attr:`~src.agent.graph.Agent.config` ``.memory.length``.
+            Tail slice of messages limited by :attr:`~src.agentic_rag.agent.graph.Agent.config` ``.memory.length``.
         """
         messages: List[AnyMessage] = []
         for message in conversation.history:
@@ -618,12 +618,12 @@ class Agent:
 
         Parameters
         ----------
-        request : :class:`~src.utils.chat.ChatRequest`
+        request : :class:`~src.agentic_rag.utils.chat.ChatRequest`
             Top-level request containing user info and conversation payload.
 
         Returns
         -------
-        :class:`~src.utils.chat.ChatResponse`
+        :class:`~src.agentic_rag.utils.chat.ChatResponse`
             Assistant response with metadata about sources, generation count, and contextual question.
         """
         config: RunnableConfig = \

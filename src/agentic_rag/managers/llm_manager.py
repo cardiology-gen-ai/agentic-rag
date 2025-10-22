@@ -8,7 +8,7 @@ from langchain_ollama.chat_models import ChatOllama
 from langchain_huggingface.chat_models.huggingface import ChatHuggingFace, HuggingFacePipeline
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 
-from src.agentic_rag.config.manager import LLMConfig, AgentConfigManager
+from agentic_rag.config.manager import LLMConfig, AgentConfigManager
 
 from cardiology_gen_ai.utils.logger import get_logger
 
@@ -29,10 +29,10 @@ class LLMManager:
 
     Parameters
     ----------
-    config : :class:`~src.config.manager.LLMConfig`
+    config : :class:`~src.agentic_rag.config.manager.LLMConfig`
         Configuration object holding model name, backend selection, temperatures, quantization bits (for HF), and other options.
     """
-    config: LLMConfig #: : :class:`~src.config.manager.LLMConfig` : The configuration instance provided at construction time.
+    config: LLMConfig #: : :class:`~src.agentic_rag.config.manager.LLMConfig` : The configuration instance provided at construction time.
     logger: logging.Logger #: :class:`logging.Logger` : Logger used to emit lifecycle and diagnostic messages.
     llm: ChatOllama | ChatHuggingFace #: :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` or :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`: The underlying chat model, selected according to ``config.ollama``.
     router: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.router_temperature``.

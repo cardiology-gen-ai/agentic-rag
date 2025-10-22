@@ -5,12 +5,12 @@ from datetime import datetime, timezone
 
 from cardiology_gen_ai.utils.logger import get_logger
 
-from src.agentic_rag.persistence import get_sync_db
-from src.agentic_rag.agent.graph import Agent
-from src.agentic_rag.persistence import SessionDB
-from src.agentic_rag.persistence.user import UserDB, UserCreateSchema
-from src.agentic_rag.utils.chat import MessageSchema, ChatRequest, ConversationRequest
-from src.main import create_new_user, get_session, create_new_session
+from agentic_rag.persistence.db import get_sync_db
+from agentic_rag.agent.graph import Agent
+from agentic_rag.persistence.session import SessionDB
+from agentic_rag.persistence.user import UserDB, UserCreateSchema
+from agentic_rag.utils.chat import MessageSchema, ChatRequest, ConversationRequest
+from main import create_new_user, get_session, create_new_session
 
 logger = get_logger("Agentic RAG Test")
 

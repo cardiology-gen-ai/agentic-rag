@@ -65,7 +65,7 @@ class DatabaseConnection:
 
 
 def get_db_connection(db_connection_string: Optional[str] = None, sync: Optional[bool] = True) -> DatabaseConnection:
-    """Return a :class:`~src.persistence.db.DatabaseConnection` instance.
+    """Return a :class:`~src.agentic_rag.persistence.db.DatabaseConnection` instance.
 
     Parameters
     ----------
@@ -76,7 +76,7 @@ def get_db_connection(db_connection_string: Optional[str] = None, sync: Optional
 
     Returns
     -------
-    :class:`~src.persistence.db.DatabaseConnection`
+    :class:`~src.agentic_rag.persistence.db.DatabaseConnection`
         The configured connection object.
     """
     return DatabaseConnection(db_connection_string, sync)

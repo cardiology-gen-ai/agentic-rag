@@ -23,14 +23,14 @@ class ConversationRequest(BaseModel):
     id: str #: str : Unique identifier of the conversation.
     chatbotId: str #: str : Identifier of the target chatbot/agent.
     question: MessageSchema #: :class:`MessageSchema` : The question/message to answer.
-    history: List[MessageSchema] #: :class:`typing.List`\[:class:`~src.utils.chat.MessageSchema`\] : Message history.
+    history: List[MessageSchema] #: :class:`typing.List`\[:class:`~src.agentic_rag.utils.chat.MessageSchema`\] : Message history.
 
 
 class ChatRequest(BaseModel):
     """Top-level request for a chat inference call."""
     user: str #: str : Human-readable username or handle.
     user_id: str | None = None #: str, optional : Stable user identifier, if available.
-    conversation: ConversationRequest #: :class:`~src.utils.chat.ConversationRequest` : The conversation payload containing the current question and history.
+    conversation: ConversationRequest #: :class:`~src.agentic_rag.utils.chat.ConversationRequest` : The conversation payload containing the current question and history.
 
 
 class ChatResponse(BaseModel):

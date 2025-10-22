@@ -8,8 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, Session
 
-from src.agentic_rag.persistence.orm_base import BaseORM, BaseDB
-from src.agentic_rag.persistence.db import get_sync_db, get_async_db, ensure_database
+from agentic_rag.persistence.orm_base import BaseORM, BaseDB
+from agentic_rag.persistence.db import get_sync_db, get_async_db, ensure_database
 
 
 class UserORM(BaseORM):
@@ -30,7 +30,7 @@ class UserCreateSchema(BaseModel):
 
 
 class UserSchema(UserCreateSchema):
-    """Pydantic schema mirroring :class:`~src.persistence.user.UserORM` for I/O and validation."""
+    """Pydantic schema mirroring :class:`~src.agentic_rag.persistence.user.UserORM` for I/O and validation."""
     user_id: uuid.UUID #: :class:`uuid.UUID` : Primary key of the user.
     user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`\[{``user``, ``admin``, ``assistant``}\] : Role assigned to the user.
 
@@ -38,7 +38,7 @@ class UserSchema(UserCreateSchema):
 class UserDB(BaseDB):
     """User DataBase CRUD (Create-Read-Update-Delete), sync and async, backed by SQLAlchemy.
 
-    On construction, this class ensures that the :class:`~src.persistence.user.UserORM` table exists
+    On construction, this class ensures that the :class:`~src.agentic_rag.persistence.user.UserORM` table exists
     by calling :sqlalchemy:`sqlalchemy.MetaData.create_all <core/metadata.html#sqlalchemy.schema.MetaData.create_all>` for that table only.
 
     .. rubric:: Notes
@@ -59,16 +59,16 @@ class UserDB(BaseDB):
         BaseORM.metadata.create_all(engine, tables=[UserORM.__table__])
 
     def _create_user(self, user: UserCreateSchema) -> UserORM:
-        """Construct a new :class:`~src.persistence.user.UserORM` (not committed).
+        """Construct a new :class:`~src.agentic_rag.persistence.user.UserORM` (not committed).
 
         Parameters
         ----------
-        user : :class:`~src.persistence.user.UserCreateSchema`
+        user : :class:`~src.agentic_rag.persistence.user.UserCreateSchema`
             Input data with ``username`` and ``email``.
 
         Returns
         -------
-        :class:`~src.persistence.user.UserORM`
+        :class:`~src.agentic_rag.persistence.user.UserORM`
             The newly constructed user object.
         """
         user_id = uuid.uuid4()
@@ -88,12 +88,12 @@ class UserDB(BaseDB):
 
         Parameters
         ----------
-        user : :class:`~src.persistence.user.UserCreateSchema`
+        user : :class:`~src.agentic_rag.persistence.user.UserCreateSchema`
             Input data for user creation.
 
         Returns
         -------
-        :class:`~src.persistence.user.UserORM`
+        :class:`~src.agentic_rag.persistence.user.UserORM`
             The committed and refreshed user row.
         """
         user_db = self._create_user(user)
@@ -106,12 +106,12 @@ class UserDB(BaseDB):
 
         Parameters
         ----------
-        user : :class:`~src.persistence.user.UserCreateSchema`
+        user : :class:`~src.agentic_rag.persistence.user.UserCreateSchema`
             Input data for user creation.
 
         Returns
         -------
-        :class:`~src.persistence.user.UserORM`
+        :class:`~src.agentic_rag.persistence.user.UserORM`
             The committed and refreshed user row.
         """
         user_db = self._create_user(user)
@@ -139,7 +139,7 @@ class UserDB(BaseDB):
         Returns
         -------
         sqlalchemy:`Select <core/selectable.html#sqlalchemy.sql.expression.Select>`
-            A select operator over :class:`~src.persistence.user.UserORM`.
+            A select operator over :class:`~src.agentic_rag.persistence.user.UserORM`.
 
         Raises
         ------
@@ -174,7 +174,7 @@ class UserDB(BaseDB):
         return result.scalars().first()
 
     def sync_update_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
-        """Set :attr:`~src.persistence.user.UserORM.last_active` to now for the given user (synchronous).
+        """Set :attr:`~src.agentic_rag.persistence.user.UserORM.last_active` to now for the given user (synchronous).
 
         Parameters
         ----------
@@ -183,7 +183,7 @@ class UserDB(BaseDB):
 
         Returns
         -------
-        :class:`~src.persistence.user.UserORM` or ``None``
+        :class:`~src.agentic_rag.persistence.user.UserORM` or ``None``
             Updated user row if found, otherwise ``None``.
         """
         user_info: UserORM | None = self.sync_get_user(user_id=user_id)
@@ -196,7 +196,7 @@ class UserDB(BaseDB):
         return user_info
 
     async def async_update_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
-        """Set :attr:`~src.persistence.user.UserORM.last_active` to now for the given user (asynchronous).
+        """Set :attr:`~src.agentic_rag.persistence.user.UserORM.last_active` to now for the given user (asynchronous).
 
         Parameters
         ----------
@@ -205,7 +205,7 @@ class UserDB(BaseDB):
 
         Returns
         -------
-        :class:`~src.persistence.user.UserORM` or ``None``
+        :class:`~src.agentic_rag.persistence.user.UserORM` or ``None``
             Updated user row if found, otherwise ``None``.
         """
         user_info: UserORM | None = await self.async_get_user(user_id=user_id)

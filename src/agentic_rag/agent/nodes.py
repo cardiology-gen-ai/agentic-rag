@@ -5,7 +5,7 @@ from langchain_core.runnables import RunnableLambda, Runnable
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from src.agentic_rag.agent import output
+from agentic_rag.agent import output
 
 
 def _strip_think(s: str) -> str:
@@ -16,9 +16,14 @@ def _strip_think(s: str) -> str:
 
 
 def _get_final(s: str) -> str:
-    match = re.search(r"assistantfinal\s*(.*)$", s, re.DOTALL)
-    if match:
-        content = match.group(1).strip()
+    # useful for parsing gpt-oss output
+    match_final = re.search(r"assistantfinal\s*(.*)$", s, re.DOTALL)
+    if match_final:
+        content = match_final.group(1).strip()
+        return content
+    match_json = re.search(r"[Jj][Ss][Oo][Nn]\s*(\{.*)$", s, re.DOTALL)
+    if match_json:
+        content = match_json.group(1).strip()
         return content
     return s
 
@@ -27,7 +32,7 @@ def detect_language(llm: Runnable) -> Runnable:
     """Build a runnable that detects the language of the text.
 
     The chain formats instructions, prompts the model, parses the raw string,
-    strips ``<think>`` traces, and validates the final JSON into :class:`~src.agent.output.DetectLanguage`.
+    strips ``<think>`` traces, and validates the final JSON into :class:`~src.agentic_rag.agent.output.DetectLanguage`.
 
     Parameters
     ----------
@@ -37,7 +42,7 @@ def detect_language(llm: Runnable) -> Runnable:
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
-        Runnable pipeline producing a validated :class:`~src.agent.output.DetectLanguage` instance.
+        Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.DetectLanguage` instance.
     """
     parser = JsonOutputParser(pydantic_object=output.DetectLanguage)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'language' whose value is either 'it' or 'en'."
@@ -104,7 +109,7 @@ def contextualize_question(llm: Runnable, context_prompt: str) -> Runnable:
 def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnable:
     """Build a runnable that routes a query to the ``conversational`` or ``document-based`` branch.
 
-    The chain instructs the model, parses JSON, strips ``<think>`` traces, and validates output into :class:`~src.agent.output.RouteQuery`.
+    The chain instructs the model, parses JSON, strips ``<think>`` traces, and validates output into :class:`~src.agentic_rag.agent.output.RouteQuery`.
 
     Parameters
     ----------
@@ -118,7 +123,7 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
-        Runnable pipeline producing a validated :class:`~src.agent.output.RouteQuery` instance.
+        Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.RouteQuery` instance.
     """
     parser = JsonOutputParser(pydantic_object=output.RouteQuery)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document_based'."
@@ -190,7 +195,7 @@ def conversational_agent(llm: Runnable, agent_prompt: str) -> Runnable:
 def retrieval_grader(llm: Runnable) -> Runnable:
     """Build a runnable that grades document relevance to a question.
 
-    Returns a binary score via :class:`~src.agent.output.GradeDocuments` after JSON parsing and validation.
+    Returns a binary score via :class:`~src.agentic_rag.agent.output.GradeDocuments` after JSON parsing and validation.
 
     Parameters
     ----------
@@ -200,7 +205,7 @@ def retrieval_grader(llm: Runnable) -> Runnable:
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
-        Runnable pipeline producing a validated :class:`~src.agent.output.GradeDocuments` instance.
+        Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.GradeDocuments` instance.
     """
     parser = JsonOutputParser(pydantic_object=output.GradeDocuments)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
@@ -225,7 +230,7 @@ def retrieval_grader(llm: Runnable) -> Runnable:
 def document_request_detector(llm: Runnable) -> Runnable:
     """Build a runnable that detects whether a user is explicitly requesting a document.
 
-    Produces a binary score via :class:`~src.agent.output.DocumentRequest` after JSON parsing and validation.
+    Produces a binary score via :class:`~src.agentic_rag.agent.output.DocumentRequest` after JSON parsing and validation.
 
     Parameters
     ----------
@@ -235,7 +240,7 @@ def document_request_detector(llm: Runnable) -> Runnable:
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
-        Runnable pipeline producing a validated :class:`~src.agent.output.DocumentRequest` instance.
+        Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.DocumentRequest` instance.
     """
     parser = JsonOutputParser(pydantic_object=output.DocumentRequest)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
@@ -382,7 +387,7 @@ def generate_default_response(llm: Runnable) -> Runnable:
 def ground_validator(llm: Runnable):
     """Build a runnable that checks whether a generation is grounded in retrieved facts.
 
-    Produces a binary score via :class:`~src.agent.output.GradeGrounding` after JSON parsing and validation.
+    Produces a binary score via :class:`~src.agentic_rag.agent.output.GradeGrounding` after JSON parsing and validation.
 
     Parameters
     ----------
@@ -392,7 +397,7 @@ def ground_validator(llm: Runnable):
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
-        Runnable pipeline producing a validated :class:`~src.agent.output.GradeGrounding` instance.
+        Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.GradeGrounding` instance.
     """
     parser = JsonOutputParser(pydantic_object=output.GradeGrounding)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
@@ -416,7 +421,7 @@ def ground_validator(llm: Runnable):
 def answer_grader(llm: Runnable):
     """Build a runnable that checks whether an answer resolves a question.
 
-    Produces a binary score via :class:`~src.agent.output.GradeAnswer` after JSON parsing and validation.
+    Produces a binary score via :class:`~src.agentic_rag.agent.output.GradeAnswer` after JSON parsing and validation.
 
     Parameters
     ----------
@@ -426,7 +431,7 @@ def answer_grader(llm: Runnable):
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
-        Runnable pipeline producing a validated :class:`~src.agent.output.GradeAnswer`.
+        Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.GradeAnswer`.
     """
     parser = JsonOutputParser(pydantic_object=output.GradeAnswer)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."

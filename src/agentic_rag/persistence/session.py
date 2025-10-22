@@ -7,9 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Mapped, mapped_column, Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agentic_rag.persistence.orm_base import BaseORM, BaseDB
-from src.agentic_rag.persistence.user import UserORM
-from src.agentic_rag.agent.graph import Agent
+from agentic_rag.persistence.orm_base import BaseORM, BaseDB
+from agentic_rag.persistence.user import UserORM
+from agentic_rag.agent.graph import Agent
 
 
 class SessionORM(BaseORM):
@@ -45,7 +45,7 @@ class SessionSchema(BaseModel):
 class SessionDB(BaseDB):
     """Session DataBase CRUD (Create-Read-Update-Delete), sync and async, backed by :sqlalchemy:`SQLAlchemy <>`.
 
-    On construction, this class ensures that the :class:`~src.persistence.session.SessionORM` table exists
+    On construction, this class ensures that the :class:`~src.agentic_rag.persistence.session.SessionORM` table exists
     by calling :sqlalchemy:`sqlalchemy.MetaData.create_all <core/metadata.html#sqlalchemy.schema.MetaData.create_all>` for that table only.
 
     .. rubric:: Notes
@@ -65,18 +65,18 @@ class SessionDB(BaseDB):
         BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
 
     def _create_session(self, user: UserORM, agent: Agent) -> SessionORM:
-        """Construct a new :class:`~src.persistence.session.SessionORM` (not committed).
+        """Construct a new :class:`~src.agentic_rag.persistence.session.SessionORM` (not committed).
 
         Parameters
         ----------
-        user : :class:`~src.persistence.user.UserORM`
+        user : :class:`~src.agentic_rag.persistence.user.UserORM`
             ORM instance for the current user; must expose ``user_id``, ``username``, and ``user_role``.
-        agent : :class:`~src.agent.graph.Agent`
+        agent : :class:`~src.agentic_rag.agent.graph.Agent`
             Agent instance providing LLM/embedding configuration.
 
         Returns
         -------
-        :class:`~src.persistence.session.SessionORM`
+        :class:`~src.agentic_rag.persistence.session.SessionORM`
             The newly constructed session object.
         """
         self.logger.info("Creating agent session")
@@ -99,14 +99,14 @@ class SessionDB(BaseDB):
 
         Parameters
         ----------
-        user : :class:`~src.persistence.user.UserORM`
+        user : :class:`~src.agentic_rag.persistence.user.UserORM`
             The current user ORM instance.
-        agent : :class:`~src.agent.graph.Agent`
+        agent : :class:`~src.agentic_rag.agent.graph.Agent`
             The agent instance used to populate model/embedding info.
 
         Returns
         -------
-        :class:`~src.persistence.session.SessionORM`
+        :class:`~src.agentic_rag.persistence.session.SessionORM`
             The committed and refreshed session row.
         """
         session_db = self._create_session(user, agent)
@@ -119,14 +119,14 @@ class SessionDB(BaseDB):
 
         Parameters
         ----------
-        user : :class:`~src.persistence.user.UserORM`
+        user : :class:`~src.agentic_rag.persistence.user.UserORM`
             The current user ORM instance.
-        agent : :class:`~src.agent.graph.Agent`
+        agent : :class:`~src.agentic_rag.agent.graph.Agent`
             The agent instance used to populate model/embedding info.
 
         Returns
         -------
-        :class:`~src.persistence.session.SessionORM`
+        :class:`~src.agentic_rag.persistence.session.SessionORM`
             The committed and refreshed session row.
         """
         session_db = self._create_session(user, agent)
@@ -150,7 +150,7 @@ class SessionDB(BaseDB):
         Returns
         -------
         :sqlalchemy:`Select <core/selectable.html#sqlalchemy.sql.expression.Select>`
-            A select operator over :class:`~src.persistence.session.SessionORM`.
+            A select operator over :class:`~src.agentic_rag.persistence.session.SessionORM`.
 
         Raises
         ------

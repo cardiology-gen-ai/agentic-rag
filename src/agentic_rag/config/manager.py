@@ -18,7 +18,7 @@ class SearchTypeNames(Enum):
 
 class SearchConfig(BaseModel):
     """Configuration for vector store search/retrieval."""
-    type: SearchTypeNames = SearchTypeNames.similarity #: :class:`~src.config.manager.SearchTypeNames`, optional : Retrieval strategy to use. Defaults to :data:`~src.config.manager.SearchTypeNames.similarity`.
+    type: SearchTypeNames = SearchTypeNames.similarity #: :class:`~src.agentic_rag.config.manager.SearchTypeNames`, optional : Retrieval strategy to use. Defaults to :data:`~src.agentic_rag.config.manager.SearchTypeNames.similarity`.
     top_k: int #: :class:`int` : Number of results to return.
     kwargs: Dict[str, Any] = None #: :class:`dict`, optional : Backend-specific arguments passed to the retriever.
     fetch_k: Optional[int] = None #: :class:`int`, optional : Candidate pool size for certain strategies (e.g., MMR).
@@ -80,12 +80,12 @@ class AgentConfig(BaseModel):
     language: str = "" #: :class:`str`, optional : Default language, used when detection is unavailable.
     allowed_languages: List[str] = field(default_factory=list) #: :class:`list` of :class:`str`, optional : Whitelist of languages the agent may use.
     embeddings: EmbeddingConfig = field(default_factory=EmbeddingConfig) #: :class:`cardiology_gen_ai.models.EmbeddingConfig` :  Embedding model configuration.
-    search: SearchConfig = field(default_factory=SearchConfig) #: :class:`~src.config.manager.SearchConfig` : Retrieval/search configuration.
+    search: SearchConfig = field(default_factory=SearchConfig) #: :class:`~src.agentic_rag.config.manager.SearchConfig` : Retrieval/search configuration.
     indexing: IndexingConfig = field(default_factory=IndexingConfig) #: :class:`cardiology_gen_ai.models.IndexingConfig` : Index backend configuration.
-    llm: LLMConfig = field(default_factory=LLMConfig) #: :class:`~src.config.manager.LLMConfig` : LLM backend configuration.
-    context: ContextConfig = field(default_factory=ContextConfig) #: :class:`~src.config.manager.ContextConfig` : Contextual prompt settings.
-    examples: ExamplesConfig = field(default_factory=ExamplesConfig) #: :class:`~src.config.manager.ExamplesConfig` : Few-shot examples settings.
-    memory: MemoryConfig = field(default_factory=MemoryConfig) #: :class:`~src.config.manager.MemoryConfig` : Conversation memory settings.
+    llm: LLMConfig = field(default_factory=LLMConfig) #: :class:`~src.agentic_rag.config.manager.LLMConfig` : LLM backend configuration.
+    context: ContextConfig = field(default_factory=ContextConfig) #: :class:`~src.agentic_rag.config.manager.ContextConfig` : Contextual prompt settings.
+    examples: ExamplesConfig = field(default_factory=ExamplesConfig) #: :class:`~src.agentic_rag.config.manager.ExamplesConfig` : Few-shot examples settings.
+    memory: MemoryConfig = field(default_factory=MemoryConfig) #: :class:`~src.agentic_rag.config.manager.MemoryConfig` : Conversation memory settings.
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "AgentConfig":
@@ -104,7 +104,7 @@ class AgentConfig(BaseModel):
 
 
 class AgentConfigManager(ConfigManager):
-    """Loader that produces a parsed :class:`~src.config.manager.AgentConfig`.
+    """Loader that produces a parsed :class:`~src.agentic_rag.config.manager.AgentConfig`.
 
     Parameters
     ----------

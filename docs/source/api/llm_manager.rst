@@ -13,7 +13,7 @@ the appropriate backend based on configuration and creating temperature-bound ru
 - All runnables (router, generator, grader) are bound to temperatures specified in the configuration.
 
 
-.. automodule:: src.managers.llm_manager
+.. automodule:: src.agentic_rag.managers.llm_manager
    :members:
    :exclude-members: from_config, model_config
    :member-order: bysource

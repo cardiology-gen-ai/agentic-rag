@@ -7,7 +7,7 @@ It defines the :sqlalchemy:`SQLAlchemy <>` ORM mapping (:class:`~src.persistence
 for input validation and data interchange.
 
 
-.. autoclass:: src.persistence.user.UserORM
+.. autoclass:: src.agentic_rag.persistence.user.UserORM
     :members:
     :undoc-members:
     :exclude-members: from_config, model_config
@@ -44,21 +44,21 @@ for input validation and data interchange.
         Last activity timestamp (stored as naive UTC).
 
 
-.. autoclass:: src.persistence.user.UserCreateSchema
+.. autoclass:: src.agentic_rag.persistence.user.UserCreateSchema
     :members:
     :undoc-members:
     :exclude-members: from_config, model_config
     :show-inheritance:
 
 
-.. autoclass:: src.persistence.user.UserSchema
+.. autoclass:: src.agentic_rag.persistence.user.UserSchema
     :members:
     :undoc-members:
     :exclude-members: from_config, model_config
     :show-inheritance:
 
 
-.. autoclass:: src.persistence.user.UserDB
+.. autoclass:: src.agentic_rag.persistence.user.UserDB
     :members:
     :undoc-members:
     :exclude-members: from_config, model_config

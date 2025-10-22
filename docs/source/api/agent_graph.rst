@@ -45,7 +45,7 @@ It integrates multiple components, including:
         classDef first fill-opacity:0
         classDef last fill:#bfb6fc
 
-.. automodule:: src.agent.graph
+.. automodule:: src.agentic_rag.agent.graph
    :members:
    :exclude-members: from_config, model_config
    :member-order: bysource

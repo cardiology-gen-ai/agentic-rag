@@ -1,4 +1,3 @@
-import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, Literal, Union
@@ -9,8 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, Session
 
-from src.persistence.orm_base import BaseORM, BaseDB
-from src.persistence.db import get_sync_db, get_async_db, ensure_database
+from src.agentic_rag.persistence.orm_base import BaseORM, BaseDB
+from src.agentic_rag.persistence.db import get_sync_db, get_async_db, ensure_database
 
 
 class UserORM(BaseORM):

@@ -7,9 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Mapped, mapped_column, Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.persistence.orm_base import BaseORM, BaseDB
-from src.persistence.user import UserORM
-from src.agent.graph import Agent
+from src.agentic_rag.persistence.orm_base import BaseORM, BaseDB
+from src.agentic_rag.persistence.user import UserORM
+from src.agentic_rag.agent.graph import Agent
 
 
 class SessionORM(BaseORM):

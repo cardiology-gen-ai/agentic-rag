@@ -4,7 +4,7 @@ Session ORM and Create Read Update Delete (CRUD) Management
 This module provides a :sqlalchemy:`SQLAlchemy <>` -based ORM mapping for user sessions** and a both synchronous and
 asynchronous CRUD interface for managing session records.
 
-.. autoclass:: src.persistence.session.SessionORM
+.. autoclass:: src.agentic_rag.persistence.session.SessionORM
     :members:
     :undoc-members:
     :exclude-members: from_config, model_config
@@ -61,14 +61,14 @@ asynchronous CRUD interface for managing session records.
       Number of messages exchanged in the session.
 
 
-.. autoclass:: src.persistence.session.SessionSchema
+.. autoclass:: src.agentic_rag.persistence.session.SessionSchema
     :members:
     :undoc-members:
     :exclude-members: from_config, model_config
     :show-inheritance:
 
 
-.. autoclass:: src.persistence.session.SessionDB
+.. autoclass:: src.agentic_rag.persistence.session.SessionDB
     :members:
     :undoc-members:
     :exclude-members: from_config, model_config

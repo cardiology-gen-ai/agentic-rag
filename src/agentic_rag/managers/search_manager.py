@@ -6,7 +6,7 @@ from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_core.documents.base import Document
 from qdrant_client.http import models
 
-from src.config.manager import SearchConfig, AgentConfigManager
+from src.agentic_rag.config.manager import SearchConfig, AgentConfigManager
 
 from cardiology_gen_ai.utils.singleton import Singleton
 from cardiology_gen_ai import IndexingConfig, IndexTypeNames, Vectorstore, QdrantVectorstore, FaissVectorstore, \

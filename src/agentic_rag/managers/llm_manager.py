@@ -8,7 +8,7 @@ from langchain_ollama.chat_models import ChatOllama
 from langchain_huggingface.chat_models.huggingface import ChatHuggingFace, HuggingFacePipeline
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 
-from src.config.manager import LLMConfig, AgentConfigManager
+from src.agentic_rag.config.manager import LLMConfig, AgentConfigManager
 
 from cardiology_gen_ai.utils.logger import get_logger
 

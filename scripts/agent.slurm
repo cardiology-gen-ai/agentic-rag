@@ -188,4 +188,4 @@ print("CUDA:", torch.cuda.is_available(),
 PY
 
 export PYTHONPATH="$PWD:${PYTHONPATH:-}"
-python -m src.agent.graph
+python -m src.agentic_rag.agent.graph

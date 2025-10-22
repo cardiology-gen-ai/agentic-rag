@@ -52,4 +52,4 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["src*", "agent*", "persistence*", "utils*"]
+include = ["agentic_rag*"]

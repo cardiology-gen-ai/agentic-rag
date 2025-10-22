@@ -6,7 +6,7 @@ LLM backends, system prompts, examples, memory, and overall agent behavior. Thes
 models ensure type safety, validation, and structured defaults when loading
 and managing agent configurations.
 
-.. automodule:: src.config.manager
+.. automodule:: src.agentic_rag.config.manager
    :members:
    :exclude-members: from_config, model_config
    :member-order: bysource

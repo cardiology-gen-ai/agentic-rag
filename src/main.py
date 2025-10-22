@@ -5,12 +5,12 @@ from typing import Optional, cast, Literal
 
 from cardiology_gen_ai.utils.logger import get_logger
 
-from src.persistence.db import get_sync_db
-from src.agent.graph import Agent
-from src.persistence.message import ConversationTurn, RetrievalTurn, LLMTurn, FeedbackRequest, FeedbackTurn
-from src.persistence.session import SessionDB
-from src.persistence.user import UserORM, UserDB, UserCreateSchema
-from src.utils.chat import MessageSchema, ChatRequest, ConversationRequest, ChatResponse, MessageRequest
+from src.agentic_rag.persistence import get_sync_db
+from src.agentic_rag.agent.graph import Agent
+from src.agentic_rag.persistence.message import ConversationTurn, RetrievalTurn, LLMTurn, FeedbackRequest, FeedbackTurn
+from src.agentic_rag.persistence import SessionDB
+from src.agentic_rag.persistence.user import UserORM, UserDB, UserCreateSchema
+from src.agentic_rag.utils.chat import MessageSchema, ChatRequest, ConversationRequest, ChatResponse, MessageRequest
 
 logger = get_logger("Agentic RAG application")
 

@@ -3,12 +3,12 @@ from typing import Optional, Union
 
 import psycopg
 from psycopg import sql
-
-from cardiology_gen_ai.utils.logger import get_logger
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from cardiology_gen_ai.utils.logger import get_logger
 
 
 POSTGRES_ADMIN_DSN = os.getenv("POSTGRES_ADMIN_DSN")

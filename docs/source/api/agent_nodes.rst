@@ -22,13 +22,13 @@ parsers, and small transformation lambdas so that they can be composed into larg
   backed by Pydantic output models. Parsers are followed by light-weight model validation to
   return typed instances.
 
-.. automodule:: src.agent.output
+.. automodule:: src.agentic_rag.agent.output
    :members:
    :exclude-members: _strip_think, from_config, model_config
    :member-order: bysource
 
 
-.. automodule:: src.agent.nodes
+.. automodule:: src.agentic_rag.agent.nodes
    :members:
    :exclude-members: _strip_think, from_config, model_config
    :member-order: bysource

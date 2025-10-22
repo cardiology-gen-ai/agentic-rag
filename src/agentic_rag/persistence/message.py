@@ -15,8 +15,8 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from cardiology_gen_ai.utils.logger import get_logger
 
-from src.managers.llm_manager import LLMManager
-from src.utils.chat import ChatResponse, ChatRequest
+from src.agentic_rag.managers.llm_manager import LLMManager
+from src.agentic_rag.utils.chat import ChatResponse, ChatRequest
 
 
 logger = get_logger("Agent memory management based on LangGraph")

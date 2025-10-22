@@ -116,9 +116,8 @@ class AgentConfigManager(ConfigManager):
         Application identifier used to choose the proper section/files. Defaults to ``\"cardiology_protocols\"``.
     """
     config: AgentConfig #: :class:`AgentConfig` : The parsed agent configuration.
-    def __init__(self,
-                 config_path: str = os.getenv("CONFIG_PATH"),
-                 app_config_path: str = os.getenv("APP_CONFIG_PATH"),
-                 app_id: str = "cardiology_protocols"):
+    def __init__(self, app_id: str, config_path: str = None, app_config_path: str = None):
+        config_path = os.getenv("CONFIG_PATH") or config_path
+        app_config_path = os.getenv("APP_CONFIG_PATH") or app_config_path
         super().__init__(config_path, app_config_path, app_id)
         self.config = AgentConfig.from_config(self._app_config)

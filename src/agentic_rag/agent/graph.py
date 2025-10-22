@@ -68,9 +68,10 @@ class Agent:
     memory: AgentMemory #: :class:`~src.agentic_rag.persistence.message.AgentMemory` : Store + checkpointer used by :langgraph:`LangGraph <reference/graphs>`.
     graph: StateGraph #: :langgraph:`StateGraph <reference/graphs/?h=state#langgraph.graph.state.StateGraph>` : Declarative graph (nodes + edges) before compilation.
     compiler: CompiledStateGraph #: :langgraph:`CompiledStateGraph <reference/graphs/?h=compiled#langgraph.graph.state.CompiledStateGraph>` : Executable state machine with persistence.
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str, config_path: str = None, app_config_path: str = None):
         self.agent_id = agent_id
-        self.config = AgentConfigManager(app_id=self.agent_id).config
+        self.config = AgentConfigManager(
+            app_id=self.agent_id, config_path=config_path, app_config_path=app_config_path).config
         self.agent_name = self.config.name
         self.logger = get_logger(f"Agent {self.agent_name}")
 

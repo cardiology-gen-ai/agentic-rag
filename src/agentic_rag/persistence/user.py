@@ -101,7 +101,7 @@ class UserDB(BaseDB):
         self.session.refresh(user_db)
         return user_db
 
-    async def async_create_user(self, user: UserCreateSchema) -> UserORM:
+    async def acreate_user(self, user: UserCreateSchema) -> UserORM:
         """Create and persist a new user (asynchronous).
 
         Parameters
@@ -164,10 +164,10 @@ class UserDB(BaseDB):
         result = self.session.execute(user_info_query)
         return result.scalars().first()
 
-    async def async_get_user(self,
-                             username: Optional[str] = None,
-                             email: Optional[str] = None,
-                             user_id: Optional[uuid.UUID] = None) -> Optional[UserORM]:
+    async def aget_user(self,
+                        username: Optional[str] = None,
+                        email: Optional[str] = None,
+                        user_id: Optional[uuid.UUID] = None) -> Optional[UserORM]:
         """Fetch a user by one of ``username``, ``email``, or ``user_id`` (asynchronous)."""
         user_info_query = self._get_user_info_query(username, email, user_id)
         result = await self.session.execute(user_info_query)
@@ -195,7 +195,7 @@ class UserDB(BaseDB):
         self.session.refresh(user_info)
         return user_info
 
-    async def async_update_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
+    async def aupdate_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
         """Set :attr:`~src.agentic_rag.persistence.user.UserORM.last_active` to now for the given user (asynchronous).
 
         Parameters
@@ -208,7 +208,7 @@ class UserDB(BaseDB):
         :class:`~src.agentic_rag.persistence.user.UserORM` or ``None``
             Updated user row if found, otherwise ``None``.
         """
-        user_info: UserORM | None = await self.async_get_user(user_id=user_id)
+        user_info: UserORM | None = await self.aget_user(user_id=user_id)
         if not user_info:
             self.logger.info(f"No user info found for user_id {user_id}")
             return None
@@ -236,6 +236,6 @@ if __name__ == "__main__":
         current_session = asyncio.run(anext(session_generator))
         try:
             current_user_db = UserDB(current_session)
-            my_user = asyncio.run(current_user_db.async_create_user(user=UserCreateSchema(username="async_test2", email="")))
+            my_user = asyncio.run(current_user_db.acreate_user(user=UserCreateSchema(username="async_test2", email="")))
         finally:
             session_generator.aclose()

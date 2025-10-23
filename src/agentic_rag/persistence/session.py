@@ -114,7 +114,7 @@ class SessionDB(BaseDB):
         self.session.refresh(session_db)
         return session_db
 
-    async def async_create_session(self, user: UserORM, agent: Agent) -> SessionORM:
+    async def acreate_session(self, user: UserORM, agent: Agent) -> SessionORM:
         """Create and persist a new session (asynchronous).
 
         Parameters
@@ -170,7 +170,7 @@ class SessionDB(BaseDB):
         result = self.session.execute(session_info_query)
         return result.scalars().first()
 
-    async def async_get_session(self, session_id: uuid.UUID) -> Optional[SessionORM]:
+    async def aget_session(self, session_id: uuid.UUID) -> Optional[SessionORM]:
         """Fetch a session by id (asynchronous)."""
         session_info_query = self._get_session_info_query(session_id=session_id)
         result = await self.session.execute(session_info_query)
@@ -188,10 +188,10 @@ class SessionDB(BaseDB):
             self.logger.info(f"Session {session_id} was not found.")
             return None
 
-    async def async_delete_session_by_id(self, session_id: uuid.UUID) -> Optional[SessionORM]:
+    async def adelete_session_by_id(self, session_id: uuid.UUID) -> Optional[SessionORM]:
         """Delete a session by id (asynchronous)."""
         self.logger.info(f"Deleting session {session_id}")
-        session_db = await self.async_get_session(session_id)
+        session_db = await self.aget_session(session_id)
         if session_db is not None:
             await self.session.delete(session_db)
             await self.session.commit()
@@ -213,9 +213,9 @@ class SessionDB(BaseDB):
             self.session.refresh(session_info)
             return session_info
 
-    async def async_update_session_title(self, session_id: uuid.UUID, title: str) -> SessionORM | None:
+    async def aupdate_session_title(self, session_id: uuid.UUID, title: str) -> SessionORM | None:
         """Update the title of a session (asynchronous)."""
-        session_info = await self.async_get_session(session_id)
+        session_info = await self.aget_session(session_id)
         if session_info is None:
             self.logger.info(f"Session {session_id} was not found.")
             return None
@@ -242,10 +242,10 @@ class SessionDB(BaseDB):
             self.session.refresh(session_info)
             return session_info
 
-    async def async_update_session_activity(self, session_id: uuid.UUID,
-                                            increment_messages: bool = True) -> SessionORM | None:
+    async def aupdate_session_activity(self, session_id: uuid.UUID,
+                                       increment_messages: bool = True) -> SessionORM | None:
         """Updates ``updated_at`` and optionally increment ``message_count`` (asynchronous)."""
-        session_info = await self.async_get_session(session_id)
+        session_info = await self.aget_session(session_id)
         if session_info is None:
             self.logger.info(f"Session {session_id} was not found.")
             return None
@@ -268,7 +268,7 @@ class SessionDB(BaseDB):
         self.logger.info(f"User {user_id} was not found.")
         return None
 
-    async def async_get_user_sessions(self, user_id: uuid.UUID) -> List[SessionORM] | None:
+    async def aget_user_sessions(self, user_id: uuid.UUID) -> List[SessionORM] | None:
         """List all sessions for a given user (asynchronous)."""
         session_info_query = self._get_session_info_query(user_id=user_id)
         result = await self.session.execute(session_info_query)

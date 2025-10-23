@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from datetime import datetime, timezone
 from time import time
@@ -152,7 +153,7 @@ def create_new_session(rag_agent: Agent, user: UserORM, thread_repo: SessionDB):
                 question=question,
             )
         )
-        result: ChatResponse = rag_agent.answer(request=request)
+        result: ChatResponse = asyncio.run(rag_agent.answer(request=request))
         save_agent_turn(rag_agent=rag_agent, request=request, response=result)
         return thread_id
     except Exception as e:
@@ -271,7 +272,7 @@ def message(request: MessageRequest, user: UserORM, thread_id: str, thread_repo:
                 question=question,
             )
         )
-        result = rag_agent.answer(request=chat_request)
+        result = asyncio.run(rag_agent.answer(request=chat_request))
         duration = round(time() - start_time, 2)
         #print(result.content)
         if result:

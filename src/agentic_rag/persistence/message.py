@@ -62,6 +62,34 @@ class ConversationTurn(BaseModel):
             created_at=request.conversation.question.datetime,
         )
 
+    @classmethod
+    def item_to_conversation_turn(cls, item: Any) -> "ConversationTurn":
+        """Convert a raw :langgraph:`PostgresStore <store/?h=postgresstore#langgraph.store.postgres.PostgresStore>`
+        item into a :class:`~src.agentic_rag.persistence.message.ConversationTurn`.
+
+        Parameters
+        ----------
+        item : :class:`object`
+            Store item with attributes ``value``, ``key``, ``namespace``, and ``created_at`` (shape defined by the underlying store).
+
+        Returns
+        -------
+        :class:`~src.agentic_rag.persistence.message.ConversationTurn`
+            A validated :class:`~src.agentic_rag.persistence.message.ConversationTurn` instance.
+        """
+        v = item.value or {}
+        session_from_ns = item.namespace[1] if getattr(item, "namespace", None) and len(item.namespace) > 1 else None
+        payload = {
+            "message_id": v.get("message_id") or item.key,
+            "session_id": v.get("session_id") or session_from_ns,
+            "question": v.get("question") or "",
+            "metadata": v.get("metadata") or {},
+            "response": v.get("response"),
+            "created_at": v.get("created_at") or item.created_at,
+            "error": v.get("error"),
+        }
+        return ConversationTurn.model_validate(payload)
+
 
 class RetrievalTurn(BaseModel):
     """A retrieval step result associated with a conversation turn."""
@@ -174,6 +202,7 @@ class FeedbackTurn(BaseModel):
         self.user_id = uuid.UUID(str(self.user_id))
 
 
+
 class AgentMemory:
     """Synchronous memory manager backed by :postgresql:`PostgreSQL <about>`.
 
@@ -216,34 +245,7 @@ class AgentMemory:
                            str(conversation_turn.message_id),
                            conversation_turn.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
-            logger.info(f"Failed to save conversation: {e}")
-
-    @staticmethod
-    def item_to_conversation_turn(item: Any) -> ConversationTurn:
-        """Convert a raw store item into a :class:`~src.agentic_rag.persistence.message.ConversationTurn`.
-
-        Parameters
-        ----------
-        item : :class:`object`
-            Store item with attributes ``value``, ``key``, ``namespace``, and ``created_at`` (shape defined by the underlying store).
-
-        Returns
-        -------
-        :class:`~src.agentic_rag.persistence.message.ConversationTurn`
-            A validated :class:`~src.agentic_rag.persistence.message.ConversationTurn` instance.
-        """
-        v = item.value or {}
-        session_from_ns = item.namespace[1] if getattr(item, "namespace", None) and len(item.namespace) > 1 else None
-        payload = {
-            "message_id": v.get("message_id") or item.key,
-            "session_id": v.get("session_id") or session_from_ns,
-            "question": v.get("question") or "",
-            "metadata": v.get("metadata") or {},
-            "response": v.get("response"),
-            "created_at": v.get("created_at") or item.created_at,
-            "error": v.get("error"),
-        }
-        return ConversationTurn.model_validate(payload)
+            logger.error(f"Failed to save conversation: {e}")
 
     def get_history(self, session_id: uuid.UUID, limit: int, reverse: bool = True) -> List[ConversationTurn]:
         """Fetch a slice of conversation history for a session.
@@ -265,7 +267,7 @@ class AgentMemory:
         conversation_items = self.store.search(("conversation", str(session_id)), limit=1000)
         if len(conversation_items) == 0 or conversation_items is None:
             return []
-        conversation_items = [self.item_to_conversation_turn(item) for item in conversation_items]
+        conversation_items = [ConversationTurn.item_to_conversation_turn(item) for item in conversation_items]
         conversation_items_sorted = sorted(conversation_items, key=lambda item: item.created_at, reverse=reverse)
         return conversation_items_sorted[:limit]
 
@@ -276,7 +278,7 @@ class AgentMemory:
                            "results",
                            retrieval_turn.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
-            logger.info(f"Failed to save retriever results: {e}")
+            logger.error(f"Failed to save retriever results: {e}")
 
     def save_llm_turn(self, llm_turn: LLMTurn) -> None:
         """Persist an :class:`~src.agentic_rag.persistence.message.LLMTurn` under the ``llm`` namespace."""
@@ -285,7 +287,7 @@ class AgentMemory:
                            "results",
                            llm_turn.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
-            logger.info(f"Failed to save LLM information: {e}")
+            logger.error(f"Failed to save LLM information: {e}")
 
     def save_feedback(self, feedback: FeedbackTurn):
         """Persist a :class:`~src.agentic_rag.persistence.message.FeedbackTurn` under the ``feedback`` namespace."""
@@ -294,7 +296,7 @@ class AgentMemory:
                             str(feedback.message_id),
                             feedback.model_dump(exclude_none=False, mode="json"))
         except Exception as e:
-            logger.info(f"Failed to save feedback: {e}")
+            logger.error(f"Failed to save feedback: {e}")
 
     def get_session_feedback(self, session_id: uuid.UUID) -> List[FeedbackTurn]:
         """Return all feedback items for a given session.
@@ -398,34 +400,43 @@ class AsyncAgentMemory:
             for it in batch:
                 await self.store.adelete(it.namespace, it.key)
 
-    async def save_conversation_turn(self, conversation_turn: ConversationTurn) -> None:
+    async def asave_conversation_turn(self, conversation_turn: ConversationTurn) -> None:
         """Persist a :class:`~src.agentic_rag.persistence.message.ConversationTurn` under the ``conversation`` namespace (asynchronous)."""
         await self.store.aput(("conversation", str(conversation_turn.session_id)),
                               str(conversation_turn.message_id),
                               conversation_turn.model_dump(exclude_none=False, mode="json"))
 
-    async def save_retrieval_turn(self, retrieval_turn: RetrievalTurn) -> None:
+    async def aget_history(self, session_id: uuid.UUID, limit: int, reverse: bool = True) -> List[ConversationTurn]:
+        """Fetch a slice of conversation history for a session (asynchronous)."""
+        conversation_items = await self.store.asearch(("conversation", str(session_id)), limit=1000)
+        if len(conversation_items) == 0 or conversation_items is None:
+            return []
+        conversation_items = [ConversationTurn.item_to_conversation_turn(item) for item in conversation_items]
+        conversation_items_sorted = sorted(conversation_items, key=lambda item: item.created_at, reverse=reverse)
+        return conversation_items_sorted[:limit]
+
+    async def asave_retrieval_turn(self, retrieval_turn: RetrievalTurn) -> None:
         """Persist a :class:`~src.agentic_rag.persistence.message.RetrievalTurn` under the ``retrieval`` namespace (asynchronous)."""
         await self.store.aput(("retrieval", str(retrieval_turn.session_id), str(retrieval_turn.message_id)),
                               "results", retrieval_turn.model_dump(exclude_none=False, mode="json"))
 
-    async def save_llm_turn(self, llm_turn: LLMTurn) -> None:
+    async def asave_llm_turn(self, llm_turn: LLMTurn) -> None:
         """Persist an :class:`~src.agentic_rag.persistence.message.LLMTurn` under the ``llm`` namespace (asynchronous)."""
         await self.store.aput(("llm", str(llm_turn.session_id), str(llm_turn.message_id)),
                               "results", llm_turn.model_dump(exclude_none=False, mode="json"))
 
-    async def save_feedback(self, feedback: FeedbackTurn) -> None:
+    async def asave_feedback(self, feedback: FeedbackTurn) -> None:
         """Persist a :class:`~src.agentic_rag.persistence.message.FeedbackTurn` under the ``feedback`` namespace (asynchronous)."""
         await self.store.aput( ("feedback", str(feedback.session_id)),
                                str(feedback.message_id),
                                feedback.model_dump(exclude_none=False, mode="json"))
 
-    async def get_session_feedback(self, session_id: uuid.UUID) -> List[FeedbackTurn]:
+    async def aget_session_feedback(self, session_id: uuid.UUID) -> List[FeedbackTurn]:
         """Return all feedback items for a given session (asynchronous)."""
         items = await self.store.asearch(("feedback", str(session_id)), limit=1000)
         return [FeedbackTurn.model_validate(it.value) for it in items]
 
-    async def delete_session(self, session_id: uuid.UUID) -> None:
+    async def adelete_session(self, session_id: uuid.UUID) -> None:
         """Remove all stored data for a session across namespaces (asynchronous)."""
         sid = str(session_id)
         await self._delete_prefix(("conversation", sid))

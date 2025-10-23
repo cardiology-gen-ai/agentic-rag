@@ -421,12 +421,12 @@ class AsyncAgentMemory:
                                feedback.model_dump(exclude_none=False, mode="json"))
 
     async def get_session_feedback(self, session_id: uuid.UUID) -> List[FeedbackTurn]:
-        """Return all feedback items for a given session (async)."""
+        """Return all feedback items for a given session (asynchronous)."""
         items = await self.store.asearch(("feedback", str(session_id)), limit=1000)
         return [FeedbackTurn.model_validate(it.value) for it in items]
 
     async def delete_session(self, session_id: uuid.UUID) -> None:
-        """Remove all stored data for a session across namespaces (async)."""
+        """Remove all stored data for a session across namespaces (asynchronous)."""
         sid = str(session_id)
         await self._delete_prefix(("conversation", sid))
         await self._delete_prefix(("retrieval", sid))

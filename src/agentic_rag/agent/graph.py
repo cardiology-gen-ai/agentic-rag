@@ -1,6 +1,7 @@
 import json
 import pathlib
 import datetime
+import asyncio
 from logging import Logger
 from typing import TypedDict, Dict, List, Annotated
 
@@ -242,6 +243,7 @@ class Agent:
             try:
                 response = runnable.invoke({"question": question, "document": documents_content[idx],
                                             "document_filename": documents_filename[idx]})
+                print(response)
                 grade = response.binary_score
                 if grade == "yes":
                     self.logger.info(f"Document {idx + 1} ({documents_filename[idx]}) is relevant to the question.")
@@ -614,13 +616,15 @@ class Agent:
             messages.append(AnyMessage(content=conversation.question.content))
         return messages[- 2 * self.config.memory.length:]
     
-    def answer(self, request: ChatRequest) -> ChatResponse:
+    async def answer(self, request: ChatRequest, step_logger_fn = None) -> ChatResponse:
         """Run the compiled graph for a user request and return a response.
 
         Parameters
         ----------
         request : :class:`~src.agentic_rag.utils.chat.ChatRequest`
             Top-level request containing user info and conversation payload.
+        step_logger_fn : function, optional
+            Logger to trace graph execution steps.
 
         Returns
         -------
@@ -639,10 +643,23 @@ class Agent:
                          f" {request.conversation.question.content}")
         try:
             is_faulted = False
-            response = self.compiled_graph.invoke(
-                input=input_state,
-                config=config
-            )
+            # response = self.compiled_graph.invoke(
+            #     input=input_state,
+            #     config=config
+            # )
+            response = {}
+            current_event_list = []
+            for event in self.compiled_graph.stream(input=input_state, config=config, stream_mode="debug"):
+                current_event_list.append(event)
+                if event["type"]== "checkpoint":
+                    if step_logger_fn is not None:
+                        try:
+                            await step_logger_fn(current_event_list)
+                        except Exception as e:
+                            self.logger.error(f"Exception while logging step: {e}")
+                    if len(event["payload"]["metadata"].get("next", [])) == 0:
+                        response = event["payload"].get("values", {})
+                    current_event_list = []
             attachments = {"sources": []}
             unique_sources = []
             if response.get("documents"):
@@ -653,7 +670,6 @@ class Agent:
                     }
                     attachments["sources"].append(document_info)
                 seen_chunks = set()
-                print(attachments["sources"])
                 for doc_info in attachments["sources"]:
                     if (doc_info["filename"], doc_info["chunk_id"]) not in seen_chunks:
                         unique_sources.append(doc_info)
@@ -693,5 +709,5 @@ if __name__ == "__main__":
         )
     )
     # metadata["chunk_idx"]
-    agent_response = agent.answer(chat_request)
+    agent_response = asyncio.run(agent.answer(chat_request))
     print(agent_response.content)

@@ -1,5 +1,6 @@
 from datetime import datetime
 import re
+from typing import List
 
 from langchain_core.runnables import RunnableLambda, Runnable
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
@@ -16,16 +17,15 @@ def _strip_think(s: str) -> str:
 
 
 def _get_final(s: str) -> str:
+    content = s
     # useful for parsing gpt-oss output
-    match_final = re.search(r"assistantfinal\s*(.*)$", s, re.DOTALL)
+    match_final = re.search(r"assistantfinal\s*(.*)$", content, re.DOTALL)
     if match_final:
         content = match_final.group(1).strip()
-        return content
-    match_json = re.search(r"[Jj][Ss][Oo][Nn]\s*(\{.*)$", s, re.DOTALL)
+    match_json = re.search(r"[Jj][Ss][Oo][Nn]\s*(\{.*)$", content, re.DOTALL)
     if match_json:
         content = match_json.group(1).strip()
-        return content
-    return s
+    return content
 
 
 def detect_language(llm: Runnable) -> Runnable:
@@ -451,15 +451,15 @@ def answer_grader(llm: Runnable):
     return grader
 
 
-def error_handler_node(llm: Runnable, language: str):
+def error_handler_node(llm: Runnable, language: List[str]):
     """Build a runnable that turns exceptions into friendly user-facing messages.
 
     Parameters
     ----------
     llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model to generate the error message.
-    language : :class:`str`
-        Target language (must be one of the allowed languages provided to the prompt).
+    language : :class:`list` of :class:`str`
+        Possible target languages (must be one of the allowed languages provided to the prompt).
 
     Returns
     -------

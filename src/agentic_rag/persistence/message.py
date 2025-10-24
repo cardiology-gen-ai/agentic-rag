@@ -360,6 +360,8 @@ class AsyncAgentMemory:
     def __init__(self, store: AsyncPostgresStore, checkpointer: AsyncPostgresSaver):
         self.store = store
         self.checkpointer = checkpointer
+        self._store_manager = None
+        self._checkpointer_manager  = None
 
     @classmethod
     async def create(cls, db_connection_string: Optional[str] = None) -> "AsyncAgentMemory":
@@ -385,11 +387,14 @@ class AsyncAgentMemory:
             raise ValueError("No database connection string provided")
         store_manager = AsyncPostgresStore.from_conn_string(db_connection_string)
         store = await store_manager.__aenter__()
-        await store.setup()
         checkpointer_manager = AsyncPostgresSaver.from_conn_string(db_connection_string)
         checkpointer = await checkpointer_manager.__aenter__()
-        await checkpointer.setup()
-        return cls(store, checkpointer)
+        instance = cls(store=store, checkpointer=checkpointer)
+        instance._store_manager = store_manager
+        instance._checkpointer_manager = checkpointer_manager
+        await instance.store.setup()
+        await instance.checkpointer.setup()
+        return instance
 
     async def _delete_prefix(self, ns_prefix: tuple, batch_size: int = 500) -> None:
         """Delete a namespace subtree in batches (async)."""
@@ -445,10 +450,10 @@ class AsyncAgentMemory:
         await self._delete_prefix(("feedback", sid))
 
 
-if __name__ == "__main__":
-    sync = True
-    if sync:
-        memory = AgentMemory()
-    else:
-        memory = asyncio.run(AsyncAgentMemory.create())
-    print(type(memory.store), type(memory.checkpointer))
+# if __name__ == "__main__":
+#     sync = True
+#     if sync:
+#         memory = AgentMemory()
+#     else:
+#         memory = asyncio.run(AsyncAgentMemory.create())
+#     print(type(memory.store), type(memory.checkpointer))

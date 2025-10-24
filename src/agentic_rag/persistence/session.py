@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from datetime import datetime, timezone
 from typing import Literal, Optional, List, Union
@@ -5,7 +6,7 @@ from typing import Literal, Optional, List, Union
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Mapped, mapped_column, Session
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from agentic_rag.persistence.orm_base import BaseORM, BaseDB
 from agentic_rag.persistence.user import UserORM
@@ -62,7 +63,15 @@ class SessionDB(BaseDB):
     def __init__(self, session: Union[AsyncSession, Session]):
         super().__init__(session=session)
         engine = session.bind
-        BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
+        if isinstance(engine, AsyncEngine):
+            asyncio.run(self._acreate_all(engine=engine))
+        else:
+            BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
+
+    @staticmethod
+    async def _acreate_all(engine: AsyncEngine):
+        async with engine.begin() as conn:
+            await conn.run_sync(BaseORM.metadata.create_all)
 
     def _create_session(self, user: UserORM, agent: Agent) -> SessionORM:
         """Construct a new :class:`~src.agentic_rag.persistence.session.SessionORM` (not committed).
@@ -164,7 +173,7 @@ class SessionDB(BaseDB):
             return select(SessionORM).where(SessionORM.service_user_id == user_id)
         return None
 
-    def sync_get_session(self, session_id: uuid.UUID) -> Optional[SessionORM]:
+    def get_session(self, session_id: uuid.UUID) -> Optional[SessionORM]:
         """Fetch a session by id (synchronous)."""
         session_info_query = self._get_session_info_query(session_id=session_id)
         result = self.session.execute(session_info_query)
@@ -176,10 +185,10 @@ class SessionDB(BaseDB):
         result = await self.session.execute(session_info_query)
         return result.scalars().first()
 
-    def sync_delete_session_by_id(self, session_id: uuid.UUID) -> Optional[SessionORM]:
+    def delete_session_by_id(self, session_id: uuid.UUID) -> Optional[SessionORM]:
         """Delete a session by id (synchronous)."""
         self.logger.info(f"Deleting session {session_id}")
-        session_db = self.sync_get_session(session_id)
+        session_db = self.get_session(session_id)
         if session_db is not None:
             self.session.delete(session_db)
             self.session.commit()
@@ -200,9 +209,9 @@ class SessionDB(BaseDB):
             self.logger.info(f"Session {session_id} was not found.")
             return None
 
-    def sync_update_session_title(self, session_id: uuid.UUID, title: str) -> SessionORM | None:
+    def update_session_title(self, session_id: uuid.UUID, title: str) -> SessionORM | None:
         """Update the title of a session (synchronous)."""
-        session_info = self.sync_get_session(session_id)
+        session_info = self.get_session(session_id)
         if session_info is None:
             self.logger.info(f"Session {session_id} was not found.")
             return None
@@ -226,10 +235,10 @@ class SessionDB(BaseDB):
             await self.session.refresh(session_info)
             return session_info
 
-    def sync_update_session_activity(self, session_id: uuid.UUID,
-                                     increment_messages: bool = True) -> SessionORM | None:
+    def update_session_activity(self, session_id: uuid.UUID,
+                                increment_messages: bool = True) -> SessionORM | None:
         """Updates ``updated_at`` and optionally increment ``message_count`` (synchronous)."""
-        session_info = self.sync_get_session(session_id)
+        session_info = self.get_session(session_id)
         if session_info is None:
             self.logger.info(f"Session {session_id} was not found.")
             return None
@@ -259,7 +268,7 @@ class SessionDB(BaseDB):
             await self.session.refresh(session_info)
             return session_info
 
-    def sync_get_user_sessions(self, user_id: uuid.UUID) -> List[SessionORM] | None:
+    def get_user_sessions(self, user_id: uuid.UUID) -> List[SessionORM] | None:
         """List all sessions for a given user (synchronous)."""
         session_info_query = self._get_session_info_query(user_id=user_id)
         result = self.session.execute(session_info_query)

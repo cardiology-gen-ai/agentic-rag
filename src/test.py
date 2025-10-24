@@ -71,7 +71,7 @@ if __name__ == "__main__":
     try:
         session_db = SessionDB(session)
         user_db = UserDB(session)
-        current_user = user_db.sync_get_user(username=logged_user.username)
+        current_user = user_db.get_user(username=logged_user.username)
         if current_user is None:
             current_user = create_new_user(user_repo=user_db, user_schema=logged_user)
 

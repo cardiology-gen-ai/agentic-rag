@@ -5,7 +5,7 @@ import asyncio
 
 from pydantic import BaseModel
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.orm import Mapped, mapped_column, Session
 
 from agentic_rag.persistence.orm_base import BaseORM, BaseDB
@@ -56,7 +56,15 @@ class UserDB(BaseDB):
         super().__init__(session=session)
         ensure_database()
         engine = session.bind
-        BaseORM.metadata.create_all(engine, tables=[UserORM.__table__])
+        if isinstance(engine, AsyncEngine):
+            asyncio.run(self._acreate_all(engine=engine))
+        else:
+            BaseORM.metadata.create_all(engine, tables=[UserORM.__table__])
+
+    @staticmethod
+    async def _acreate_all(engine: AsyncEngine):
+        async with engine.begin() as conn:
+            await conn.run_sync(BaseORM.metadata.create_all)
 
     def _create_user(self, user: UserCreateSchema) -> UserORM:
         """Construct a new :class:`~src.agentic_rag.persistence.user.UserORM` (not committed).
@@ -83,7 +91,7 @@ class UserDB(BaseDB):
         self.session.add(user_db)
         return user_db
 
-    def sync_create_user(self, user: UserCreateSchema) -> UserORM:
+    def create_user(self, user: UserCreateSchema) -> UserORM:
         """Create and persist a new user (synchronous).
 
         Parameters
@@ -155,10 +163,10 @@ class UserDB(BaseDB):
             return select(UserORM).where(UserORM.email == email)
         return None
 
-    def sync_get_user(self,
-                      username: Optional[str] = None,
-                      email: Optional[str] = None,
-                      user_id: Optional[uuid.UUID] = None) -> Optional[UserORM]:
+    def get_user(self,
+                 username: Optional[str] = None,
+                 email: Optional[str] = None,
+                 user_id: Optional[uuid.UUID] = None) -> Optional[UserORM]:
         """Fetch a user by one of ``username``, ``email``, or ``user_id`` (synchronous)."""
         user_info_query = self._get_user_info_query(username, email, user_id)
         result = self.session.execute(user_info_query)
@@ -173,7 +181,7 @@ class UserDB(BaseDB):
         result = await self.session.execute(user_info_query)
         return result.scalars().first()
 
-    def sync_update_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
+    def update_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
         """Set :attr:`~src.agentic_rag.persistence.user.UserORM.last_active` to now for the given user (synchronous).
 
         Parameters
@@ -186,7 +194,7 @@ class UserDB(BaseDB):
         :class:`~src.agentic_rag.persistence.user.UserORM` or ``None``
             Updated user row if found, otherwise ``None``.
         """
-        user_info: UserORM | None = self.sync_get_user(user_id=user_id)
+        user_info: UserORM | None = self.get_user(user_id=user_id)
         if not user_info:
             self.logger.info(f"No user info found for user_id {user_id}")
             return None
@@ -225,7 +233,7 @@ if __name__ == "__main__":
         current_session = next(session_generator)
         try:
             current_user_db = UserDB(current_session)
-            my_user = current_user_db.sync_create_user(user=UserCreateSchema(username="sync_test2", email=""))
+            my_user = current_user_db.create_user(user=UserCreateSchema(username="sync_test2", email=""))
         finally:
             try:
                 next(session_generator)

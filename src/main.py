@@ -33,7 +33,7 @@ def show_help():
 
 def show_session_status(thread_id: str, thread_repo: SessionDB):
     """Show current session status"""
-    session_info = thread_repo.sync_get_session(session_id=uuid.UUID(thread_id))
+    session_info = thread_repo.get_session(session_id=uuid.UUID(thread_id))
     if session_info is not None:
         logger.info(f"Successfully retrieved session data for session {thread_id}.")
         print(f"Messages in session: {session_info.message_count}")
@@ -47,7 +47,7 @@ def show_session_status(thread_id: str, thread_repo: SessionDB):
 def list_sessions(user_id: str, thread_repo: SessionDB):
     """List available sessions for current user"""
     logger.info(f"Listing sessions for user {user_id}")
-    sessions = thread_repo.sync_get_user_sessions(uuid.UUID(user_id))
+    sessions = thread_repo.get_user_sessions(uuid.UUID(user_id))
     if sessions is None or len(sessions) == 0:
         logger.info(f"No sessions for user {user_id}")
         return None
@@ -69,7 +69,7 @@ def list_sessions(user_id: str, thread_repo: SessionDB):
 def create_new_user(user_repo: UserDB, user_schema: UserCreateSchema):
     logger.info(f"Creating new user with username: {user_schema.username}")
     try:
-        current_user_orm = user_repo.sync_create_user(user=user_schema)
+        current_user_orm = user_repo.create_user(user=user_schema)
         return current_user_orm
     except Exception as e:
         logger.error(f"Failed to create new user: {e}")
@@ -78,7 +78,7 @@ def create_new_user(user_repo: UserDB, user_schema: UserCreateSchema):
 
 def get_user(user_repo: UserDB, username: Optional[str] = None, email: Optional[str] = None,
              user_id: Optional[uuid.UUID] = None):
-    return user_repo.sync_get_user(username=username, email=email, user_id=user_id)
+    return user_repo.get_user(username=username, email=email, user_id=user_id)
 
 
 def save_agent_turn(rag_agent: Agent, request: ChatRequest, response: ChatResponse, duration: float = None):
@@ -96,7 +96,7 @@ def save_agent_turn(rag_agent: Agent, request: ChatRequest, response: ChatRespon
 def get_session(thread_id: str, thread_repo: SessionDB):
     logger.info(f"Getting session {thread_id}")
     try:
-        current_session = thread_repo.sync_get_session(session_id=uuid.UUID(thread_id))
+        current_session = thread_repo.get_session(session_id=uuid.UUID(thread_id))
         return current_session
     except Exception as e:
         logger.error(f"Failed to get session: {e}")
@@ -106,7 +106,7 @@ def get_session(thread_id: str, thread_repo: SessionDB):
 def rename_session(thread_id: str, thread_repo: SessionDB, new_session_title: str):
     logger.info(f"Renaming session {thread_id} as {new_session_title}")
     try:
-        renamed_session = thread_repo.sync_update_session_title(
+        renamed_session = thread_repo.update_session_title(
             session_id=uuid.UUID(thread_id), title=new_session_title)
         return renamed_session
     except Exception as e:
@@ -117,7 +117,7 @@ def rename_session(thread_id: str, thread_repo: SessionDB, new_session_title: st
 def delete_session(thread_id: str, thread_repo: SessionDB):
     logger.info(f"Deleting session {thread_id}")
     try:
-        current_session = thread_repo.sync_delete_session_by_id(session_id=uuid.UUID(thread_id))
+        current_session = thread_repo.delete_session_by_id(session_id=uuid.UUID(thread_id))
         return current_session
     except Exception as e:
         logger.error(f"Failed to delete session: {e}")
@@ -276,13 +276,13 @@ def message(request: MessageRequest, user: UserORM, thread_id: str, thread_repo:
         duration = round(time() - start_time, 2)
         #print(result.content)
         if result:
-            thread = thread_repo.sync_get_session(session_id=uuid.UUID(str(thread_id)))
+            thread = thread_repo.get_session(session_id=uuid.UUID(str(thread_id)))
             if thread and thread.title is None:
                 logger.info(f"Setting thread name from first message")
-                thread_repo.sync_update_session_title(session_id=uuid.UUID(str(thread_id)), title=request_message)
+                thread_repo.update_session_title(session_id=uuid.UUID(str(thread_id)), title=request_message)
         save_agent_turn(rag_agent, chat_request, result, duration = duration)
-        _ = thread_repo.sync_update_session_activity(session_id=uuid.UUID(str(thread_id)),
-                                                                   increment_messages=True)
+        _ = thread_repo.update_session_activity(session_id=uuid.UUID(str(thread_id)),
+                                                increment_messages=True)
         return msg_id, result.content
     except Exception as e:
         logger.error(f"Error processing message: {e}")
@@ -334,7 +334,7 @@ if __name__ == "__main__":
     try:
         session_db = SessionDB(session)
         user_db = UserDB(session)
-        current_user = user_db.sync_get_user(username=logged_user.username)
+        current_user = user_db.get_user(username=logged_user.username)
         if current_user is None:
             current_user = create_new_user(user_repo=user_db, user_schema=logged_user)
         if ((session_id and get_session(thread_id=str(session_id), thread_repo=session_db) is None)

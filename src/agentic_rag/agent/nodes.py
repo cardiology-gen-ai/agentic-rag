@@ -128,7 +128,7 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
     parser = JsonOutputParser(pydantic_object=output.RouteQuery)
     format_instructions = "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document_based'."
     system_prompt = f"""
-    You are an expert at routing a human message to a document-based branch or conversational branch. 
+    You are an expert at routing a human message to a document_based branch or conversational branch. 
     This is the vectorstore description: {index_description}\n
     Determine whether the user's question is a conversational inquiry, meaning it is general, casual, or social. 
     This can include, but it is not limited to greetings (e.g., 'Hello'), small talk 

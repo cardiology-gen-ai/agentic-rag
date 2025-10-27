@@ -73,7 +73,7 @@ class SessionDB(BaseDB):
         async with engine.begin() as conn:
             await conn.run_sync(BaseORM.metadata.create_all)
 
-    def _create_session(self, user: UserORM, agent: Agent) -> SessionORM:
+    def _create_session(self, user: UserORM, agent: Agent, session_id: uuid.UUID = None) -> SessionORM:
         """Construct a new :class:`~src.agentic_rag.persistence.session.SessionORM` (not committed).
 
         Parameters
@@ -82,6 +82,8 @@ class SessionDB(BaseDB):
             ORM instance for the current user; must expose ``user_id``, ``username``, and ``user_role``.
         agent : :class:`~src.agentic_rag.agent.graph.Agent`
             Agent instance providing LLM/embedding configuration.
+        session_id : uuid.UUID, optional
+            Unique session ID.
 
         Returns
         -------
@@ -90,7 +92,7 @@ class SessionDB(BaseDB):
         """
         self.logger.info("Creating agent session")
         session_db = SessionORM(
-            session_id=uuid.uuid4(),
+            session_id=session_id or uuid.uuid4(),
             service_user_id=user.user_id,
             username=user.username,
             user_role=user.user_role,
@@ -103,7 +105,7 @@ class SessionDB(BaseDB):
         self.session.add(session_db)
         return session_db
 
-    def create_session(self, user: UserORM, agent: Agent) -> SessionORM:
+    def create_session(self, user: UserORM, agent: Agent, session_id: uuid.UUID = None) -> SessionORM:
         """Create and persist a new session (synchronous).
 
         Parameters
@@ -112,18 +114,20 @@ class SessionDB(BaseDB):
             The current user ORM instance.
         agent : :class:`~src.agentic_rag.agent.graph.Agent`
             The agent instance used to populate model/embedding info.
+        session_id : uuid.UUID, optional
+            Unique session ID.
 
         Returns
         -------
         :class:`~src.agentic_rag.persistence.session.SessionORM`
             The committed and refreshed session row.
         """
-        session_db = self._create_session(user, agent)
+        session_db = self._create_session(user, agent, session_id=session_id)
         self.session.commit()
         self.session.refresh(session_db)
         return session_db
 
-    async def acreate_session(self, user: UserORM, agent: Agent) -> SessionORM:
+    async def acreate_session(self, user: UserORM, agent: Agent, session_id: uuid.UUID = None) -> SessionORM:
         """Create and persist a new session (asynchronous).
 
         Parameters
@@ -132,13 +136,15 @@ class SessionDB(BaseDB):
             The current user ORM instance.
         agent : :class:`~src.agentic_rag.agent.graph.Agent`
             The agent instance used to populate model/embedding info.
+        session_id : uuid.UUID, optional
+            Unique session ID.
 
         Returns
         -------
         :class:`~src.agentic_rag.persistence.session.SessionORM`
             The committed and refreshed session row.
         """
-        session_db = self._create_session(user, agent)
+        session_db = self._create_session(user, agent, session_id=session_id)
         await self.session.commit()
         await self.session.refresh(session_db)
         return session_db

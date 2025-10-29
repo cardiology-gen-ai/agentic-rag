@@ -43,7 +43,7 @@ class SearchableVectorstore(Vectorstore, ABC):
         list of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`
             Retrieved documents.
         """
-        return self.retriver.invoke(query)
+        return self.retriever.invoke(query)
 
 
 class SearchableQdrantVectorstore(SearchableVectorstore, QdrantVectorstore):

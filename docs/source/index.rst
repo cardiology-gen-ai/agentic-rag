@@ -13,4 +13,5 @@ Agentic Retrieval-Augmented Generation (RAG)
    api/db_base
    api/persistence_message
    api/persistence_session
+   api/persistence_authentication
    api/persistence_user

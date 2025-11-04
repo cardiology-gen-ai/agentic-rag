@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, Literal, Union
@@ -7,9 +8,14 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from sqlalchemy.orm import Mapped, mapped_column, Session
+import jwt
+from jwt import InvalidTokenError
+from fastapi import HTTPException
+from starlette import status
 
 from agentic_rag.persistence.orm_base import BaseORM, BaseDB
 from agentic_rag.persistence.db import get_sync_db, get_async_db, ensure_database
+from agentic_rag.persistence.authentication import Authentication
 
 
 class UserORM(BaseORM):
@@ -20,13 +26,16 @@ class UserORM(BaseORM):
     username: Mapped[str] = mapped_column(nullable=False) #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] :  Unique username for the user.
     user_role: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Role of the user (e.g. ``"user"``, ``"admin"``, ``"assistant"``).
     email: Mapped[str] = mapped_column(nullable=False) #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Email address.
+    hashed_password: Mapped[str] = mapped_column(nullable=False)  #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Hashed user password for authentication.
     created_at: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Creation timestamp (stored as naive UTC).
     last_active: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Last activity timestamp (stored as naive UTC).
+
 
 class UserCreateSchema(BaseModel):
     """Pydantic input schema with the minimal information necessary to create a user."""
     username: str #: :class:`str` : Desired username.
     email: str #: :class:`str` : Email address.
+    password: str #: :class:`str` : Password.
 
 
 class UserSchema(UserCreateSchema):
@@ -54,7 +63,9 @@ class UserDB(BaseDB):
     """
     def __init__(self, session: Union[AsyncSession, Session]):
         super().__init__(session=session)
-        ensure_database()
+        admin_dsn = os.getenv("POSTGRES_ADMIN_DSN")
+        if admin_dsn:
+            ensure_database()
         engine = session.bind
         if isinstance(engine, AsyncEngine):
             asyncio.run(self._acreate_all(engine=engine))
@@ -180,6 +191,145 @@ class UserDB(BaseDB):
         user_info_query = self._get_user_info_query(username, email, user_id)
         result = await self.session.execute(user_info_query)
         return result.scalars().first()
+
+    def authenticate(self, username: str, password: str) -> Optional[UserORM]:
+        """Authenticate a user synchronously.
+
+        Retrieves the user from the database by username and verifies that the provided password matches the stored hash.
+
+        Parameters
+        ----------
+        username : :class:`str`
+            The username of the account to authenticate.
+        password : :class:`str`
+            The plaintext password provided by the user.
+
+        Returns
+        -------
+        :class:`~src.agentic_rag.persistence.user.UserORM`
+            The authenticated user object if verification succeeds; otherwise, ``None``.
+        """
+        user_orm = self.get_user(username=username)
+        if not user_orm:
+            return None
+        if not Authentication.verify_password(password, user_orm.hashed_password):
+            return None
+        return user_orm
+
+    async def aauthenticate(self, username: str, password: str) -> Optional[UserORM]:
+        """Authenticate a user asynchronously.
+        Retrieves the user and verifies the password using asynchronous database calls.
+
+        Parameters
+        ----------
+        username : :class:`str`
+            The username of the account to authenticate.
+        password : :class:`str`
+            The plaintext password provided by the user.
+
+        Returns
+        -------
+        :class:`~src.agentic_rag.persistence.user.UserORM`
+            The authenticated user object if verification succeeds; otherwise, ``None``.
+        """
+        user_orm = await self.aget_user(username=username)
+        if not user_orm:
+            return None
+        if not Authentication.verify_password(password, user_orm.hashed_password):
+            return None
+        return user_orm
+
+    @staticmethod
+    def get_username_by_token(token: str) -> str:
+        """Extract the username from a :jwt:`JWT <api.html>` token.
+
+        Decodes the :jwt:`JWT <api.html>` token using the secret key and retrieves the
+        ``sub`` (username) and ``role`` claims. Raises an :starlette:`HTTP 401 exception <exceptions>` if the token is invalid or incomplete.
+
+        Parameters
+        ----------
+        token : :class:`str`
+            The user's :jwt:`JWT <api.html>` token.
+
+        Returns
+        -------
+        :class:`str`
+            The username extracted from the token.
+
+        Raises
+        ------
+        :fastapi:`HTTPException <exceptions/?h=httpe>`
+            If the token is invalid or credential validation fails.
+        """
+        try:
+            user_payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=["HS256"])
+            username = user_payload.get("sub")
+            user_role = user_payload.get("role")
+            if username is None or user_role is None:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                    detail="Credential validation failed",
+                                    headers={"WWW-Authenticate": "Bearer"})
+        except InvalidTokenError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                    detail="Credential validation failed",
+                                    headers={"WWW-Authenticate": "Bearer"})
+        return username
+
+    def get_user_by_token(self, token: str) -> Optional[UserORM]:
+        """Retrieve a user from a :jwt:`JWT <api.html>` token.
+
+        Decodes the token, extracts the username, and retrieves the corresponding user object from the database. Raises an exception if the user does not exist or the token is invalid.
+
+        Parameters
+        ----------
+        token : :class:`str`
+            The user's :jwt:`JWT <api.html>` token.
+
+        Returns
+        -------
+        :class:`~src.agentic_rag.persistence.user.UserORM`
+            The user object associated with the token.
+
+        Raises
+        ------
+        :fastapi:`HTTPException <exceptions/?h=httpe>`
+            If the token is invalid or the user does not exist.
+        """
+        username = self.get_username_by_token(token)
+        user_orm = self.get_user(username=username)
+        if user_orm is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Credential validation failed",
+                                headers={"WWW-Authenticate": "Bearer"})
+        return user_orm
+
+    async def aget_user_by_token(self, token: str) -> Optional[UserORM]:
+        """Retrieve a user from a :jwt:`JWT <api.html>` token asynchronously.
+
+        Decodes the token, extracts the username, and retrieves the corresponding user object from the database. Raises an exception if the user does not exist or the token is invalid.
+
+        Parameters
+        ----------
+        token : :class:`str`
+            The user's :jwt:`JWT <api.html>` token.
+
+        Returns
+        -------
+        :class:`~src.agentic_rag.persistence.user.UserORM`
+            The user object associated with the token.
+
+        Raises
+        ------
+        :fastapi:`HTTPException <exceptions/?h=httpe>`
+            If the token is invalid or the user does not exist.
+        """
+        username = self.get_username_by_token(token)
+        user_orm = await self.aget_user(username=username)
+        if user_orm is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Credential validation failed",
+                                headers={"WWW-Authenticate": "Bearer"})
+        return user_orm
 
     def update_user_activity(self, user_id: uuid.UUID) -> UserORM | None:
         """Set :attr:`~src.agentic_rag.persistence.user.UserORM.last_active` to now for the given user (synchronous).

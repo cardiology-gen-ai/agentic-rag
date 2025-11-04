@@ -3,16 +3,18 @@ from typing import Optional, Union
 
 import psycopg
 from psycopg import sql
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from cardiology_gen_ai.utils.logger import get_logger
+from agentic_rag.persistence.orm_base import BaseORM
 
 
 POSTGRES_ADMIN_DSN = os.getenv("POSTGRES_ADMIN_DSN")
-DB_NAME = "cardiology_protocols"  # TODO: maybe put in config
+DB_NAME = "cardiology_protocols"  # TODO: maybe put in config / env
+SCHEMA_NAME = "public"  # TODO: maybe put in config / env
 
 logger = get_logger("Database creation")
 
@@ -103,6 +105,32 @@ def get_engine(db_connection_string: Optional[str] = None, sync: bool = True) ->
     else:
         engine: AsyncEngine = create_async_engine(db_connection.db_connection_string, echo=False)
     return engine
+
+
+def ensure_schema_exists(db_connection_string: Optional[str] = None, sync: bool = True):
+    """
+    Ensure that the target schema exists in the database. Create it if it doesn't exist.
+
+    Parameters
+    ----------
+    db_connection_string : str, optional
+        Full DSN. If ``None``, it is derived from :class:`DatabaseConnection`.
+    sync : bool, optional
+        ``True`` for :sqlalchemy:`Engine <connections.html#sqlalchemy.engine.Engine>`, ``False`` for  :sqlalchemy:`AsyncEngine <orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncEngine>`.
+    """
+    engine = get_engine(db_connection_string, sync)
+    with engine.connect() as connection:
+        schema_exists = connection.execute(
+            text("SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schema"),
+            {"schema": SCHEMA_NAME}
+        ).scalar() is not None
+
+        if not schema_exists:
+            connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{SCHEMA_NAME}"'))
+            connection.commit()
+            logger.info(f"Schema '{SCHEMA_NAME}' created successfully.")
+        else:
+            logger.info(f"Schema '{SCHEMA_NAME}' already exists.")
 
 
 def get_sync_db(db_connection_string: Optional[str] = None):

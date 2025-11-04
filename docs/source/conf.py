@@ -167,7 +167,11 @@ extlinks = {
     "postgresql": ("https://www.postgresql.org/%s", "%s"),
     "psycopg": ("https://www.psycopg.org/docs/%s", "%s"),
     "asyncpg": ("https://magicstack.github.io/asyncpg/current/%s", "%s"),
-    "qdrant_client": ("https://qdrant.tech/documentation/concepts/%s", "%s")
+    "qdrant_client": ("https://qdrant.tech/documentation/concepts/%s", "%s"),
+    "jwt": ("https://pyjwt.readthedocs.io/en/latest/%s", "%s"),
+    "fastapi": ("https://fastapi.tiangolo.com/reference/%s", "%s"),
+    "starlette": ("https://starlette.dev/%s", "%s"),
+    "passlib": ("https://passlib.readthedocs.io/en/stable/%s", "%s"),
 }
 
 templates_path = ['_templates']

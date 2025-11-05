@@ -2,6 +2,7 @@ import os
 from datetime import timedelta, datetime, timezone
 from typing import Dict, Optional
 
+from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 import jwt
 
@@ -9,6 +10,7 @@ from agentic_rag.persistence.orm_base import BaseDB
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 # TODO: check if it makes sense that this inherits from BaseDB

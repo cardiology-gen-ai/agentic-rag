@@ -29,6 +29,7 @@ class UserORM(BaseORM):
     hashed_password: Mapped[str] = mapped_column(nullable=False)  #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Hashed user password for authentication.
     created_at: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Creation timestamp (stored as naive UTC).
     last_active: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Last activity timestamp (stored as naive UTC).
+    disabled: Mapped[bool] = mapped_column()  #: :class:`~sqlalchemy.orm.Mapped`[:class:`bool`] : Whether the user has currently a valid access token.
 
 
 class UserCreateSchema(BaseModel):
@@ -42,6 +43,7 @@ class UserSchema(UserCreateSchema):
     """Pydantic schema mirroring :class:`~src.agentic_rag.persistence.user.UserORM` for I/O and validation."""
     user_id: uuid.UUID #: :class:`uuid.UUID` : Primary key of the user.
     user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`\[{``user``, ``admin``, ``assistant``}\] : Role assigned to the user.
+    disabled: Optional[bool] = None  #: :class:`bool` : Whether the user has currently a valid access token.
 
 
 class UserDB(BaseDB):
@@ -98,6 +100,7 @@ class UserDB(BaseDB):
             user_role="user",
             created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             last_active=datetime.now(timezone.utc).replace(tzinfo=None),
+            disable=False,
         )
         self.session.add(user_db)
         return user_db
@@ -383,7 +386,7 @@ if __name__ == "__main__":
         current_session = next(session_generator)
         try:
             current_user_db = UserDB(current_session)
-            my_user = current_user_db.create_user(user=UserCreateSchema(username="sync_test2", email=""))
+            my_user = current_user_db.create_user(user=UserCreateSchema(username="sync_test2", email="", password="password"))
         finally:
             try:
                 next(session_generator)
@@ -394,6 +397,6 @@ if __name__ == "__main__":
         current_session = asyncio.run(anext(session_generator))
         try:
             current_user_db = UserDB(current_session)
-            my_user = asyncio.run(current_user_db.acreate_user(user=UserCreateSchema(username="async_test2", email="")))
+            my_user = asyncio.run(current_user_db.acreate_user(user=UserCreateSchema(username="async_test2", email="", password="password")))
         finally:
             session_generator.aclose()

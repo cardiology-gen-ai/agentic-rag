@@ -35,7 +35,7 @@ dependencies = [
     "langchain-community>=0.3.25",
     "langchain-qdrant>=0.2.0",
     "safetensors>=0.4.3",
-    "passlib>=1.7.0",
+    "pwdlib[argon2]==0.3.0",
     "PyJWT==2.10.0",
     "fastapi[standard]==0.116.2",
     "cardiologygenai-coordo @ git+https://github.com/cardiology-gen-ai/cardiology-gen-ai.git@main"

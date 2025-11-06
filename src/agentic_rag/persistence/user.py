@@ -90,7 +90,7 @@ class UserDB(BaseDB):
             ensure_database()
         engine = session.bind
         if isinstance(engine, AsyncEngine):
-            asyncio.run(self._acreate_all(engine=engine))
+            await self._acreate_all(engine=engine)
         else:
             BaseORM.metadata.create_all(engine, tables=[UserORM.__table__])
         return self

@@ -88,7 +88,7 @@ class SessionDB(BaseDB):
         self = cls(session=session)
         engine = session.bind
         if isinstance(engine, AsyncEngine):
-            asyncio.run(self._acreate_all(engine=engine))
+            await self._acreate_all(engine=engine)
         else:
             BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
         return self

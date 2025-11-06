@@ -77,16 +77,22 @@ class SessionDB(BaseDB):
 
     def __init__(self, session: Union[AsyncSession, Session]):
         super().__init__(session=session)
-        engine = session.bind
-        if isinstance(engine, AsyncEngine):
-            asyncio.run(self._acreate_all(engine=engine))
-        else:
-            BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
 
     @staticmethod
     async def _acreate_all(engine: AsyncEngine):
         async with engine.begin() as conn:
             await conn.run_sync(BaseORM.metadata.create_all)
+
+    @classmethod
+    async def create(cls, session: Union[AsyncSession, Session]) -> "SessionDB":
+        self = cls(session=session)
+        engine = session.bind
+        if isinstance(engine, AsyncEngine):
+            asyncio.run(self._acreate_all(engine=engine))
+        else:
+            BaseORM.metadata.create_all(engine, tables=[SessionORM.__table__])
+        return self
+
 
     def _create_session(self, user: UserORM, agent: Agent, session_id: uuid.UUID = None) -> SessionORM:
         """Construct a new :class:`~src.agentic_rag.persistence.session.SessionORM` (not committed).

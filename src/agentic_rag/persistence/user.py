@@ -76,6 +76,15 @@ class UserDB(BaseDB):
     """
     def __init__(self, session: Union[AsyncSession, Session]):
         super().__init__(session=session)
+
+    @staticmethod
+    async def _acreate_all(engine: AsyncEngine):
+        async with engine.begin() as conn:
+            await conn.run_sync(BaseORM.metadata.create_all)
+
+    @classmethod
+    async def create(cls,  session: Union[AsyncSession, Session]) -> "UserDB":
+        self = cls(session=session)
         admin_dsn = os.getenv("POSTGRES_ADMIN_DSN")
         if admin_dsn:
             ensure_database()
@@ -84,11 +93,7 @@ class UserDB(BaseDB):
             asyncio.run(self._acreate_all(engine=engine))
         else:
             BaseORM.metadata.create_all(engine, tables=[UserORM.__table__])
-
-    @staticmethod
-    async def _acreate_all(engine: AsyncEngine):
-        async with engine.begin() as conn:
-            await conn.run_sync(BaseORM.metadata.create_all)
+        return self
 
     def _create_user(self, user: UserCreateSchema) -> UserORM:
         """Construct a new :class:`~src.agentic_rag.persistence.user.UserORM` (not committed).

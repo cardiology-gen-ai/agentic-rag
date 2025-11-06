@@ -329,11 +329,12 @@ if __name__ == "__main__":
     logged_user = UserCreateSchema(
         username="gaia",
         email="",
+        password="password",
     )
     session_id = "c22c3e13-d229-46e8-a572-c24a8890bd87"
     try:
-        session_db = SessionDB(session)
-        user_db = UserDB(session)
+        session_db = asyncio.run(SessionDB.create(session))
+        user_db = asyncio.run(UserDB.create(session))
         current_user = user_db.get_user(username=logged_user.username)
         if current_user is None:
             current_user = create_new_user(user_repo=user_db, user_schema=logged_user)

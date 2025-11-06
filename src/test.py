@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 import json
 from pathlib import Path
@@ -69,8 +70,8 @@ if __name__ == "__main__":
     session_id = None
 
     try:
-        session_db = SessionDB(session)
-        user_db = UserDB(session)
+        session_db = asyncio.run(SessionDB.create(session))
+        user_db = asyncio.run(UserDB.create(session))
         current_user = user_db.get_user(username=logged_user.username)
         if current_user is None:
             current_user = create_new_user(user_repo=user_db, user_schema=logged_user)

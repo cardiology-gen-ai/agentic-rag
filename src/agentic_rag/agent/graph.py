@@ -649,7 +649,7 @@ class Agent:
             # )
             response = {}
             current_event_list = []
-            for event in self.compiled_graph.stream(input=input_state, config=config, stream_mode="debug"):
+            for event in self.compiled_graph.stream(input=input_state, config=config, stream_mode="debug"):  # type: ignore
                 current_event_list.append(event)
                 if event["type"]== "checkpoint":
                     if step_logger_fn is not None:

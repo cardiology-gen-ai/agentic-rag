@@ -42,6 +42,21 @@ class SessionSchema(BaseModel):
     updated_at: datetime #: :class:`datetime.datetime` : Last update timestamp (naive UTC).
     message_count: int #: :class:`int` : Number of messages exchanged in the session.
 
+    @classmethod
+    def from_orm(cls, session_orm: SessionORM) -> "SessionORM":
+        return SessionORM(
+            session_id=session_orm.session_id,
+            service_user_id=session_orm.service_user_id,
+            title=session_orm.title,
+            username=session_orm.username,
+            user_role=session_orm.user_role,
+            model_name=session_orm.model_name,
+            embedding_name=session_orm.embedding_name,
+            created_at=session_orm.created_at,
+            updated_at=session_orm.updated_at,
+            message_count=session_orm.message_count,
+        )
+
 
 class SessionDB(BaseDB):
     """Session DataBase CRUD (Create-Read-Update-Delete), sync and async, backed by :sqlalchemy:`SQLAlchemy <>`.

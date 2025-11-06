@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, Literal, Union
+from typing import Optional, Literal, Union, cast
 import asyncio
 
 from pydantic import BaseModel
@@ -44,6 +44,17 @@ class UserSchema(UserCreateSchema):
     user_id: uuid.UUID #: :class:`uuid.UUID` : Primary key of the user.
     user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`\[{``user``, ``admin``, ``assistant``}\] : Role assigned to the user.
     disabled: Optional[bool] = None  #: :class:`bool` : Whether the user has currently a valid access token.
+
+    @classmethod
+    def from_orm(cls, user_orm: UserORM) -> "UserSchema":
+        return cls(
+            username=user_orm.username,
+            email=user_orm.email,
+            password=user_orm.hashed_password,
+            user_role=cast(Literal["user", "admin", "assistant"], user_orm.user_role),
+            disabled=user_orm.disabled,
+            user_id=user_orm.user_id,
+        )
 
 
 class UserDB(BaseDB):
@@ -100,7 +111,7 @@ class UserDB(BaseDB):
             user_role="user",
             created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             last_active=datetime.now(timezone.utc).replace(tzinfo=None),
-            disable=False,
+            disabled=False,
         )
         self.session.add(user_db)
         return user_db
@@ -264,18 +275,19 @@ class UserDB(BaseDB):
         :fastapi:`HTTPException <exceptions/?h=httpe>`
             If the token is invalid or credential validation fails.
         """
+        credential_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credential validation failed",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
         try:
             user_payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=["HS256"])
             username = user_payload.get("sub")
             user_role = user_payload.get("role")
             if username is None or user_role is None:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                    detail="Credential validation failed",
-                                    headers={"WWW-Authenticate": "Bearer"})
+                raise credential_exception
         except InvalidTokenError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                    detail="Credential validation failed",
-                                    headers={"WWW-Authenticate": "Bearer"})
+            raise credential_exception
         return username
 
     def get_user_by_token(self, token: str) -> Optional[UserORM]:
@@ -377,6 +389,20 @@ class UserDB(BaseDB):
         await self.session.commit()
         await self.session.refresh(user_info)
         return user_info
+
+    def delete_user(self, user_id: uuid.UUID) -> None:
+        user_db = self.get_user(user_id=user_id)
+        if user_db is not None:
+            self.session.delete(user_db)
+            self.session.commit()
+        return None
+
+    async def adelete_user(self, user_id: uuid.UUID) -> None:
+        user_db = await self.aget_user(user_id=user_id)
+        if user_db is not None:
+            await self.session.delete(user_db)
+            await self.session.commit()
+        return None
 
 
 if __name__ == "__main__":

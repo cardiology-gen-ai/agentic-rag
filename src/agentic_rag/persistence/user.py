@@ -113,6 +113,7 @@ class UserDB(BaseDB):
             user_id=user_id,
             username=user.username,
             email=user.email,
+            hashed_password=Authentication.hash_password(user.password),
             user_role="user",
             created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             last_active=datetime.now(timezone.utc).replace(tzinfo=None),

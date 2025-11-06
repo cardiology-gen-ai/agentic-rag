@@ -3,13 +3,13 @@ from datetime import timedelta, datetime, timezone
 from typing import Dict, Optional
 
 from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
 import jwt
 
 from agentic_rag.persistence.orm_base import BaseDB
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = PasswordHash.recommended()  # CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 

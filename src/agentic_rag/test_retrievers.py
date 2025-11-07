@@ -158,30 +158,11 @@ class RetrieverTester:
 
 if __name__ == "__main__":
 
-    # Logging Setup
-    log_dir = pathlib.Path("logs")
-    log_dir.mkdir(exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
-    log_file = log_dir / f"retriever_test_{timestamp}.log"
-
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        "%Y-%m-%d %H:%M:%S"
-    ))
-
-    logging.getLogger().addHandler(file_handler)
-
-    print(f"[LOG] Writing detailed logs to: {log_file}")
-
 
     tester = RetrieverTester(
         test_file="src/agentic_rag/retriever_tests/subset_test_questions.json",

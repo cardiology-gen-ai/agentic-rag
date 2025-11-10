@@ -437,8 +437,7 @@ class AsyncAgentMemory:
                                feedback.model_dump(exclude_none=False, mode="json"))
 
     async def adelete_feedback(self, session_id: uuid.UUID, message_id: uuid.UUID) -> None:
-        sid = str(session_id)
-        await self._delete_prefix(("feedback", sid, message_id))
+        await self._delete_prefix(("feedback", str(session_id), str(message_id)))
 
     async def aget_session_feedback(self, session_id: uuid.UUID) -> List[FeedbackTurn]:
         """Return all feedback items for a given session (asynchronous)."""

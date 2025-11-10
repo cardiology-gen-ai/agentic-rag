@@ -43,6 +43,7 @@ class UserSchema(UserCreateSchema):
     """Pydantic schema mirroring :class:`~src.agentic_rag.persistence.user.UserORM` for I/O and validation."""
     user_id: uuid.UUID #: :class:`uuid.UUID` : Primary key of the user.
     user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`\[{``user``, ``admin``, ``assistant``}\] : Role assigned to the user.
+    created_at: Optional[datetime] = None #: Creation timestamp (stored as naive UTC).
     disabled: Optional[bool] = None  #: :class:`bool` : Whether the user has currently a valid access token.
 
     @classmethod
@@ -54,6 +55,7 @@ class UserSchema(UserCreateSchema):
             user_role=cast(Literal["user", "admin", "assistant"], user_orm.user_role),
             disabled=user_orm.disabled,
             user_id=user_orm.user_id,
+            created_at=user_orm.created_at,
         )
 
 

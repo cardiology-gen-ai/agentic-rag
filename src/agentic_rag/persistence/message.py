@@ -3,7 +3,6 @@ import uuid
 from dataclasses import field
 from datetime import datetime
 from typing import Dict, Any, Optional, List
-import asyncio
 
 from psycopg import connect, Connection
 from psycopg.rows import dict_row

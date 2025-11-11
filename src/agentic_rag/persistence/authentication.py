@@ -80,3 +80,26 @@ class Authentication(BaseDB):
         encode_data.update({"exp": expiration})
         encoded_jwt = jwt.encode(encode_data, os.getenv("SECRET_KEY"), algorithm="HS256")
         return encoded_jwt
+
+    @staticmethod
+    def verify_access_token(token: str) -> bool:
+        """
+        Verify whether a JWT token is valid and non-expired.
+
+        Parameters
+        ----------
+        token : str
+            Token under verification.
+
+        Returns
+        -------
+        bool
+            True if the token is valid, False otherwise.
+        """
+        try:
+            _ = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=["HS256"])
+            return True
+        except jwt.ExpiredSignatureError:
+            return False
+        except jwt.InvalidTokenError:
+            return False

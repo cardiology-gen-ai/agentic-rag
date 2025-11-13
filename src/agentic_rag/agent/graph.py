@@ -1,3 +1,4 @@
+import os
 import json
 import pathlib
 import datetime
@@ -27,6 +28,7 @@ from agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSche
 
 
 GENERATION_LIMIT = 2
+os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
 
 class GraphState(TypedDict, total=False):

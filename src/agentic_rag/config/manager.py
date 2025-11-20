@@ -9,8 +9,6 @@ from pydantic import BaseModel
 from cardiology_gen_ai.config.manager import ConfigManager
 from cardiology_gen_ai import EmbeddingConfig, IndexingConfig
 
-# TODO: remove APP_CONFIG_PATH from .env
-
 
 class SearchTypeNames(Enum):
     """Supported retrieval strategies for the vector store."""
@@ -121,7 +119,7 @@ class AgentConfigManager(ConfigManager):
     config: AgentConfig #: :class:`AgentConfig` : The parsed agent configuration.
     def __init__(self, app_id: str, config_path: str = None, app_config_path: str = None):
         config_path = os.getenv("CONFIG_PATH") or config_path
-        app_config_path = os.getenv("APP_CONFIG_PATH") or app_config_path
+        app_config_path = app_config_path
         super().__init__(config_path, app_config_path, app_id)
         self._load_indexing_config()
         self.config = AgentConfig.from_config(self._app_config)

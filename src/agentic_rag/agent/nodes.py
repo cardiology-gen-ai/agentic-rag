@@ -1,12 +1,18 @@
 from datetime import datetime
 import re
-from typing import List
+from typing import List, Any, Dict
 
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AnyMessage
 from langchain_core.runnables import RunnableLambda, Runnable
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel
 
 from agentic_rag.agent import output
+
+# prompt structure: system prompt (role or persona + goal + guardrails + answer structure),
+# few-shot examples (if needed), history, documents, user query 
 
 
 def _strip_think(s: str) -> str:
@@ -28,7 +34,25 @@ def _get_final(s: str) -> str:
     return content
 
 
-def detect_language(llm: Runnable) -> Runnable:
+def get_llm_with_structured_output(llm: BaseChatModel, output_schema: BaseModel | Dict | Any, prompt: ChatPromptTemplate):
+    llm_with_structured_output = llm.with_structured_output(output_schema, include_raw=True)
+    language_detector = prompt | llm_with_structured_output
+    return language_detector
+
+
+def get_chain_with_unstructured_output(llm: BaseChatModel, prompt: ChatPromptTemplate):
+    runnable = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) |  RunnableLambda(_get_final)
+    return runnable
+
+
+def get_chain_with_structured_output(llm: BaseChatModel, output_schema: BaseModel | Dict | Any, prompt: ChatPromptTemplate):
+    parser = JsonOutputParser(pydantic_object=output_schema)
+    to_model = RunnableLambda(lambda d: output_schema.model_validate(d))
+    runnable = get_chain_with_unstructured_output(llm, prompt) | parser | to_model
+    return runnable
+
+
+def detect_language(llm: BaseChatModel, structured_output: bool = True) -> Runnable:
     """Build a runnable that detects the language of the text.
 
     The chain formats instructions, prompts the model, parses the raw string,
@@ -38,31 +62,32 @@ def detect_language(llm: Runnable) -> Runnable:
     ----------
     llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model to execute the detection.
+    structured_output: bool
+        Whether to return a structured output. Default is ``True``.
 
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.DetectLanguage` instance.
     """
-    parser = JsonOutputParser(pydantic_object=output.DetectLanguage)
-    format_instructions = "Return ONLY a valid JSON object with exactly one key 'language' whose value is either 'it' or 'en'."
+    format_instructions = "" if structured_output else \
+        "Return ONLY a valid JSON object with exactly one key 'language' whose value is either 'it' or 'en'."
     system_prompt = f"""
-    You are a language detector. Decide if the input is Italian or English.  
-    Return "it" if the input is in Italian, "en" if the input is in English.\n
-    {format_instructions}
-    """
+        You are a language detector. Decide if the input is Italian or English.  
+        Return "it" if the input is in Italian, "en" if the input is in English.\n
+        {format_instructions}
+        """
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
             ("human", "Text:\n{text}"),
         ]
     )
-    to_model = RunnableLambda(lambda d: output.DetectLanguage.model_validate(d))
-    language_detector = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
-    return language_detector
+    return get_llm_with_structured_output(llm, output.DetectLanguage, prompt) if structured_output else (
+        get_chain_with_structured_output(llm, output.DetectLanguage, prompt))
 
 
-def contextualize_question(llm: Runnable, context_prompt: str) -> Runnable:
+def contextualize_question(llm: BaseChatModel, context_prompt: str, messages: List[AnyMessage]) -> Runnable:
     """Build a runnable that minimally adds context to the last user question.
 
     The chain returns the original question verbatim unless context is truly needed to make it understandable without the prior chat history.
@@ -79,34 +104,39 @@ def contextualize_question(llm: Runnable, context_prompt: str) -> Runnable:
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a context-adjusted question string.
     """
+    # Thought: Given the chat history and the latest user question which might reference context in the chat history, formulate a standalone question which can be understood without the chat history.
+    #
+    # Action:I will NOT answer the latest user question. I will reformulate the latest user question as a new question using the chat history so it can be a standalone question which can be understood without the chat history. If the question does not need any reformulation, I will return the question as is in the original format. Formulate the new question in a standalone question format without chat history.
+    #
+    # Observation: is the reformulated question clear and concise and in a question format?
+    #
+    # Given a chat history and the latest user question which might reference context in the chat history, formulate a standalone question which can be understood without the chat history. Do NOT answer the question, just reformulate it if needed and otherwise return it as is. Your standalone question will be used to query a vector database for RAG.
     system_prompt = """
-    Given the provided history, add context to the last human message ONLY if needed to make it understandable without the chat history.
-
-    IMPORTANT RULES:
-    1. If there is NO history or the history is empty, return the question EXACTLY as provided - do not modify it at all
-    2. If the question is a greeting, introduction request, or general conversational message, return it EXACTLY as provided
-    3. Only add context when the question refers to something mentioned earlier in the conversation
-    4. Always preserve the user's original intent and meaning
-    5. Do NOT rewrite questions to make them "more suitable for retrieval"
-    6. Do NOT answer the question, just add context if truly needed
-
-    Examples:
-    - "Hello" → "Hello" (return exactly as is)
-    - "Please introduce yourself" → "Please introduce yourself" (return exactly as is)
-    - "What about that condition?" (with history about diabetes) → "What about diabetes?" (add context)
+    You are an intelligent agent tasked with understanding ambiguous or unclear user questions in the context of cardiology protocols.
+    Your goal is to analyze the user question, alongside the given chat history, 
+    to formulate a clear, standalone question that retains the original intent 
+    but can be understood independently without requiring prior context or the chat history.
+    Do NOT answer the question, just reformulate it if needed and otherwise return it as is.
     """
+    # IMPORTANT RULES:
+    # 1. If there is NO history or the history is empty, return the question EXACTLY as provided - do not modify it at all
+    # 2. If the question is a greeting, introduction request, or general conversational message, return it EXACTLY as provided
+    # 3. Only add context when the question refers to something mentioned earlier in the conversation
+    # 4. Always preserve the user's original intent and meaning
+    # 5. Do NOT rewrite questions to make them "more suitable for retrieval"
+    # 6. Do NOT answer the question, just add context if truly needed
+    # """
     system_prompt += context_prompt
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", system_prompt),
-            ("human", " Language: {language} \nHistory: \n {history} \nQuestion: {question}"),
-        ]
+            ("system", system_prompt + "\n Question must be in {language} language."),
+            ("human", "User Question: {question}\n Chat History: \n"),
+        ] + messages
     )
-    contextualizer = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) |  RunnableLambda(_get_final)
-    return contextualizer
+    return get_chain_with_unstructured_output(llm, prompt)
 
 
-def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnable:
+def router(llm: BaseChatModel, index_description: str, example_prompt: str, structured_output: bool = True) -> Runnable:
     """Build a runnable that routes a query to the ``conversational`` or ``document-based`` branch.
 
     The chain instructs the model, parses JSON, strips ``<think>`` traces, and validates output into :class:`~src.agentic_rag.agent.output.RouteQuery`.
@@ -119,14 +149,16 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
         Description of the vectorstore/index available to the agent.
     example_prompt : str
         Few-shot examples guiding the routing behavior.
+    structured_output: bool
+        Whether to return a structured output. Default is ``True``.
 
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.RouteQuery` instance.
     """
-    parser = JsonOutputParser(pydantic_object=output.RouteQuery)
-    format_instructions = "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document_based'."
+    format_instructions = "" if structured_output else \
+        "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document_based'."
     system_prompt = f"""
     You are an expert at routing a human message to a document_based branch or conversational branch. 
     This is the vectorstore description: {index_description}\n
@@ -146,12 +178,11 @@ def router(llm: Runnable, index_description: str, example_prompt: str) -> Runnab
             ("human", "User question: {question}"),
         ]
     )
-    to_model = RunnableLambda(lambda d: output.RouteQuery.model_validate(d))
-    question_router = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
-    return question_router
+    return get_llm_with_structured_output(llm, output.RouteQuery, prompt) if structured_output else (
+        get_chain_with_structured_output(llm, output.RouteQuery, prompt))
 
 
-def conversational_agent(llm: Runnable, agent_prompt: str) -> Runnable:
+def conversational_agent(llm: BaseChatModel, agent_prompt: str) -> Runnable:
     """Build a general conversational agent runnable.
 
     Produces clear, concise answers in the requested language, using the given agent prompt and the current timestamp.
@@ -188,11 +219,10 @@ def conversational_agent(llm: Runnable, agent_prompt: str) -> Runnable:
             ("human", "Question: {question}, \nChat history: {history} \nLanguage: {language}"),
         ]
     )
-    conversational_agent_runnable = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
-    return conversational_agent_runnable
+    return get_chain_with_unstructured_output(llm, prompt)
 
 
-def retrieval_grader(llm: Runnable) -> Runnable:
+def retrieval_grader(llm: BaseChatModel, structured_output: bool = True) -> Runnable:
     """Build a runnable that grades document relevance to a question.
 
     Returns a binary score via :class:`~src.agentic_rag.agent.output.GradeDocuments` after JSON parsing and validation.
@@ -201,14 +231,16 @@ def retrieval_grader(llm: Runnable) -> Runnable:
     ----------
     llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for grading.
+    structured_output: bool
+        Whether to return a structured output. Default is ``True``.
 
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.GradeDocuments` instance.
     """
-    parser = JsonOutputParser(pydantic_object=output.GradeDocuments)
-    format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
+    format_instructions = "" if structured_output else \
+        "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
     You are a grader assessing relevance of a retrieved document to a user question.
     If the document or the document filename contain keyword(s) or semantic meaning related to the question, grade it as relevant.
@@ -222,12 +254,11 @@ def retrieval_grader(llm: Runnable) -> Runnable:
             ("human", "Retrieved document filename: {document_filename} \nRetrieved document: {document} \nUser question: {question}")
         ]
     )
-    to_model = RunnableLambda(lambda d: output.GradeDocuments.model_validate(d))
-    grader = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
-    return grader
+    return get_llm_with_structured_output(llm, output.GradeDocuments, prompt) if structured_output else (
+            get_chain_with_structured_output(llm, output.GradeDocuments, prompt))
 
 
-def document_request_detector(llm: Runnable) -> Runnable:
+def document_request_detector(llm: BaseChatModel, structured_output: bool = True) -> Runnable:
     """Build a runnable that detects whether a user is explicitly requesting a document.
 
     Produces a binary score via :class:`~src.agentic_rag.agent.output.DocumentRequest` after JSON parsing and validation.
@@ -236,14 +267,16 @@ def document_request_detector(llm: Runnable) -> Runnable:
     ----------
     llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for detection.
+    structured_output: bool
+        Whether to return a structured output. Default is ``True``.
 
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.DocumentRequest` instance.
     """
-    parser = JsonOutputParser(pydantic_object=output.DocumentRequest)
-    format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
+    format_instructions = "" if structured_output else \
+        "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
     You are a classifier that determines whether a user's question is a request for a document.\n
     Respond with 'yes' if the user is explicitly asking to receive, access, or view a document.\n
@@ -257,12 +290,11 @@ def document_request_detector(llm: Runnable) -> Runnable:
             ("human", "User question: {question}"),
         ]
     )
-    to_model = RunnableLambda(lambda d: output.DocumentRequest.model_validate(d))
-    document_detector = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
-    return document_detector
+    return get_llm_with_structured_output(llm ,output.DocumentRequest, prompt) if structured_output else (
+        get_chain_with_structured_output(llm ,output.DocumentRequest, prompt))
 
 
-def generate_document_response(llm: Runnable) -> Runnable:
+def generate_document_response(llm: BaseChatModel) -> Runnable:
     """Build a runnable that crafts a polite response when the user requests documents.
 
     The response avoids mentioning specific filenames.
@@ -292,10 +324,9 @@ def generate_document_response(llm: Runnable) -> Runnable:
             ("human", "Question: {question} \nAvailable documents: {documents} \nLanguage: {language}"),
         ]
     )
-    document_response = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
-    return document_response
+    return get_chain_with_unstructured_output(llm, prompt)
 
-def generate(llm: Runnable) -> Runnable:
+def generate(llm: BaseChatModel) -> Runnable:
     """Build a runnable that answers using retrieved context.
 
     If the answer is unknown, the agent should state it clearly. The response uses the question's language.
@@ -310,23 +341,39 @@ def generate(llm: Runnable) -> Runnable:
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline yielding a response string.
     """
+    # Your primary mission is to answer questions based on provided context or chat history.
+    # Carefully analyze the given context and ensure your response is concise and directly addresses the question without any additional narration.
+    #
+    # ###
+    #
+    # Your final answer should be written concisely (but include important numerical values, technical terms, jargon, and names)
+    #
+    # # Steps
+    #
+    # 1. Carefully read and understand the context provided.
+    # 2. Identify the key information related to the question within the context.
+    # 3. Formulate a concise answer based on the relevant information.
+    # 4. Ensure your final answer directly addresses the question.
+    # TODO: check if it is a good idea to keep current_datetime
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M")
     system_prompt = f"""
     Today is {current_datetime}. \n
     You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question\n
     If you don't know the answer, just say that you don't know. \nUse the language of the question in your answer.\n
     """
+    # TODO: maybe also history is needed to correctly answer a question
+    # use the following context to answer the query
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
             ("human", "Retrieved information: \n{documents} \nQuestion: \n{question} \nLanguage:{language} \nAnswer:")
         ]
     )
-    generator = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) |  RunnableLambda(_get_final)
-    return generator
+    return get_chain_with_unstructured_output(llm, prompt)
 
 
-def question_rewriter(llm: Runnable) -> Runnable:
+# TODO: here implement query rewriting strategies
+def question_rewriter(llm: BaseChatModel) -> Runnable:
     """Build a runnable that rewrites a query for better vectorstore retrieval.
 
     Parameters
@@ -349,10 +396,10 @@ def question_rewriter(llm: Runnable) -> Runnable:
             ("human", "Here is the initial question: \n\n {question} \n Formulate an improved question."),
         ]
     )
-    rewriter = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
-    return rewriter
+    return get_chain_with_unstructured_output(llm, prompt)
 
-def generate_default_response(llm: Runnable) -> Runnable:
+
+def generate_default_response(llm: BaseChatModel) -> Runnable:
     """Build a runnable that returns a polite fallback response.
 
     The message states that the system lacks sufficient knowledge and suggests
@@ -380,11 +427,11 @@ def generate_default_response(llm: Runnable) -> Runnable:
             ("human", "Question: {question} \nLanguage: {language}\n"),
         ]
     )
-    default_response = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final)
-    return default_response
+    return get_chain_with_unstructured_output(llm, prompt)
 
 
-def ground_validator(llm: Runnable):
+# TODO: check prompts of evaluation libraries to correct these prompts
+def ground_validator(llm: BaseChatModel, structured_output: bool = True):
     """Build a runnable that checks whether a generation is grounded in retrieved facts.
 
     Produces a binary score via :class:`~src.agentic_rag.agent.output.GradeGrounding` after JSON parsing and validation.
@@ -393,14 +440,16 @@ def ground_validator(llm: Runnable):
     ----------
     llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for grading.
+    structured_output: bool
+        Whether to return a structured output. Default is ``True``.
 
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.GradeGrounding` instance.
     """
-    parser = JsonOutputParser(pydantic_object=output.GradeGrounding)
-    format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
+    format_instructions = "" if structured_output else \
+        "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
     You are a grader assessing whether an LLM generation is grounded and supported by a set of retrieved facts.\n
     Given a set of facts and a generation, assess whether the generation is grounded in the facts.\n
@@ -413,12 +462,11 @@ def ground_validator(llm: Runnable):
             ("human", "Set of facts: :\n{documents}\n\n LLM generation: {generation}"),
         ]
     )
-    to_model = RunnableLambda(lambda d: output.GradeGrounding.model_validate(d))
-    groundedness_validator = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
-    return groundedness_validator
+    return get_llm_with_structured_output(llm, output.GradeGrounding, prompt) if structured_output \
+            else get_chain_with_structured_output(llm, output.GradeGrounding, prompt)
 
 
-def answer_grader(llm: Runnable):
+def answer_grader(llm: BaseChatModel, structured_output: bool = True):
     """Build a runnable that checks whether an answer resolves a question.
 
     Produces a binary score via :class:`~src.agentic_rag.agent.output.GradeAnswer` after JSON parsing and validation.
@@ -427,14 +475,16 @@ def answer_grader(llm: Runnable):
     ----------
     llm : :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Temperature-bound chat model used for grading.
+    structured_output: bool
+        Whether to return a structured output. Default is ``True``.
 
     Returns
     -------
     :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`
         Runnable pipeline producing a validated :class:`~src.agentic_rag.agent.output.GradeAnswer`.
     """
-    parser = JsonOutputParser(pydantic_object=output.GradeAnswer)
-    format_instructions = "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
+    format_instructions = "" if structured_output else \
+        "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
     system_prompt = f"""
     You are a grader assessing whether an answer addresses and resolves a question\n
     Give a binary score 'yes' or 'no'. 'Yes' means that the answer resolves the question.\n
@@ -446,12 +496,11 @@ def answer_grader(llm: Runnable):
             ("human", "Question: {question} \n\n Answer: {generation}"),
         ]
     )
-    to_model = RunnableLambda(lambda d: output.GradeAnswer.model_validate(d))
-    grader = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think) | RunnableLambda(_get_final) | parser | to_model
-    return grader
+    return get_llm_with_structured_output(llm, output.GradeAnswer, prompt) if structured_output else (
+        get_chain_with_structured_output(llm, output.GradeAnswer, prompt))
 
 
-def error_handler_node(llm: Runnable, language: List[str]):
+def error_handler_node(llm: BaseChatModel, language: List[str]):
     """Build a runnable that turns exceptions into friendly user-facing messages.
 
     Parameters
@@ -478,8 +527,7 @@ def error_handler_node(llm: Runnable, language: List[str]):
             ("human", "Exception: {exception}"),
         ]
     )
-    error_message_generator = prompt | llm | StrOutputParser() | RunnableLambda(_strip_think)
-    return error_message_generator
+    return get_chain_with_unstructured_output(llm, prompt)
 
 
 # TODO: still need to decide how to appropriately handling long-term memory

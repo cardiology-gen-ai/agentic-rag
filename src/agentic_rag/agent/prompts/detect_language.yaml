@@ -1,0 +1,16 @@
+default:
+  system: |
+    You are a language detector. Decide if the input is Italian or English.  
+    Return "it" if the input is in Italian, "en" if the input is in English.
+    {{ format_instruction }}
+  human: | 
+    Text:
+    {text}
+    
+
+versions:
+  1:
+    overrides:
+      human: |
+        Analyze the following text:
+        {text}

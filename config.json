@@ -7,7 +7,7 @@
         "allowed_languages": ["it", "en"],
         "indexing": {
             "name": "cardiology_protocols",
-            "type": "qdrant",
+            "type": "faiss",
             "distance": "cosine"
         },
         "search": {

@@ -4,8 +4,10 @@ from typing import List
 import torch
 import ollama
 from langchain_core.runnables import Runnable
+from langchain_core.language_models import BaseChatModel
 from langchain_ollama.chat_models import ChatOllama
 from langchain_huggingface.chat_models.huggingface import ChatHuggingFace, HuggingFacePipeline
+from langchain.chat_models import init_chat_model
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 
 from agentic_rag.config.manager import LLMConfig, AgentConfigManager
@@ -34,7 +36,7 @@ class LLMManager:
     """
     config: LLMConfig #: : :class:`~src.agentic_rag.config.manager.LLMConfig` : The configuration instance provided at construction time.
     logger: logging.Logger #: :class:`logging.Logger` : Logger used to emit lifecycle and diagnostic messages.
-    llm: ChatOllama | ChatHuggingFace #: :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` or :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`: The underlying chat model, selected according to ``config.ollama``.
+    llm: BaseChatModel #: :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` or :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`: The underlying chat model, selected according to ``config.ollama``.
     router: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.router_temperature``.
     generator: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.generator_temperature``.
     grader: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.grader_temperature``.
@@ -48,7 +50,7 @@ class LLMManager:
         self.generator = self.llm.bind(options={"temperature": self.config.generator_temperature})
         self.grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
 
-    def init_ollama(self) -> ChatOllama:
+    def init_ollama(self) -> BaseChatModel:
         """Initialize and return an :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` model.
 
         This method pulls the model specified by ``config.model_name`` from an :ollama:`Ollama <>` server and then constructs the chat model.
@@ -67,12 +69,17 @@ class LLMManager:
             self.logger.info(f"Pulling model {self.config.model_name} from Ollama server..")
             ollama.pull(self.config.model_name)  # TODO: maybe move from here and pre-pull somewhere else
             self.logger.info(f"Model {self.config.model_name} pulled.")
-            return ChatOllama(model=self.config.model_name, temperature=0)
+            return init_chat_model(
+                model=self.config.model_name,
+                model_provider="ollama",
+                temperature=0,
+                configurable_fiels=("temperature",),
+            )
         except Exception as e:
             self.logger.info(f"Model {self.config.model_name} could not be initialized: {e}")
             raise
 
-    def init_huggingface(self) -> ChatHuggingFace:
+    def init_huggingface(self) -> BaseChatModel:
         """Initialize and return a :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>` model.
 
         Depending on ``config.nbits``, this method configures either 4/8-bit  quantization (via :transformers:`BitsAndBytesConfig <main_classes/quantization#transformers.BitsAndBytesConfig>`) or full
@@ -126,7 +133,13 @@ class LLMManager:
                 return_full_text=False,
             )
             llm = HuggingFacePipeline(pipeline=pip)
-            return ChatHuggingFace(llm=llm)
+            # return ChatHuggingFace(llm=llm)
+            return init_chat_model(
+                model=self.config.model_name,
+                model_provider="huggingface",
+                llm=llm,
+                configurable_fiels=("temperature",),
+            )
         except Exception as e:
             self.logger.info(f"Model {self.config.model_name} could not be initialized: {e}")
             raise

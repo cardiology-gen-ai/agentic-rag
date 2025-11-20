@@ -18,22 +18,23 @@ authors = [
 dependencies = [
     "pydantic==2.11.7",
     "qdrant-client==1.15.1",
-    "langchain-core==0.3.75",
+    "langchain>=1.0.0",
+    "langchain-core>=1.0.0",
+    "langgraph>=1.0.0",
+    "langgraph-checkpoint-postgres==2.0.23",
+    "langchain-ollama>=1.0.0",
+    "langchain-huggingface>=1.0.0",
+    "langchain-qdrant>=1.0.0",
+    "langchain-classic>=1.0.0",
     "sentence-transformers==5.1.0",
     "faiss-cpu==1.12.0",
     "fastembed==0.7.2",
     "sqlalchemy==2.0.43",
     "psycopg-binary==3.2.10",
     "asyncpg==0.30.0",
-    "langgraph==0.6.7",
-    "langgraph-checkpoint-postgres==2.0.23",
-    "langchain-ollama==0.3.7",
-    "langchain-huggingface==0.3.1",
     "transformers==4.56.0",
     "bitsandbytes==0.42.0",
     "accelerate==1.10.1",
-    "langchain-community>=0.3.25",
-    "langchain-qdrant>=0.2.0",
     "safetensors>=0.4.3",
     "pwdlib[argon2]==0.3.0",
     "PyJWT==2.10.0",
@@ -48,6 +49,10 @@ documentation = [
     "autodoc-pydantic==2.2.0",
     "sphinx-toolbox==4.0.0",
     "sphinx-book-theme==1.1.4"
+]
+
+prompting = [
+    "dspy==3.0.4"
 ]
 
 [tool.setuptools]

@@ -16,7 +16,7 @@ from agentic_rag.config.manager import AgentConfigManager
 
 
 class RetrieverTester:
-    def __init__(self, test_file: str, app_id: str = "cardiology_protocols", results_dir: str = "src/agentic_rag/retriever_tests"):
+    def __init__(self, test_file: str, app_id: str = "cardiology_protocols", results_dir: str = "retriever_logs/"):
         self.test_file = pathlib.Path(test_file)
         self.results_dir = pathlib.Path(results_dir)
         self.logger = logging.getLogger("RetrieverTester")
@@ -247,7 +247,7 @@ class RetrieverTester:
 
 if __name__ == "__main__":
 # Logging Setup
-    log_dir = pathlib.Path("logs")
+    log_dir = pathlib.Path("retriever_logs")
     log_dir.mkdir(exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
@@ -284,7 +284,7 @@ if __name__ == "__main__":
         tester = RetrieverTester(
             test_file=test_file,
             app_id="cardiology_protocols",
-            results_dir="logs/",
+            results_dir="retriever_logs/",
         )
         tester.test_tag = test_tag 
         tester.load_questions()

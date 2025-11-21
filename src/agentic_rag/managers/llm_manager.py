@@ -5,8 +5,7 @@ import torch
 import ollama
 from langchain_core.runnables import Runnable
 from langchain_core.language_models import BaseChatModel
-from langchain_ollama.chat_models import ChatOllama
-from langchain_huggingface.chat_models.huggingface import ChatHuggingFace, HuggingFacePipeline
+from langchain_huggingface.chat_models.huggingface import HuggingFacePipeline
 from langchain.chat_models import init_chat_model
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 

@@ -5,7 +5,9 @@ default:
     to formulate a clear, standalone question that retains the original intent 
     but can be understood independently without requiring prior context or the chat history.
     Do NOT answer the question, just reformulate it if needed and otherwise return it as is.
+    {{ context_prompt }}
     {{ fragments.language }}
   human: | 
     User Question: {question} 
-    Chat History: \n
+    Chat History: 
+    {messages}

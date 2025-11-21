@@ -5,6 +5,11 @@
         "system_prompt": "You are an assistant specialized in answering questions about cardiology protocols.",
         "language": "italian",
         "allowed_languages": ["it", "en"],
+        "indexing": {
+            "name": "cardiology_protocols",
+            "type": "faiss",
+            "distance": "cosine"
+        },
         "search": {
             "type": "similarity",
             "top_k": 3

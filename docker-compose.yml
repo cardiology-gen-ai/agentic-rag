@@ -1,4 +1,26 @@
 services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-cardio-agentic-rag
+    ports:
+      - "6335:6333"    # HTTP API
+      - "6336:6334"    # gRPC API
+    volumes:
+      - ${INDEX_ROOT}/qdrant_storage:/qdrant/storage
+      - ${INDEX_ROOT}/qdrant_config/agentic-rag:/qdrant/config
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
+      - QDRANT__SERVICE__ENABLE_CORS=true
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "timeout 2 bash -c 'cat < /dev/null > /dev/tcp/localhost/6333' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
   db:
     image: ankane/pgvector
     restart: always
@@ -8,12 +30,6 @@ services:
       POSTGRES_USER: postgres
     ports:
       - "5432:5432"
-
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
 
   ollama:
     image: ollama/ollama:latest

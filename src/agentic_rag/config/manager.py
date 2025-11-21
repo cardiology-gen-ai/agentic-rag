@@ -1,3 +1,4 @@
+import json
 import os
 from dataclasses import field
 from enum import Enum
@@ -118,6 +119,20 @@ class AgentConfigManager(ConfigManager):
     config: AgentConfig #: :class:`AgentConfig` : The parsed agent configuration.
     def __init__(self, app_id: str, config_path: str = None, app_config_path: str = None):
         config_path = os.getenv("CONFIG_PATH") or config_path
-        app_config_path = os.getenv("APP_CONFIG_PATH") or app_config_path
+        app_config_path = app_config_path
         super().__init__(config_path, app_config_path, app_id)
+        self._load_indexing_config()
         self.config = AgentConfig.from_config(self._app_config)
+
+    def _load_indexing_config(self, filename="config.json"):
+        info_config = self._app_config["indexing"]
+        with open(os.path.join(os.getenv("INDEX_ROOT"), filename), "r") as f:
+            loaded_config = json.load(f)
+        assert (loaded_config["indexing"]["name"] == info_config["name"])
+        assert (loaded_config["indexing"]["distance"] == info_config["distance"])
+        loaded_type = loaded_config["indexing"]["type"] if isinstance(loaded_config["indexing"]["type"], list) \
+            else [loaded_config["indexing"]["type"]]
+        assert (info_config["type"] in loaded_type)
+        loaded_config["indexing"]["type"] = info_config["type"]
+        self._app_config["indexing"] = loaded_config["indexing"]
+        self._app_config["embeddings"] = loaded_config["embeddings"]

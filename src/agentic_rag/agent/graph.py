@@ -1,3 +1,4 @@
+import os
 import json
 import pathlib
 import datetime
@@ -5,11 +6,12 @@ import asyncio
 from logging import Logger
 from typing import TypedDict, Dict, List, Annotated
 
+from langchain.agents.middleware import SummarizationMiddleware
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
+from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import PromptTemplate, FewShotPromptTemplate
-from langchain_core.runnables import Runnable
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import START, END, StateGraph, add_messages
 from langchain_core.messages import HumanMessage, AnyMessage, AIMessage
@@ -17,16 +19,19 @@ from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 
 from cardiology_gen_ai.utils.logger import get_logger
+from langgraph.runtime import Runtime
 
+from agentic_rag.agent.nodes_factory import NodeFactory
 from agentic_rag.config.manager import AgentConfigManager, AgentConfig
 from agentic_rag.managers.llm_manager import LLMManager
 from agentic_rag.managers.search_manager import SearchManager
 from agentic_rag.persistence.message import AgentMemory
-from agentic_rag.agent import nodes
+from agentic_rag.agent import output
 from agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
 
 
 GENERATION_LIMIT = 2
+os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
 
 class GraphState(TypedDict, total=False):
@@ -60,9 +65,11 @@ class Agent:
     config: AgentConfig #: :class:`~src.agentic_rag.config.manager.AgentConfig` : Loaded configuration (system prompt, embeddings, indexing, search, etc.).
     logger: Logger #: :class:`logging.Logger` : Logger for lifecycle and diagnostics.
     llm_manager: LLMManager #: :class:`~src.agentic_rag.managers.llm_manager.LLMManager` :  LLM manager exposing ``router``, ``generator``, and ``grader`` :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`.
-    router: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for routing queries.
-    generator: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for answer generation.
-    grader: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable for grading/validation of retrieved context and generated chunks.
+    llm: BaseChatModel
+    router_config: RunnableConfig
+    generator_config: RunnableConfig
+    grader_config: RunnableConfig
+    node_factory: NodeFactory
     search_manager: SearchManager #: :class:`~src.agentic_rag.managers.search_manager.SearchManager` : Index loader and retriever factory for the vector store.
     retriever: VectorStoreRetriever #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Configured retriever if the vector store exists.
     examples: List[Dict[str, str]] #: :class:`list` : Few-shot examples loaded for the router prompt.
@@ -77,10 +84,12 @@ class Agent:
         self.logger = get_logger(f"Agent {self.agent_name}")
 
         self.llm_manager = LLMManager(self.config.llm)
-        self.router = self.llm_manager.router
-        self.generator = self.llm_manager.generator
-        self.grader = self.llm_manager.grader
-
+        self.llm = self.llm_manager.llm
+        self.router_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.router_temperature})
+        self.generator_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.generator_temperature})
+        self.grader_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.grader_temperature})
+        self.node_factory = NodeFactory()
+        self.summarizer = SummarizationMiddleware(model=self.llm, messages_to_keep=5)
         self.search_manager = SearchManager(
             index_config=self.config.indexing,
             search_config=self.config.search,
@@ -91,11 +100,11 @@ class Agent:
         self.examples = self._load_examples()
 
         self.memory = AgentMemory()
-        
+
         self.graph: StateGraph = self._create_graph()
         self.compiled_graph: CompiledStateGraph = self.graph.compile(
             checkpointer=self.memory.checkpointer,
-            store=self.memory.store
+            # store=self.memory.store
         )
 
         self.logger.info("Agent initialization completed")
@@ -142,8 +151,9 @@ class Agent:
         """
         self.logger.info("Detecting language...")
         question = state["question"]
-        runnable = nodes.detect_language(self.generator)
-        response = runnable.invoke({"text": question})
+        runnable = self.node_factory.build_node("detect_language", self.llm,
+                                                structured_output=True, output_schema=output.DetectLanguage)
+        response = runnable.invoke({"text": question}, config=self.generator_config, with_retry=True)
         language = response.language
         self.logger.info(f"Detected language: {language}")
         return {"language": language}
@@ -161,14 +171,18 @@ class Agent:
         :class:`dict`
             Keys: ``response`` (assistant text) and ``messages`` (list with new :langchain_core:`AIMessage <messages/langchain_core.messages.ai.AIMessage.html>`).
         """
-        self.logger.info("Agent is ready to answer questions")
+        self.logger.info("Agent is answering conversational question.")
         agent_prompt = self.config.system_prompt
         language = state["language"] or self.config.language
         question = state["question"]
         messages = state["messages"]
         history = "\n".join([f"{msg.type}: {msg.content}" for msg in messages[:-1]]) if messages else ""
-        runnable = nodes.conversational_agent(llm=self.generator, agent_prompt=agent_prompt)
-        response = runnable.invoke({"question": question, "language": language, "history": history})
+        runnable = self.node_factory.build_node(
+            "conversational_agent", self.llm, structured_output=False, agent_prompt=agent_prompt)
+        response = runnable.invoke(
+            {"question": question, "language": language, "history": history},
+            config=self.generator_config,
+        )
         return {"response": response, "messages": [AIMessage(content=response)]}
 
     def _contextualize_question(self, state: GraphState) -> Dict:
@@ -188,14 +202,19 @@ class Agent:
         self.logger.info(f"Original question: {state['question']}")
         question = state["question"]
         language = state["language"]
-        messages = state["messages"]
-        runnable = nodes.contextualize_question(self.generator, self.config.context.system_prompt)
+        self.summarizer.before_model(state, Runtime())
+        messages = [(msg.type, msg.content) for msg in state["messages"]]
+        runnable = self.node_factory.build_node("contextualize_question", self.llm,
+                                                structured_output=False,
+                                                context_prompt=self.config.context.system_prompt,
+                                                )
         response = runnable.invoke(
-            {"question": question, "language": language, "history": messages}
+            {"question": question, "language": language, "messages": messages},
+            config=self.generator_config,
         )
         self.logger.info(f"Contextual question: {response}")
         return {"generation_count": 0, "transform_query_count": 0, "contextual_question": response}
-    
+
     def _retrieve(self, state: GraphState) -> Dict:
         """Retrieve candidate documents for the contextualized question.
 
@@ -237,13 +256,16 @@ class Agent:
         question = state["contextual_question"]
         documents_content = [doc.page_content for doc in state["documents"]]
         documents_filename = [doc.metadata['filename'] for doc in state["documents"]]  # TODO: check correctness
-        runnable = nodes.retrieval_grader(self.grader)
+        runnable = self.node_factory.build_node(
+            "retrieval_grader", self.llm, structured_output=True, output_schema=output.GradeDocuments)
         filtered_docs = []
         for idx, d in enumerate(state["documents"]):
             try:
-                response = runnable.invoke({"question": question, "document": documents_content[idx],
-                                            "document_filename": documents_filename[idx]})
-                print(response)
+                response = runnable.invoke(
+                    {"question": question, "document": documents_content[idx],
+                     "document_filename": documents_filename[idx]},
+                    config=self.grader_config, with_retry=True,
+                )
                 grade = response.binary_score
                 if grade == "yes":
                     self.logger.info(f"Document {idx + 1} ({documents_filename[idx]}) is relevant to the question.")
@@ -270,8 +292,9 @@ class Agent:
         """
         self.logger.info("Checking if user question requires a document.")
         question = state["contextual_question"]
-        runnable = nodes.document_request_detector(self.router)
-        score = runnable.invoke({"question": question})
+        runnable = self.node_factory.build_node(
+            "document_request_detector", self.llm, structured_output=True, output_schema=output.DocumentRequest)
+        score =  runnable.invoke({"question": question}, config=self.router_config, with_retry=True)
         binary_score = score.binary_score
         if binary_score == "yes":
             self.logger.info("User question implies a document request.")
@@ -324,10 +347,13 @@ class Agent:
         question = state["contextual_question"]
         files = list(set([doc.metadata["filename"] for doc in documents]))
         language = state["language"]
-        runnable = nodes.generate_document_response(self.generator)
-        response = runnable.invoke({"question": question, "documents": files, "language": language})
+        runnable = self.node_factory.build_node("generate_document_response", self.llm, structured_output=False)
+        response = runnable.invoke(
+            {"question": question, "documents": files, "language": language},
+            config=self.generator_config,
+        )
         self.logger.info(f"Generated response: {response}")
-        return {"response": response}
+        return {"response": response, "messages": [AIMessage(content=response)]}
 
     def _generate(self, state: GraphState) -> Dict:
         """Generate an answer grounded in retrieved documents.
@@ -350,9 +376,12 @@ class Agent:
         retrieved_docs_as_context = [(f"Filename: {doc.metadata['filename']}\n"
                                       f"Content: {doc.page_content}") for doc in documents]
         context = "\n\n".join([string for string in retrieved_docs_as_context])
-        runnable = nodes.generate(self.generator)
-        response = runnable.invoke({"documents": context, "question": question, "language": language})
-        return {"response": response, "generation_count": state["generation_count"] + 1,}
+        runnable = self.node_factory.build_node("generate", self.llm, structured_output=False)
+        response = runnable.invoke(
+            {"documents": context, "question": question, "language": language},
+            config=self.generator_config,
+        )
+        return {"response": response, "generation_count": state["generation_count"] + 1, "messages": [AIMessage(content=response)]}
 
     def _question_rewriter(self, state: GraphState) -> Dict:
         """Rewrite the question to improve retrieval when needed.
@@ -370,8 +399,11 @@ class Agent:
         self.logger.info("Transforming query.")
         question = state["contextual_question"]
         self.logger.info(f"Original question: {question}")
-        runnable = nodes.question_rewriter(self.generator)
-        response = runnable.invoke({"question": question})
+        runnable = self.node_factory.build_node("question_rewriter", self.llm, structured_output=False)
+        response = runnable.invoke(
+            {"question": question},
+            config=self.generator_config,
+        )
         return {
             "contextual_question": response,
             "transform_query_count": state["transform_query_count"] + 1,
@@ -393,9 +425,12 @@ class Agent:
         self.logger.info("Generating default response.")
         language = state["language"]
         question = state["question"]
-        runnable = nodes.generate_default_response(self.generator)
-        response = runnable.invoke({"language": language, "question": question})
-        return {"response": response, "documents": []}
+        runnable = self.node_factory.build_node("generate_default_response", self.llm, structured_output=False)
+        response = runnable.invoke(
+            {"language": language, "question": question},
+            config=self.generator_config,
+        )
+        return {"response": response, "documents": [], "messages": [AIMessage(content=response)]}
 
     def _router(self, state: GraphState) -> str | None:
         """Route the contextual question to conversational or document-based flow.
@@ -429,8 +464,11 @@ class Agent:
             suffix="",
         )
         example_prompt = few_shot_prompt.format(input=state["contextual_question"])
-        runnable = nodes.router(self.router, self.config.indexing.description, example_prompt)
-        routing = runnable.invoke({"question": state["contextual_question"]})
+        runnable = self.node_factory.build_node(
+            "router", self.llm, structured_output=True, output_schema=output.RouteQuery,
+            index_description=self.config.indexing.description, example_prompt=example_prompt)
+        routing = (
+            runnable.invoke({"question": state["contextual_question"]},  config=self.router_config, with_retry=True))
         if routing.branch == "conversational":
             self.logger.info("Conversational question is routed to the Agent.")
             return "conversational_question"
@@ -464,14 +502,18 @@ class Agent:
         generation_count = state["generation_count"]
         question = state["contextual_question"]
         docs_string = "\n\n".join([doc.page_content for doc in documents])
-        ground_validator_runnable = nodes.ground_validator(self.grader)
-        answer_grader_runnable = nodes.answer_grader(self.grader)
+        validator_runnable = self.node_factory.build_node(
+            "ground_validator", self.llm, structured_output=True, output_schema=output.GradeGrounding)
+        grader_runnable = self.node_factory.build_node(
+            "answer_grader", self.llm, structured_output=True, output_schema=output.GradeAnswer)
         if generation_count <= GENERATION_LIMIT:
-            ground_validation = ground_validator_runnable.invoke({"documents": docs_string, "generation": generation})
+            ground_validation = validator_runnable.invoke(
+                {"documents": docs_string, "generation": generation}, config=self.grader_config, with_retry=True)
             ground_validation_score = ground_validation.binary_score
             if ground_validation_score == "yes":
                 self.logger.info("Generated answer is grounded in documents.")
-                answer_grade = answer_grader_runnable.invoke({"question": question, "generation": generation})
+                answer_grade = grader_runnable.invoke(
+                    {"question": question, "generation": generation}, config=self.grader_config, with_retry=True)
                 answer_question = answer_grade.binary_score
                 if answer_question == "yes":
                     self.logger.info(f"Generated answer addresses the question.")
@@ -504,7 +546,7 @@ class Agent:
             return "retrieve"
         else:
             return "generate_default_response"
-    
+
     def _create_graph(self) -> StateGraph:
         """Declare the LangGraph nodes and edges and return the graph.
 
@@ -585,8 +627,12 @@ class Agent:
             Mapping with key ``response`` holding the error message.
         """
         self.logger.info("Error Handler Node.")
-        runnable = nodes.error_handler_node(self.generator, self.config.allowed_languages)
-        response = runnable.invoke({"exception": exception})
+        runnable = self.node_factory.build_node(
+            "error_handler_node", self.llm, structured_output=False, languages=self.config.allowed_languages)
+        response = runnable.invoke(
+            {"exception": exception},
+            config=self.generator_config,
+        )
         return {"response": response}
 
     def _convert_conversation_to_messages(self, conversation: ConversationRequest) -> List[AnyMessage]:
@@ -615,7 +661,7 @@ class Agent:
         else:
             messages.append(AnyMessage(content=conversation.question.content))
         return messages[- 2 * self.config.memory.length:]
-    
+
     async def answer(self, request: ChatRequest, step_logger_fn = None) -> ChatResponse:
         """Run the compiled graph for a user request and return a response.
 

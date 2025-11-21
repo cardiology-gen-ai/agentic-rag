@@ -3,6 +3,8 @@ agent/.chainlit*
 /build/
 /CardiologyGenAI_AgenticRAG.egg-info/
 
+src/agentic_rag/retriever_tests
+
 # Python cache
 __pycache__/
 *.py[cod]
@@ -12,3 +14,7 @@ __pycache__/
 /.env.leonardo
 /uv.lock
 /docs/build/
+
+/logs/
+
+

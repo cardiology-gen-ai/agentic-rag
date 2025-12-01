@@ -51,6 +51,6 @@ kg_builder = SimpleKGPipeline(
 )
 
 # Modify if you need to process multiple files
-pdf_file = "test_data/Test_file.pdf"
+pdf_file = "test_data/CardiovascularRiskChildren.pdf"
 result = asyncio.run(kg_builder.run_async(file_path=pdf_file))
 print(result.result)

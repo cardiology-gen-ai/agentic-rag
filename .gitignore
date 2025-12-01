@@ -17,4 +17,6 @@ __pycache__/
 
 /logs/
 
-
+src/graph_rag/__pycache__
+src/graph_rag/.env
+src/graph_rag/data/

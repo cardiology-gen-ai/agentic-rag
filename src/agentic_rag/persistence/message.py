@@ -20,6 +20,8 @@ from agentic_rag.utils.chat import ChatResponse, ChatRequest
 
 logger = get_logger("Agent memory management based on LangGraph")
 
+POSTGRES_ADMIN_DSN = f"postgresql://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/postgres"
+
 
 class ConversationTurn(BaseModel):
     """A single conversation turn persisted in the memory store."""
@@ -222,7 +224,7 @@ class AgentMemory:
     store: PostgresStore #: :langgraph:`PostgresStore <store/?h=postgresstore#langgraph.store.postgres.PostgresStore>` : Key-value store abstraction layered on :postgresql:`PostgreSQL <about>`.
     checkpointer: PostgresSaver #: :langgraph:`PostgresSaver <reference/checkpoints/?h=postgressa#langgraph.checkpoint.postgres.PostgresSaver>`  : Checkpointer for LangGraph workflows.
     def __init__(self, db_connection_string: Optional[str] = None):
-        db_connection_string = db_connection_string or os.getenv("POSTGRES_ADMIN_DSN")
+        db_connection_string = db_connection_string or POSTGRES_ADMIN_DSN
         if not db_connection_string:
             raise ValueError("No database connection string provided")
         self.connection = connect(conninfo=db_connection_string, autocommit=True, row_factory=dict_row)
@@ -381,7 +383,7 @@ class AsyncAgentMemory:
         ValueError
             If no database connection string can be determined.
         """
-        db_connection_string = db_connection_string or os.getenv("POSTGRES_ADMIN_DSN")
+        db_connection_string = db_connection_string or POSTGRES_ADMIN_DSN
         if not db_connection_string:
             raise ValueError("No database connection string provided")
         store_manager = AsyncPostgresStore.from_conn_string(db_connection_string)

@@ -7,7 +7,7 @@
         "allowed_languages": ["it", "en"],
         "indexing": {
             "name": "cardiology_protocols",
-            "type": "faiss",
+            "type": "qdrant",
             "distance": "cosine"
         },
         "search": {
@@ -15,7 +15,7 @@
             "top_k": 3
         },
         "llm": {
-            "deployment": "llama3.2:1b",
+            "deployment": "gpt-oss:20b",
             "ollama": true,
             "nbits": 16,
             "generator_temperature": 0.01,
@@ -33,11 +33,6 @@
         },
         "memory": {
             "length": 3
-        },
-    "agent": {
-        "langfuse_public_key": "",
-        "langfuse_secret_key": "",
-        "langfuse_host": "https://cloud.langfuse.com"
+        }
     }
-}
 }

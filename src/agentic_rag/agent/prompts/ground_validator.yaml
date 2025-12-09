@@ -1,8 +1,10 @@
 default:
-  system: |
-    You are a grader assessing whether an LLM generation is grounded and supported by a set of retrieved facts.
+  instructions: |
     Given a set of facts and a generation, assess whether the generation is grounded in the facts.
     Give a binary score 'yes' or 'no'. 'Yes' means that the generation is grounded and supported by the facts.
+  system: |
+    You are a grader assessing whether an LLM generation is grounded and supported by a set of retrieved facts.
+    {{ instructions }}
     {{ format_instructions }}
   human: | 
     Set of facts: 

@@ -1,13 +1,15 @@
 default:
-  system: |
-    You are an expert at routing a human message to a document_based branch or conversational branch. 
-    This is the vectorstore description: {{ index_description }}
+  instructions: |
     Determine whether the user's question is a conversational inquiry, meaning it is general, casual, or social. 
     This can include, but it is not limited to greetings (e.g., 'Hello'), small talk 
     (e.g., 'How are you?', 'What information can you give me?, 'What documentation can you provide me?'), 
     personal opinions, and polite expressions of gratitude (e.g., 'Thank you').
     Return 'conversational' if the user question is a conversational inquiry.
     Return 'document_based' if the user question is NOT a conversational inquiry
+  system: |
+    You are an expert at routing a human message to a document_based branch or conversational branch. 
+    This is the vectorstore description: {{ index_description }}
+    {{ instructions }}
     Follow these examples to decide if the question should be routed to the vectorstore or conversational branch:
     {{ example_prompt }}.
     {{ format_instructions }}

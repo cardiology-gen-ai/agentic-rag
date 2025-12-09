@@ -1,8 +1,9 @@
 import logging
+import os
 from typing import List
 
 import torch
-import ollama
+from ollama import Client
 from langchain_core.runnables import Runnable
 from langchain_core.language_models import BaseChatModel
 from langchain_huggingface.chat_models.huggingface import HuggingFacePipeline
@@ -66,13 +67,14 @@ class LLMManager:
         """
         try:
             self.logger.info(f"Pulling model {self.config.model_name} from Ollama server..")
-            ollama.pull(self.config.model_name)  # TODO: maybe move from here and pre-pull somewhere else
+            client = Client(host=os.getenv("OLLAMA_URL"))
+            client.pull(self.config.model_name)  # TODO: maybe move from here and pre-pull somewhere else
             self.logger.info(f"Model {self.config.model_name} pulled.")
             return init_chat_model(
                 model=self.config.model_name,
                 model_provider="ollama",
                 temperature=0,
-                configurable_fiels=("temperature",),
+                base_url=os.getenv("OLLAMA_URL"),
             )
         except Exception as e:
             self.logger.info(f"Model {self.config.model_name} could not be initialized: {e}")
@@ -132,12 +134,10 @@ class LLMManager:
                 return_full_text=False,
             )
             llm = HuggingFacePipeline(pipeline=pip)
-            # return ChatHuggingFace(llm=llm)
             return init_chat_model(
                 model=self.config.model_name,
                 model_provider="huggingface",
                 llm=llm,
-                configurable_fiels=("temperature",),
             )
         except Exception as e:
             self.logger.info(f"Model {self.config.model_name} could not be initialized: {e}")

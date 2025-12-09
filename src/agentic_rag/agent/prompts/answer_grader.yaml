@@ -1,7 +1,9 @@
 default:
+  instructions: |
+    Give a binary score 'yes' or 'no'. 'Yes' means that the answer resolves the question.
   system: |
     You are a grader assessing whether an answer addresses and resolves a question.
-    Give a binary score 'yes' or 'no'. 'Yes' means that the answer resolves the question.
+    {{ instructions }}
     {{ format_instructions }}
   human: | 
     Question: 

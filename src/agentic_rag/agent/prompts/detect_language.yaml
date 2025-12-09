@@ -1,7 +1,8 @@
 default:
+  instructions: |
+    You are a language detector. Decide if the input is Italian or English.
   system: |
-    You are a language detector. Decide if the input is Italian or English.  
-    Return "it" if the input is in Italian, "en" if the input is in English.
+    {{ instructions }}
     {{ format_instruction }}
   human: | 
     Text:

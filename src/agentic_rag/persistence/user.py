@@ -18,6 +18,9 @@ from agentic_rag.persistence.db import get_sync_db, get_async_db, ensure_databas
 from agentic_rag.persistence.authentication import Authentication
 
 
+POSTGRES_ADMIN_DSN = f"postgresql://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/postgres"
+
+
 class UserORM(BaseORM):
     """ORM mapping for the ``public.user`` table."""
     __tablename__ = "user"
@@ -87,7 +90,7 @@ class UserDB(BaseDB):
     @classmethod
     async def create(cls,  session: Union[AsyncSession, Session]) -> "UserDB":
         self = cls(session=session)
-        admin_dsn = os.getenv("POSTGRES_ADMIN_DSN")
+        admin_dsn = POSTGRES_ADMIN_DSN
         if admin_dsn:
             ensure_database()
         engine = session.bind

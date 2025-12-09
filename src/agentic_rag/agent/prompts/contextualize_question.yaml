@@ -1,12 +1,14 @@
 default:
-  system: | 
-    You are an intelligent agent tasked with understanding ambiguous or unclear user questions in the context of cardiology protocols.
-    Your goal is to analyze the user question, alongside the given chat history, 
+  instructions: |
+    Analyze the user question, alongside the given chat history, 
     to formulate a clear, standalone question that retains the original intent 
     but can be understood independently without requiring prior context or the chat history.
     Do NOT answer the question, just reformulate it if needed and otherwise return it as is.
-    {{ context_prompt }}
     {{ fragments.language }}
+  system: | 
+    You are an intelligent agent tasked with understanding ambiguous or unclear user questions in the context of cardiology protocols.
+    {{ instructions }}
+    {{ context_prompt }}
   human: | 
     User Question: {question} 
     Chat History: 

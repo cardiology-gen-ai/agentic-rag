@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import re
 import yaml
 import copy
@@ -29,9 +29,23 @@ def load_yaml(filepath: Path) -> Dict:
         return yaml.safe_load(f)
 
 
-def render_template(template_str: str, fragments: Dict, **kwargs) -> str:
+def render(template_str: str, context: Dict) -> str:
     t = Template(template_str, undefined=DebugUndefined)
-    return t.render(fragments=fragments, **kwargs)
+    return t.render(**context)
+
+
+def render_template(data: str | List[str] | Dict, context: Dict):
+    if isinstance(data, str):
+        return render(data, context)
+
+    if isinstance(data, list):
+        return [render_template(x, context) for x in data]
+
+    if isinstance(data, dict):
+        return {
+            k: render_template(v, context)
+            for k, v in data.items()
+        }
 
 
 def _strip_think(s: str) -> str:
@@ -90,13 +104,14 @@ class PromptFactory:
         return prompt_components
 
     def render_prompt_components(self, prompt_components: Dict, **kwargs):
-        messages = []
-        for role, text in prompt_components.items():
-            # rendered_fragments = render_template(text, self.fragments) if re.search(r"\{\{.*?\}\}", text) else text
-            rendered_text = (
-                render_template(text, self.fragments, **kwargs)) \
-                if re.search(r"\{\{.*?\}\}", text) else text
-            messages.append((role, rendered_text))
+        context = {
+            **prompt_components,
+            "fragments": self.fragments,
+            **kwargs,
+        }
+        rendered_text = render_template(prompt_components, context)
+        messages = [(role, text) for role, text in rendered_text.items()
+                    if role in ["human", "user", "ai", "assistant", "system"]]
         return ChatPromptTemplate.from_messages(messages)
 
     def build_prompt(self, name: str, version: str | int = "default", **kwargs):

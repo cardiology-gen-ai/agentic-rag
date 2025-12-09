@@ -1,9 +1,11 @@
 default:
-  system: | 
-    You are a grader assessing relevance of a retrieved document to a user question.
+  instructions: |
     If the document or the document filename contain keyword(s) or semantic meaning related to the question, grade it as relevant.
     - Use 'yes' if the document is relevant to the question
     - Use 'no' if the document is not relevant to the question.
+  system: | 
+    You are a grader assessing relevance of a retrieved document to a user question.
+    {{ instructions }}
     {{ format_instructions }}
   human: | 
     Retrieved document filename: 

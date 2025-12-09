@@ -12,8 +12,8 @@ from cardiology_gen_ai.utils.logger import get_logger
 from agentic_rag.persistence.orm_base import BaseORM
 
 
-POSTGRES_ADMIN_DSN = os.getenv("POSTGRES_ADMIN_DSN")
-DB_NAME = "cardiology_protocols"  # TODO: maybe put in config / env
+POSTGRES_ADMIN_DSN = f"postgresql://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/postgres"
+DB_NAME = os.getenv("POSTGRES_DB")
 SCHEMA_NAME = "public"  # TODO: maybe put in config / env
 
 logger = get_logger("Database creation")
@@ -60,7 +60,8 @@ class DatabaseConnection:
         self.db_connection_string = db_connection_string if db_connection_string is not None else None
         if self.db_connection_string is None:
             prefix = "postgresql+psycopg://" if sync is True else "postgresql+asyncpg://"
-            self.db_connection_string = prefix + os.getenv("DB_CONNECTION_STRING")
+            self.db_connection_string = \
+                (prefix + f"{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/{DB_NAME}")
             if self.db_connection_string is None:
                 raise ValueError("No database connection string provided")
         logger.info(f"Database connection initialized")

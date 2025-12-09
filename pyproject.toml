@@ -62,3 +62,6 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["agentic_rag*"]
+
+[tool.setuptools.package-data]
+"agentic_rag.agent.prompts" = ["*.yaml"]

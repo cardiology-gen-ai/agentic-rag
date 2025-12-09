@@ -1,0 +1,1 @@
+recursive-include src/agentic_rag/agent/prompts *.yaml

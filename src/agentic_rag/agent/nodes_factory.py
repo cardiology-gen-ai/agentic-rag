@@ -1,8 +1,9 @@
-from pathlib import Path
 from typing import Dict, Any, Optional, List
 import re
 import yaml
 import copy
+from importlib.resources import files
+from importlib.resources.abc import Traversable
 
 from jinja2 import Template, DebugUndefined
 from langchain_core.language_models import BaseChatModel
@@ -22,7 +23,7 @@ def deep_merge(a: Dict, b: Dict) -> Dict:
     return result
 
 
-def load_yaml(filepath: Path) -> Dict:
+def load_yaml(filepath: Traversable) -> Dict:
     if not filepath.is_file():
         raise FileNotFoundError(filepath)
     with filepath.open("r", encoding="utf-8") as f:
@@ -86,7 +87,7 @@ def get_chain_with_structured_output(llm: BaseChatModel, output_schema: BaseMode
 
 
 class PromptFactory:
-    def __init__(self, prompt_folder=Path("src/agentic_rag/agent/prompts")):
+    def __init__(self, prompt_folder=files("agentic_rag.agent.prompts")):
         self.prompt_folder = prompt_folder
         self.fragments = load_yaml(self.prompt_folder / "fragments.yaml").get("fragments", {})
 
@@ -150,7 +151,7 @@ class LangChainNode(BaseModel):
 
 
 class NodeFactory:
-    def __init__(self, prompt_folder=Path("src/agentic_rag/agent/prompts")):
+    def __init__(self, prompt_folder=files("agentic_rag.agent.prompts")):
         self.prompt_factory = PromptFactory(prompt_folder=prompt_folder)
 
     def build_node(self, name: str, llm: BaseChatModel, structured_output: bool,

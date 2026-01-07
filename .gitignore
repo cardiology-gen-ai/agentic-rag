@@ -15,8 +15,12 @@ __pycache__/
 /uv.lock
 /docs/build/
 
+
 /logs/
 
 src/graph_rag/__pycache__
 src/graph_rag/.env
+src/graph_rag/.env.leonardo
+src/graph_rag/retriever_tests
+src/graph_rag/graph_logs/
 src/graph_rag/data/

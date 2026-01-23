@@ -7,7 +7,7 @@
         "allowed_languages": ["it", "en"],
         "indexing": {
             "name": "cardiology_protocols",
-            "type": "qdrant",
+            "type": "faiss",
             "distance": "cosine"
         },
         "search": {
@@ -33,6 +33,10 @@
         },
         "memory": {
             "length": 3
+        },
+        "nodes": {
+            "config": "configs/graphs/rag_agent.yaml",
+            "prompts": "src/agentic_rag/agent/prompts"
         }
     }
 }

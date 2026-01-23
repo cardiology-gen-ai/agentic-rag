@@ -2,6 +2,7 @@ import json
 import os
 from dataclasses import field
 from enum import Enum
+from pathlib import Path
 from typing import Optional, Dict, Any, List, Literal
 
 from pydantic import BaseModel
@@ -73,6 +74,17 @@ class MemoryConfig(BaseModel):
     length: int = 0 #: :class:`int`, optional : Maximum number of conversational turns (or turn pairs) to keep. Defaults to ``0``.
 
 
+class NodePromptConfig(BaseModel):
+    config: Path | str
+    prompts: Path | str
+
+    @classmethod
+    def from_config(cls, config_dict: Dict[str, Any]) -> "NodePromptConfig":
+        config = Path(config_dict["config"]) if isinstance(config_dict["config"], str) else config_dict["config"]
+        prompts = Path(config_dict["prompts"]) if isinstance(config_dict["prompts"], str) else config_dict["prompts"]
+        return cls(config=config, prompts=prompts)
+
+
 class AgentConfig(BaseModel):
     """Top-level configuration for an agent instance."""
     name: str = "" #: :class:`str`, optional : Agent display name.
@@ -87,6 +99,7 @@ class AgentConfig(BaseModel):
     context: ContextConfig = field(default_factory=ContextConfig) #: :class:`~src.agentic_rag.config.manager.ContextConfig` : Contextual prompt settings.
     examples: ExamplesConfig = field(default_factory=ExamplesConfig) #: :class:`~src.agentic_rag.config.manager.ExamplesConfig` : Few-shot examples settings.
     memory: MemoryConfig = field(default_factory=MemoryConfig) #: :class:`~src.agentic_rag.config.manager.MemoryConfig` : Conversation memory settings.
+    nodes: NodePromptConfig = field(default_factory=NodePromptConfig)
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "AgentConfig":
@@ -98,10 +111,12 @@ class AgentConfig(BaseModel):
         search_config = SearchConfig.from_config(search_dict)
         llm_dict = config_dict["llm"]
         llm_config = LLMConfig.from_config(llm_dict)
+        nodes_dict = config_dict["nodes"]
+        nodes_config = NodePromptConfig.from_config(nodes_dict)
         other_config_dict = \
-            {k: v for k, v in config_dict.items() if k not in ["indexing", "embeddings", "search", "llm"]}
+            {k: v for k, v in config_dict.items() if k not in ["indexing", "embeddings", "search", "llm", "nodes"]}
         return cls(embeddings=embedding_config, search=search_config, indexing=indexing_config, llm=llm_config,
-                   **other_config_dict)
+                   nodes=nodes_config, **other_config_dict)
 
 
 class AgentConfigManager(ConfigManager):

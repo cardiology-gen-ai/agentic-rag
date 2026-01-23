@@ -10,6 +10,7 @@ services:
       - .env
     volumes: # TODO: remove in production [all in dockerfile]
       - ${CONFIG_PATH}:/app/config.json
+      - ./configs:/app/configs
       - ./src:/app/src
       - ./examples.json:/app/examples.json
       - ${INDEX_ROOT}:/app/data/index

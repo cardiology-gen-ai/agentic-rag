@@ -1,0 +1,68 @@
+nodes:
+  - name: question_contextualizer
+    prompt_filename: question_contextualizer
+    prompt_version: default
+
+  - name: conversational_agent
+    prompt_filename: conversational_agent
+    prompt_version: default
+
+  - name: generator
+    prompt_filename: generator
+    prompt_version: default
+
+  - name: default_response_generator
+    prompt_filename: default_response_generator
+    prompt_version: default
+
+  - name: document_response_generator
+    prompt_filename: document_response_generator
+    prompt_version: default
+
+  - name: question_rewriter
+    prompt_filename: question_rewriter
+    prompt_version: default
+
+  - name: hyde
+    prompt_filename: hyde
+    prompt_version: default
+
+  - name: multi_query_generator
+    prompt_filename: multi_query_generator
+    prompt_version: default
+
+  - name: question_clarifier
+    prompt_filename: question_clarifier
+    prompt_version: default
+
+  - name: answer_grader
+    prompt_filename: answer_grader
+    prompt_version: default
+
+  - name: retrieval_grader
+    prompt_filename: retrieval_grader
+    prompt_version: default
+
+  - name: groundedness_grader
+    prompt_filename: groundedness_grader
+    prompt_version: default
+
+  - name: router
+    prompt_filename: router
+    prompt_version: default
+
+  - name: document_request_detector
+    prompt_filename: document_request_detector
+    prompt_version: default
+
+  - name: language_detector
+    prompt_filename: language_detector
+    prompt_version: default
+
+  - name: question_ambiguity_detector
+    prompt_filename: question_ambiguity_detector
+    prompt_version: default
+
+  - name: error_handler
+    prompt_filename: error_handler
+    prompt_version: default

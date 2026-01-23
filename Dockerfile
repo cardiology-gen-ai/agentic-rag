@@ -12,10 +12,10 @@ RUN apt-get update && apt-get install -y git build-essential && rm -rf /var/lib/
 COPY pyproject.toml /app/
 
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[prompting]"
 
 COPY src/ /app/src
-# COPY config.json /app/config.json  # TODO: uncomment in production
+# COPY configs/ /app/configs  # TODO: uncomment in production
 
 RUN useradd -m user
 USER user

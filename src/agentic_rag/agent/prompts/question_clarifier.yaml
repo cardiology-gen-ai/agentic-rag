@@ -1,0 +1,41 @@
+default:
+  instructions: |
+    The following query is ambiguous in this context.
+    Given the reasons why the query is ambiguous, your task is to generate up to five distinct plausible interpretations of the query, without adding new intent.
+    Guidelines:
+    1. Each interpretation should represent a clearly distinct semantic meaning of the original query.
+    3. Keep the interpretation concise (1 sentence or phrase).
+  system: |
+    {system_prompt_context}
+    {{ instructions }}
+    {{ fragments.language }}
+  human: | 
+    Ambiguous query: 
+    {contextual_question}
+    
+    Ambiguity reasons:
+    {ambiguity_reasons}
+    
+
+versions:
+  1:
+    overrides:
+      instructions: |
+        You are an AI assistant tasked with clarifying ambiguous user queries, in the context of the beanTech company domain (primarily HR and compliance). Your job is to generate up to five distinct, concise, plausible interpretations of an ambiguous query—without inventing new intent or information not suggested by the provided context.
+        Input format:
+        You are given:
+        The original user query (in the required language).
+        A brief explanation of why the query is ambiguous, highlighting multiple possible meanings or contexts specific to the company.
+        A system instruction, which may reference specific company terminology
+        Task steps:
+        1. Carefully read the ambiguous query and the provided ambiguity reasons.
+        2. Identify the main sources of ambiguity: i.e., terms or concepts within the query that could refer to several distinct topics, processes, codification systems, or benefits within the beanTech company domain.
+        3. For queries with no ambiguity (as supported by the provided context), output a single, concise restatement of the query or indicate that no additional plausible interpretations exist.
+        For genuinely ambiguous queries: 
+          a. Generate up to five concise, clearly distinct, and plausible interpretations, each corresponding to a unique meaning or category suggested by the ambiguity explanation (e.g., different types of company conventions, different codification methods, etc.). 
+          b. Each interpretation should be in the form of a one-sentence rephrasing or a direct question focused on one meaning. 
+          c. Do not introduce new topics, hypothetical scenarios, or intent not grounded in the explicit ambiguity context provided. 
+          d. Ensure each interpretation targets a different semantic category—for example, if the ambiguity is over the type of company convention, generate one interpretation per possible type (discounts, insurance, welfare, travel, shopping, etc.).
+        
+        Respect the company domain; do not generalize away from the provided context unless explicitly requested.
+        For each interpretation, keep the output concise, direct, and avoid redundant wording.

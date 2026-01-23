@@ -21,14 +21,14 @@ from langgraph.graph.state import CompiledStateGraph
 from cardiology_gen_ai.utils.logger import get_logger
 from langgraph.runtime import Runtime
 
-from agentic_rag.agent.nodes_factory import NodeFactory
+from agentic_rag.managers.nodes_manager import NodeFactory, NodeConfig
 from agentic_rag.config.manager import AgentConfigManager, AgentConfig
 from agentic_rag.managers.llm_manager import LLMManager
 from agentic_rag.managers.search_manager import SearchManager
 from agentic_rag.persistence.message import AgentMemory
 from agentic_rag.agent import output
 from agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
-
+from agentic_rag.utils.nodes import load_yaml
 
 GENERATION_LIMIT = 2
 os.environ["TOKENIZERS_PARALLELISM"] = "False"
@@ -88,7 +88,10 @@ class Agent:
         self.router_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.router_temperature})
         self.generator_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.generator_temperature})
         self.grader_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.grader_temperature})
-        self.node_factory = NodeFactory()
+
+        self.nodes_config = self._load_nodes_config()
+        self.node_factory = NodeFactory(prompt_folder=self.config.nodes.prompts)
+
         self.summarizer = SummarizationMiddleware(model=self.llm, messages_to_keep=5)
         self.search_manager = SearchManager(
             index_config=self.config.indexing,
@@ -108,6 +111,13 @@ class Agent:
         )
 
         self.logger.info("Agent initialization completed")
+
+    def _load_nodes_config(self) -> List[NodeConfig]:
+        nodes_config_dict = load_yaml(self.config.nodes.config)
+        return [NodeConfig.from_config(node_config) for node_config in nodes_config_dict["nodes"]]
+
+    def _get_node_config(self, name: str) -> NodeConfig:
+        return next(node_config for node_config in self.nodes_config if node_config.name == name)
 
     def _load_examples(self) -> List[Dict[str, str]]:
         """Load few-shot examples for router prompting.
@@ -151,8 +161,10 @@ class Agent:
         """
         self.logger.info("Detecting language...")
         question = state["question"]
-        runnable = self.node_factory.build_node("detect_language", self.llm,
-                                                structured_output=True, output_schema=output.DetectLanguage)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("language_detector"), self.llm,
+            structured_output=True, output_schema=output.DetectedLanguage,
+        )
         response = runnable.invoke({"text": question}, config=self.generator_config, with_retry=True)
         language = response.language
         self.logger.info(f"Detected language: {language}")
@@ -177,8 +189,9 @@ class Agent:
         question = state["question"]
         messages = state["messages"]
         history = "\n".join([f"{msg.type}: {msg.content}" for msg in messages[:-1]]) if messages else ""
-        runnable = self.node_factory.build_node(
-            "conversational_agent", self.llm, structured_output=False, agent_prompt=agent_prompt)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("conversational_agent"), self.llm, structured_output=False, agent_prompt=agent_prompt
+        )
         response = runnable.invoke(
             {"question": question, "language": language, "history": history},
             config=self.generator_config,
@@ -204,10 +217,10 @@ class Agent:
         language = state["language"]
         self.summarizer.before_model(state, Runtime())
         messages = [(msg.type, msg.content) for msg in state["messages"]]
-        runnable = self.node_factory.build_node("contextualize_question", self.llm,
-                                                structured_output=False,
-                                                context_prompt=self.config.context.system_prompt,
-                                                )
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("question_contextualizer"), self.llm,
+            structured_output=False, context_prompt=self.config.context.system_prompt,
+        )
         response = runnable.invoke(
             {"question": question, "language": language, "messages": messages},
             config=self.generator_config,
@@ -256,8 +269,10 @@ class Agent:
         question = state["contextual_question"]
         documents_content = [doc.page_content for doc in state["documents"]]
         documents_filename = [doc.metadata['filename'] for doc in state["documents"]]  # TODO: check correctness
-        runnable = self.node_factory.build_node(
-            "retrieval_grader", self.llm, structured_output=True, output_schema=output.GradeDocuments)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("retrieval_grader"), self.llm,
+            structured_output=True, output_schema=output.GradeDocuments
+        )
         filtered_docs = []
         for idx, d in enumerate(state["documents"]):
             try:
@@ -292,8 +307,10 @@ class Agent:
         """
         self.logger.info("Checking if user question requires a document.")
         question = state["contextual_question"]
-        runnable = self.node_factory.build_node(
-            "document_request_detector", self.llm, structured_output=True, output_schema=output.DocumentRequest)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("document_request_detector"), self.llm,
+            structured_output=True, output_schema=output.DocumentRequest
+        )
         score =  runnable.invoke({"question": question}, config=self.router_config, with_retry=True)
         binary_score = score.binary_score
         if binary_score == "yes":
@@ -347,7 +364,9 @@ class Agent:
         question = state["contextual_question"]
         files = list(set([doc.metadata["filename"] for doc in documents]))
         language = state["language"]
-        runnable = self.node_factory.build_node("generate_document_response", self.llm, structured_output=False)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("document_response_generator"), self.llm, structured_output=False,
+        )
         response = runnable.invoke(
             {"question": question, "documents": files, "language": language},
             config=self.generator_config,
@@ -376,7 +395,9 @@ class Agent:
         retrieved_docs_as_context = [(f"Filename: {doc.metadata['filename']}\n"
                                       f"Content: {doc.page_content}") for doc in documents]
         context = "\n\n".join([string for string in retrieved_docs_as_context])
-        runnable = self.node_factory.build_node("generate", self.llm, structured_output=False)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("generator"), self.llm, structured_output=False,
+        )
         response = runnable.invoke(
             {"documents": context, "question": question, "language": language},
             config=self.generator_config,
@@ -399,7 +420,9 @@ class Agent:
         self.logger.info("Transforming query.")
         question = state["contextual_question"]
         self.logger.info(f"Original question: {question}")
-        runnable = self.node_factory.build_node("question_rewriter", self.llm, structured_output=False)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("question_rewriter"), self.llm, structured_output=False
+        )
         response = runnable.invoke(
             {"question": question},
             config=self.generator_config,
@@ -425,7 +448,9 @@ class Agent:
         self.logger.info("Generating default response.")
         language = state["language"]
         question = state["question"]
-        runnable = self.node_factory.build_node("generate_default_response", self.llm, structured_output=False)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("default_response_generator"), self.llm, structured_output=False
+        )
         response = runnable.invoke(
             {"language": language, "question": question},
             config=self.generator_config,
@@ -464,9 +489,10 @@ class Agent:
             suffix="",
         )
         example_prompt = few_shot_prompt.format(input=state["contextual_question"])
-        runnable = self.node_factory.build_node(
-            "router", self.llm, structured_output=True, output_schema=output.RouteQuery,
-            index_description=self.config.indexing.description, example_prompt=example_prompt)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("router"), self.llm, structured_output=True, output_schema=output.RouteQuery,
+            index_description=self.config.indexing.description, example_prompt=example_prompt
+        )
         routing = (
             runnable.invoke({"question": state["contextual_question"]},  config=self.router_config, with_retry=True))
         if routing.branch == "conversational":
@@ -502,10 +528,14 @@ class Agent:
         generation_count = state["generation_count"]
         question = state["contextual_question"]
         docs_string = "\n\n".join([doc.page_content for doc in documents])
-        validator_runnable = self.node_factory.build_node(
-            "ground_validator", self.llm, structured_output=True, output_schema=output.GradeGrounding)
-        grader_runnable = self.node_factory.build_node(
-            "answer_grader", self.llm, structured_output=True, output_schema=output.GradeAnswer)
+        validator_runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("groundedness_grader"), self.llm,
+            structured_output=True, output_schema=output.GradeGrounding,
+        )
+        grader_runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("answer_grader"), self.llm,
+            structured_output=True, output_schema=output.GradeAnswer,
+        )
         if generation_count <= GENERATION_LIMIT:
             ground_validation = validator_runnable.invoke(
                 {"documents": docs_string, "generation": generation}, config=self.grader_config, with_retry=True)
@@ -627,8 +657,10 @@ class Agent:
             Mapping with key ``response`` holding the error message.
         """
         self.logger.info("Error Handler Node.")
-        runnable = self.node_factory.build_node(
-            "error_handler_node", self.llm, structured_output=False, languages=self.config.allowed_languages)
+        runnable = self.node_factory.build_node_from_config(
+            self._get_node_config("error_handler"), self.llm,
+            structured_output=False, languages=self.config.allowed_languages,
+        )
         response = runnable.invoke(
             {"exception": exception},
             config=self.generator_config,

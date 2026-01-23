@@ -1,8 +1,8 @@
-from typing import Literal
+from typing import Literal, List, Optional
 
 from pydantic import BaseModel, Field
 
-class DetectLanguage(BaseModel):
+class DetectedLanguage(BaseModel):
     """Detect the language of the input text."""
     language: Literal["it", "en"] = Field(description="The detected language: 'it' for Italian, 'en' for English.") #: :class:`typing.Literal`\[`it`, `en`\] : The detected language, 'it' for Italian, 'en' for English.
 
@@ -57,3 +57,16 @@ class RouteQuery(BaseModel):
     @staticmethod
     def format_instruction() -> str:
         return "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document_based'."
+
+
+class MultipleQueries(BaseModel):
+    """List of generated queries"""
+    queries: List[str] = Field(description="List of generated queries")
+
+
+class QueryAmbiguity(BaseModel):
+    """Whether the user query is ambiguous w.r.t. the knowledge base available to the RAG agent."""
+    status: Literal["ambiguous", "clear"] = Field(
+        description="Whether the user query is ambiguous or clear w.r.t. the knowledge base available to the RAG agent."
+    )
+    reason: Optional[str] = Field(description="Reason why the status is selected as ambiguous or clear.")

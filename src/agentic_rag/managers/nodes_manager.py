@@ -7,11 +7,11 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, Runnable, RunnableConfig
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from agentic_rag.agent.prompts.output_schemas import node_output_schemas
-from agentic_rag.managers.prompt_manager import PromptFactory
-from agentic_rag.utils.nodes import _strip_think, _get_final, NodeType
+from src.agentic_rag.agent.prompts.output_schemas import node_output_schemas
+from src.agentic_rag.managers.prompt_manager import PromptFactory
+from src.agentic_rag.utils.nodes import _strip_think, _get_final, NodeType
 
 
 def get_llm_with_structured_output(llm: BaseChatModel, output_schema: BaseModel | Dict | Any, prompt: ChatPromptTemplate):
@@ -34,8 +34,8 @@ def get_chain_with_structured_output(llm: BaseChatModel, output_schema: BaseMode
 
 class NodeConfig(BaseModel):
     name: str
-    prompt_filename: str
-    prompt_version: str
+    prompt_filename: str = ""
+    prompt_version: str = ""
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "NodeConfig":
@@ -53,9 +53,7 @@ class Node(BaseModel, ABC):
     type: NodeType
     prompt: dspy.SignatureMeta | ChatPromptTemplate
     runnable: dspy.Module | Runnable
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @abstractmethod
     def invoke(self, invoke_dict: Dict, **kwargs):
@@ -86,9 +84,7 @@ class LangChainNode(Node):
     output_schema: Optional[BaseModel | Dict | Any]
     prompt: ChatPromptTemplate
     runnable: Runnable = None
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def model_post_init(self, __context: Any) -> None:
         if self.output_schema:

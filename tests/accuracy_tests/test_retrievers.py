@@ -1,87 +1,119 @@
 import json
 import re
-import logging
 import pathlib
-from datetime import datetime
-from fuzzywuzzy import fuzz
-from dotenv import load_dotenv
+from typing import Any, Dict, List, Set, Callable
 
-# Load environment
-dotenv_path = pathlib.Path(__file__).resolve().parents[2] / ".env"
-print(f"Loading .env from: {dotenv_path}")
-load_dotenv(dotenv_path=dotenv_path)
+from cardiology_gen_ai import EmbeddingConfig, IndexingConfig
+from langchain_core.documents.base import Document
+from pydantic import BaseModel, ConfigDict
 
-from agentic_rag.managers.search_manager import SearchManager
-from agentic_rag.config.manager import AgentConfigManager
+from src.agentic_rag.managers.search_manager import SearchManager
+from src.agentic_rag.config.manager import SearchConfig
+from tests.accuracy_tests.eval import EvalTestConfig, EvalTest
+from tests.accuracy_tests.nodes_config import NodeOptimizationConfig
 
 
-class RetrieverTester:
-    def __init__(self, test_file: str, app_id: str = "cardiology_protocols", results_dir: str = "retriever_logs/"):
-        self.test_file = pathlib.Path(test_file)
-        self.results_dir = pathlib.Path(results_dir)
-        self.logger = logging.getLogger("RetrieverTester")
+class RetrieverTestConfig(EvalTestConfig):
+    index_config: IndexingConfig
+    search_config: SearchConfig
+    embeddings_config: EmbeddingConfig
 
-        # Load the agent configuration 
-        config = AgentConfigManager(app_id=app_id).config
-
-        # Initialize the unified search manager
-        self.search_manager = SearchManager(
-            index_config=config.indexing,
-            search_config=config.search,
-            embeddings=config.embeddings
-        )
-        self.model_name = getattr(config.embeddings, "deployment", None) or getattr(config.embeddings, "model_name", "unknown")
-        self.model_name = self.model_name.split("/")[-1]
-
-    def load_questions(self):
-        with open(self.test_file, "r", encoding="utf-8") as f:
-            self.test_data = json.load(f)
-        self.logger.info(f"Loaded {self.test_data['metadata']['total_questions']} questions.")
-
-    def run_tests(self, top_k: int = 5):
-        self.logger.info(f"Running retrieval tests with top_k={top_k}...")
-        self.results = {
-            "metadata": {
-                "embedding_model": self.model_name,
-                "index_name": self.search_manager.index_config.name,
-                "test_date": datetime.now().isoformat(),
-                "top_k": top_k,
-                "test_tag": getattr(self, "test_tag", "default"),
-            },
-            "retrieval_results": []
+    @classmethod
+    def from_config(cls, config_dict: Dict[str, Any]) -> "RetrieverTestConfig":
+        embedding_dict = config_dict["embeddings"]
+        embedding_config = EmbeddingConfig.from_config(embedding_dict)
+        indexing_dict = config_dict["indexing"]
+        indexing_config = IndexingConfig.from_config(indexing_dict)
+        search_dict = config_dict["search"]
+        search_config = SearchConfig.from_config(search_dict)
+        base_kwargs = {
+            k: v for k, v in config_dict.items()
+            if k in EvalTestConfig.model_fields
         }
+        return cls(
+            **base_kwargs, index_config=indexing_config, search_config=search_config, embeddings_config=embedding_config
+        )
 
-        for guideline_key, guideline_data in self.test_data["guidelines"].items():
-            self.logger.info(f"\nTesting guideline: {guideline_data['guideline_name']}")
-            for q in guideline_data["questions"]:
-                docs = self.search_manager.search(query=q["question"]) or []
-                docs = docs[:top_k]  # limit to top_k
 
-                # Serialize retrieved documents
-                serialized_docs = []
-                for d in docs:
-                    if hasattr(d, "page_content"):
-                        md = dict(getattr(d, "metadata", {}) or {})
-                        serialized_docs.append({
-                            "page_content": d.page_content,
-                            "metadata": md,
-                            "headers": md.get("headers", {})  # flatten headers for easier eval
-                        })
-                    elif isinstance(d, dict):
-                        serialized_docs.append(d)
-                    else:
-                        self.logger.warning(f"Unknown doc type: {type(d)}")
+# TODO: maybe this is useful also for the graph
+class SearchResult(BaseModel):
+    chunks: List[Document]
+    normalize: bool = True
 
-                self.results["retrieval_results"].append({
-                    "guideline": guideline_key,
-                    "guideline_name": guideline_data["guideline_name"],
-                    "question_id": q["id"],
-                    "question": q["question"],
-                    "sections": q.get("sections", []),
-                    "retrieved_documents": serialized_docs
-                })
+    def extract_unique_chunks(self) -> List[Document]:
+        unique_chunks, unique_sources = set(), []
+        for chunk in self.chunks:
+            doc_info = chunk.metadata
+            if (doc_info["filename"], doc_info["chunk_id"]) not in unique_chunks:
+                unique_sources.append(chunk)
+                unique_chunks.add((doc_info["filename"], doc_info["chunk_id"]))
+        return unique_sources
 
-    def _normalize_text(self, s: str) -> str:
+    def normalize_filename(self, filename: str) -> str:
+        return filename.split("/")[-1] if self.normalize else filename
+
+    def normalize_headers(self, headers: Dict[str, str]) -> Dict[str, str] | List[str]:
+        return list(headers.values()) if self.normalize else headers
+
+    def extract_unique_filenames(self) -> List[str]:
+        return list(set([chunk.metadata["filename"] for chunk in self.chunks]))
+
+    def group_by_filename(self) -> Dict[str, Set[str]]:
+        sections_by_filename = dict()
+        for chunk in self.chunks:
+            filename = self.normalize_filename(chunk.metadata["filename"])
+            chunk_sections = self.normalize_headers(chunk.metadata["headers"])
+            if filename not in list(sections_by_filename.keys()):
+                sections_by_filename[filename] = set()
+            sections_by_filename[filename].update(chunk_sections)
+        return sections_by_filename
+
+
+class Source(BaseModel):
+    document: str
+    sections: List[str]
+
+
+class RetrieverData(BaseModel):
+    question: str
+    sources: List[Source]
+    model_config = ConfigDict(extra="ignore")
+
+    @classmethod
+    def from_search_result(cls, question: str, search_result: SearchResult) -> "RetrieverData":
+        grouped_sources = search_result.group_by_filename()
+        sources = [Source(document=doc, sections=list(sections)) for doc, sections in grouped_sources.items()]
+        return cls(question=question, sources=sources)
+
+    def extract_unique_filenames(self) -> List[str]:
+        return list(set([source.document for source in self.sources]))
+
+    def group_sources_by_filename(self) -> Dict[str, Set[str]]:
+        sections_by_filename = dict()
+        for source in self.sources:
+            filename, file_sections  = source.document, source.sections
+            if filename not in list(sections_by_filename.keys()):
+                sections_by_filename[filename] = set()
+            sections_by_filename[filename].update(file_sections)
+        return sections_by_filename
+
+
+class EvalRetriever(EvalTest):
+    def __init__(self, test_config_path: pathlib.Path, node_config: NodeOptimizationConfig):
+        super().__init__(test_config_path=test_config_path, node_config=node_config)
+        search_manager = SearchManager(
+            index_config=self.test_config.index_config,
+            search_config=self.test_config.search_config,
+            embeddings=self.test_config.embeddings_config
+        )
+        self.retriever = search_manager.vectorstore.retriever
+
+    def get_config(self):
+        config_dict = self._load_config()
+        return RetrieverTestConfig.from_config(config_dict)
+
+    @staticmethod
+    def _normalize_text(s: str) -> str:
         """
         Helper to normalize section/header strings:
         - lowercase
@@ -93,205 +125,66 @@ class RetrieverTester:
         s = re.sub(r"\s+", " ", s)
         return s.strip()
 
-    def evaluate_retrieval(self, top_k: int = 5, fuzzy_threshold: int = 85):
-        """
-        Section-level evaluation.
+    def get_data(self, **kwargs) -> List[Dict]:
+        with open(self.test_config.data_folder / self.test_config.data_name, "r", encoding="utf-8") as f:
+            items = json.load(f)
+        retriever_data_list = [RetrieverData.model_validate(item) for item in items]
+        invoke_dict_list = []
+        for retriever_data in retriever_data_list:
+            retriever_data_dict = retriever_data.model_dump()
+            if "document" in self.node_config.output_keys:
+                invoke_dict = {
+                    "inputs": {"_input": retriever_data_dict.get("question")},
+                    "expectations": {"_output": retriever_data.extract_unique_filenames()},
+                }
+                invoke_dict_list.append(invoke_dict)
+            elif "sections" in self.node_config.output_keys:
+                grouped_sources = retriever_data.group_sources_by_filename()
+                for source, source_headers in grouped_sources.items():
+                    invoke_dict = {
+                        "inputs": {"_input": retriever_data_dict.get("question"), "_context": source},
+                        "expectations": {"_output": [self._normalize_text(header) for header in  list(source_headers)]},
+                    }
+                    invoke_dict_list.append(invoke_dict)
+            else:
+                invoke_dict = {
+                    "inputs": {"question": retriever_data_dict.get("question")},
+                    "expectations": {"sources": retriever_data_dict.get("sources")},
+                }
+                invoke_dict_list.append(invoke_dict)
+        return invoke_dict_list
 
-        For each question:
-        - expected_sections = list of section titles from the dataset
-        - retrieved_chunks = top_k retrieved documents
+    def post_process(self, search_results: SearchResult, **kwargs) -> List[str]:
+        if "document" in self.node_config.output_keys:
+            return search_results.extract_unique_filenames()
+        elif "sections" in self.node_config.output_keys:
+            grouped_sources = search_results.group_by_filename()
+            for filename, file_sections in grouped_sources.items():
+                grouped_sources[filename] = [self._normalize_text(section) for section in list(file_sections)]
+            return grouped_sources.get(kwargs.get("_context"), [])
+        return []
 
-        A retrieved chunk is considered CORRECT if any of its headers
-        fuzzy-matches any expected section above fuzzy_threshold.
+    def get_predict_fn(self, **kwargs) -> Callable:
+        def predict_fn(**inputs):
+            results = SearchResult(chunks=self.retriever.invoke(inputs.get("_input")))
+            if "document" in self.node_config.output_keys or "sections" in self.node_config.output_keys:
+                results = self.post_process(results, _context=inputs["_context"]) if "_context" in inputs.keys() else self.post_process(results)
+            return {"_output": results}
+        return predict_fn
 
-        Metrics:
-        - accuracy: fraction of questions with at least one correct chunk in top_k
-        - precision@k: average over questions of (correct_chunks / retrieved_chunks)
-        - recall@k: average over questions of
-                    (#expected_sections_hit / #expected_sections)
-        - f1@k: harmonic mean of avg precision and avg recall
-        """
-        self.logger.info("Evaluating retrieval results...")
-
-        total_questions = 0
-        questions_with_hit = 0
-        per_q_precisions = []
-        per_q_recalls = []
-
-        for result in self.results["retrieval_results"]:
-
-            # Extract and normalize expected section labels
-            raw_expected_sections = result.get("sections", []) or []
-            expected_sections = [
-                self._normalize_text(s) 
-                for s in raw_expected_sections 
-                if isinstance(s, str) and s.strip()
-            ]
-
-            # If the question has no valid expected sections → SKIP from evaluation
-            if not expected_sections:
-                self.logger.warning(
-                    f"No expected sections for question id={result.get('question_id')}, "
-                    "skipping from evaluation."
-                )
-                continue
-
-            # Count only evaluated questions
-            total_questions += 1
-
-            retrieved_chunks = result.get("retrieved_documents", [])[:top_k]
-
-            correct_chunk_count = 0
-            hit_any_section = False
-            matched_sections = set()  # track which expected sections were hit
-
-            # Evaluate each retrieved chunk
-            for chunk in retrieved_chunks:
-                # Extract headers robustly
-                if isinstance(chunk, dict):
-                    headers = chunk.get("headers", {})
-                else:
-                    headers = getattr(chunk, "metadata", {}).get("headers", {})
-
-                # Convert headers into a list of strings
-                header_values = []
-                if isinstance(headers, dict):
-                    header_values = list(headers.values())
-                elif isinstance(headers, (list, tuple)):
-                    header_values = list(headers)
-                elif isinstance(headers, str):
-                    header_values = [headers]
-
-                # Normalize header texts
-                header_values = [
-                    h for h in header_values 
-                    if isinstance(h, str) and h.strip()
-                ]
-                header_norms = [self._normalize_text(h) for h in header_values]
-
-                # Fuzzy match
-                chunk_hits_section = False
-                for h_norm in header_norms:
-                    for sec_norm in expected_sections:
-                        score = fuzz.partial_ratio(h_norm, sec_norm)
-                        if score >= fuzzy_threshold:
-                            chunk_hits_section = True
-                            hit_any_section = True
-                            matched_sections.add(sec_norm)
-                            break
-                    if chunk_hits_section:
-                        break
-
-                if chunk_hits_section:
-                    correct_chunk_count += 1
-
-            # Accuracy
-            if hit_any_section:
-                questions_with_hit += 1
-
-            # Per-question precision
-            q_precision = (
-                correct_chunk_count / len(retrieved_chunks)
-                if retrieved_chunks else 0.0
-            )
-
-            # Per-question recall
-            q_recall = (
-                len(matched_sections) / len(expected_sections)
-                if expected_sections else 0.0
-            )
-            q_recall = min(q_recall, 1.0)
-
-            per_q_precisions.append(q_precision)
-            per_q_recalls.append(q_recall)
-
-        # Aggregate metrics
-        if total_questions == 0:
-            self.logger.warning("No questions evaluated (total_questions == 0).")
-            return {}
-
-        accuracy = questions_with_hit / total_questions
-        avg_precision = sum(per_q_precisions) / len(per_q_precisions)
-        avg_recall = sum(per_q_recalls) / len(per_q_recalls)
-        f1 = 2 * avg_precision * avg_recall / (avg_precision + avg_recall + 1e-9)
-
-        metrics = {
-            "accuracy": round(accuracy, 3),
-            f"precision@{top_k}": round(avg_precision, 3),
-            f"recall@{top_k}": round(avg_recall, 3),
-            f"f1@{top_k}": round(f1, 3),
-        }
-
-        self.results["metrics"] = metrics
-
-        self.logger.info("\n Evaluation Metrics:")
-        for k, v in metrics.items():
-            self.logger.info(f"{k:15s}: {v:.3f}")
-
-        return metrics
-
-
-    def save_results(self):
-        self.results_dir.mkdir(parents=True, exist_ok=True)
-        safe_model_name = re.sub(r'[^a-zA-Z0-9._]', '_', self.model_name)
-        timestamp = datetime.now().strftime("%H_%M_%S__%d_%m_%Y")
-        test_tag = getattr(self, "test_tag", "test")
-        output_file = self.results_dir / f"{safe_model_name}_{test_tag}_{timestamp}.json"
-
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(self.results, f, indent=2, ensure_ascii=False)
-
-        self.logger.info(f"Results saved to {output_file}")
-        return output_file
-
-
-if __name__ == "__main__":
-# Logging Setup
-    log_dir = pathlib.Path("retriever_logs")
-    log_dir.mkdir(exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
-    log_file = log_dir / f"retriever_test_{timestamp}.log"
-
-    # Configure console logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
-    # Create file handler 
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        "%Y-%m-%d %H:%M:%S"
-    ))
-
-    root_logger = logging.getLogger()
-    root_logger.addHandler(file_handler)
-
-    print(f"[LOG] Writing detailed logs to: {log_file}")
-
-    test_files = {
-    "en":  "src/agentic_rag/retriever_tests/test_questions.json",
-    "it":  "src/agentic_rag/retriever_tests/translated_questions.json",
-    }
-
-    for test_tag, test_file in test_files.items():
-        logging.info(f"\n=== Evaluating test file ({test_tag}): {test_file} ===")
-
-        tester = RetrieverTester(
-            test_file=test_file,
-            app_id="cardiology_protocols",
-            results_dir="retriever_logs/",
-        )
-        tester.test_tag = test_tag 
-        tester.load_questions()
-        tester.run_tests(top_k=5)
-        tester.evaluate_retrieval(top_k=5, fuzzy_threshold=90)
-        tester.save_results()
-
-
-
-
+    def run_eval(self, save: bool = True):
+        results = self.get_eval_results()
+        if save:
+            _ = results["index_config"].pop("folder")
+            results["index_config"]["type"] = results["index_config"].get("type").value
+            results["index_config"]["distance"] = results["index_config"].get("distance").value
+            results["index_config"]["retrieval_mode"] = results["index_config"].get("retrieval_mode").value
+            results["search_config"]["type"] = results["search_config"].get("type").value
+            _ = results["embeddings_config"].pop("model")
+            _ = results["embeddings_config"].pop("kwargs")
+            results_file = (
+                    self.test_config.results_folder/ f"run_{self.test_config.test_id}" / f"{self.node_config.name}.json")
+            results_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(results_file, "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
+            self.logger.info(f"Eval results saved in: {results_file}")

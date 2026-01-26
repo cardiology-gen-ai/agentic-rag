@@ -1,12 +1,15 @@
+import json
 import logging
+import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import List
 
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_core.documents.base import Document
 from qdrant_client.http import models
 
-from agentic_rag.config.manager import SearchConfig, AgentConfigManager
+from src.agentic_rag.config.manager import SearchConfig
 
 from cardiology_gen_ai.utils.singleton import Singleton
 from cardiology_gen_ai import IndexingConfig, IndexTypeNames, Vectorstore, QdrantVectorstore, FaissVectorstore, \
@@ -209,10 +212,15 @@ class SearchManager(metaclass=Singleton):
 
 
 if __name__ == "__main__":
-    config = AgentConfigManager().config
-    search_manager = SearchManager(
-        index_config=config.indexing,
-        search_config=config.search,
-        embeddings=config.embeddings
-    )
-    print(type(search_manager.vectorstore.retriever))
+    print(os.getcwd())
+    with open(Path("tests/data") / "synthetic_data.json", "r", encoding="utf-8") as f:
+        items = json.load(f)
+    for item in items:
+        print(item["question"])
+    # config = AgentConfigManager().config
+    # search_manager = SearchManager(
+    #     index_config=config.indexing,
+    #     search_config=config.search,
+    #     embeddings=config.embeddings
+    # )
+    # print(type(search_manager.vectorstore.retriever))

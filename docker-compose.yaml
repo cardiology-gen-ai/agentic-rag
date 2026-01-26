@@ -4,19 +4,20 @@ services:
       context: .
       dockerfile: Dockerfile
     user: root # TODO: remove in production
-    command: ["python", "-m", "src.agentic_rag.agent.graph"]
+    # command: [ "python", "-m", "src.agentic_rag.agent.graph" ]
+    command: ["python", "-m", "tests.accuracy_tests.main_test"]
     profiles: ["default", "ollama_models", "qdrant_vectorstore"]
     env_file:
       - .env
     volumes: # TODO: remove in production [all in dockerfile]
       - ${CONFIG_PATH}:/app/config.json
-      - ./configs:/app/configs
-      - ./src:/app/src
-      - ./examples.json:/app/examples.json
+      - ${ROOT_PATH}/configs:/app/configs
+      - ${ROOT_PATH}/src:/app/src
+      - ${ROOT_PATH}/tests:/app/tests  # TODO: remove in production at all
+      - ${ROOT_PATH}/examples.json:/app/examples.json
       - ${INDEX_ROOT}:/app/data/index
     working_dir: /app
     environment:
-      PYTHONPATH: /app/src  # TODO: remove in production
       CONFIG_PATH: /app/config.json
       INDEX_ROOT: /app/data/index
       QDRANT_URL: ${QDRANT_URL}
@@ -30,8 +31,10 @@ volumes:
       external: true
     ollama:
       external: true
+      name: cardiology-gen-ai_ollama
     pgdata:
       external: true
+      name: cardiology-gen-ai_pgdata
 
 networks:
   cardiology-ai-net:

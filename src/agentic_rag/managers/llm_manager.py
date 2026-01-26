@@ -10,7 +10,7 @@ from langchain_huggingface.chat_models.huggingface import HuggingFacePipeline
 from langchain.chat_models import init_chat_model
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 
-from agentic_rag.config.manager import LLMConfig, AgentConfigManager
+from src.agentic_rag.config.manager import LLMConfig, AgentConfigManager
 
 from cardiology_gen_ai.utils.logger import get_logger
 

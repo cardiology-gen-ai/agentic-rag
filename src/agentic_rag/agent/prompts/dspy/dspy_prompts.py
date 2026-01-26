@@ -3,8 +3,8 @@ from typing import List, Tuple
 
 import dspy
 
-from agentic_rag.config.manager import AgentConfigManager
-from agentic_rag.agent import output
+from src.agentic_rag.config.manager import AgentConfigManager
+from src.agentic_rag.agent import output
 
 config = AgentConfigManager(
     app_id=os.getenv("AGENT_ID"), config_path=os.getenv("CONFIG_PATH")

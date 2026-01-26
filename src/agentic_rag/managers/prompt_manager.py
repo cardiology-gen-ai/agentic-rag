@@ -5,12 +5,12 @@ import dspy
 import mlflow
 from langchain_core.prompts import ChatPromptTemplate
 
-from agentic_rag.agent.prompts.dspy.dspy_prompts import node_names
-from agentic_rag.utils.nodes import NodeType, deep_merge, load_yaml, render_template
+from src.agentic_rag.agent.prompts.dspy.dspy_prompts import node_names
+from src.agentic_rag.utils.nodes import NodeType, deep_merge, load_yaml, render_template
 
 
 class PromptFactory:
-    def __init__(self, prompt_folder=files("agentic_rag.agent.prompts")):
+    def __init__(self, prompt_folder=files("src.agentic_rag.agent.prompts")):
         self.prompt_folder = prompt_folder
         self.fragments = load_yaml(self.prompt_folder / "fragments.yaml").get("fragments", {})
 

@@ -13,9 +13,9 @@ from jwt import InvalidTokenError
 from fastapi import HTTPException
 from starlette import status
 
-from agentic_rag.persistence.orm_base import BaseORM, BaseDB
-from agentic_rag.persistence.db import get_sync_db, get_async_db, ensure_database
-from agentic_rag.persistence.authentication import Authentication
+from src.agentic_rag.persistence.orm_base import BaseORM, BaseDB
+from src.agentic_rag.persistence.db import get_sync_db, get_async_db, ensure_database
+from src.agentic_rag.persistence.authentication import Authentication
 
 
 POSTGRES_ADMIN_DSN = f"postgresql://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/postgres"

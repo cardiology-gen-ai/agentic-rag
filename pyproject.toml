@@ -41,6 +41,9 @@ dependencies = [
     "PyJWT==2.10.0",
     "fastapi[standard]==0.116.2",
     "mlflow==3.8.1",
+    "psycopg2-binary==2.9.10",
+    "fuzzywuzzy==0.18.0",
+    "python-Levenshtein>=0.25.0",
     "cardiologygenai-coordo @ git+https://github.com/cardiology-gen-ai/cardiology-gen-ai.git@main"
 ]
 

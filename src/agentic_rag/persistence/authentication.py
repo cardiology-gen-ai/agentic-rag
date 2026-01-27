@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from pwdlib import PasswordHash
 import jwt
 
-from agentic_rag.persistence.orm_base import BaseDB
+from src.agentic_rag.persistence.orm_base import BaseDB
 
 
 pwd_context = PasswordHash.recommended()

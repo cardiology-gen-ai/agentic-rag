@@ -1,0 +1,25 @@
+{
+    "test_name": "retriever_test_dense",
+    "test_id": 1,
+    "data_folder": "tests/data",
+    "data_name": "synthetic_data.json",
+    "results_folder": "tests/results/accuracy_tests",
+    "fuzzy_threshold": 0.90,
+    "indexing": {
+        "name": "cardiology_protocols",
+        "description": "Documents containing medical protocols for cardiologic patients.",
+        "type": "faiss",
+        "distance": "cosine",
+        "alias": ""
+    },
+    "embeddings": {
+        "deployment": "qwen3-embedding:8b",
+        "ollama": true,
+        "kwargs": {}
+    },
+    "search": {
+        "type": "similarity",
+        "top_k": 10,
+        "fusion": false
+    }
+}

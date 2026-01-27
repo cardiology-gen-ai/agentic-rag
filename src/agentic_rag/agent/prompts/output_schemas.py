@@ -1,4 +1,4 @@
-from agentic_rag.agent import output
+from src.agentic_rag.agent import output
 
 node_output_schemas = {
     "question_contextualizer": None,

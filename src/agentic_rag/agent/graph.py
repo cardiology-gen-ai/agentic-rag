@@ -6,6 +6,7 @@ import asyncio
 from logging import Logger
 from typing import TypedDict, Dict, List, Annotated
 
+import mlflow
 from langchain.agents.middleware import SummarizationMiddleware
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
@@ -21,14 +22,15 @@ from langgraph.graph.state import CompiledStateGraph
 from cardiology_gen_ai.utils.logger import get_logger
 from langgraph.runtime import Runtime
 
-from agentic_rag.managers.nodes_manager import NodeFactory, NodeConfig
-from agentic_rag.config.manager import AgentConfigManager, AgentConfig
-from agentic_rag.managers.llm_manager import LLMManager
-from agentic_rag.managers.search_manager import SearchManager
-from agentic_rag.persistence.message import AgentMemory
-from agentic_rag.agent import output
-from agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
-from agentic_rag.utils.nodes import load_yaml
+from src.agentic_rag.managers.nodes_manager import NodeFactory, NodeConfig
+from src.agentic_rag.config.manager import AgentConfigManager, AgentConfig
+from src.agentic_rag.managers.llm_manager import LLMManager
+from src.agentic_rag.managers.search_manager import SearchManager
+from src.agentic_rag.persistence.db import ensure_database
+from src.agentic_rag.persistence.message import AgentMemory
+from src.agentic_rag.agent import output
+from src.agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
+from src.agentic_rag.utils.nodes import load_yaml
 
 GENERATION_LIMIT = 2
 os.environ["TOKENIZERS_PARALLELISM"] = "False"
@@ -770,6 +772,11 @@ class Agent:
 
 
 if __name__ == "__main__":
+    if os.getenv("MLFLOW_DB", None):
+        ensure_database(db_name=os.getenv("MLFLOW_DB"))
+        mlflow.set_tracking_uri(f"postgresql+psycopg://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/{os.getenv("MLFLOW_DB")}")
+        mlflow.set_experiment(f"{os.getenv('AGENT_ID')}_observability")
+        mlflow.langchain.autolog()
     agent = Agent("cardiology_protocols")
     chat_request = ChatRequest(
         user="gaia",

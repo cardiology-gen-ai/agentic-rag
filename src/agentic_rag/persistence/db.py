@@ -9,7 +9,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from cardiology_gen_ai.utils.logger import get_logger
-from agentic_rag.persistence.orm_base import BaseORM
 
 
 POSTGRES_ADMIN_DSN = f"postgresql://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/postgres"
@@ -19,22 +18,22 @@ SCHEMA_NAME = "public"  # TODO: maybe put in config / env
 logger = get_logger("Database creation")
 
 
-def ensure_database():
+def ensure_database(db_name=os.getenv("POSTGRES_DB")):
     with psycopg.connect(POSTGRES_ADMIN_DSN, autocommit=True) as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DB_NAME,))
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
             exists = cur.fetchone() is not None
 
             if not exists:
                 stmt = sql.SQL(
                     "CREATE DATABASE {} WITH ENCODING 'UTF8' TEMPLATE template1 {}"
                 ).format(
-                    sql.Identifier(DB_NAME), sql.SQL("")
+                    sql.Identifier(db_name), sql.SQL("")
                 )
                 cur.execute(stmt)
-                logger.info(f"Database {DB_NAME} successfully created")
+                logger.info(f"Database {db_name} successfully created")
             else:
-                logger.info(f"Database {DB_NAME} already exists")
+                logger.info(f"Database {db_name} already exists")
 
 
 class DatabaseConnection:

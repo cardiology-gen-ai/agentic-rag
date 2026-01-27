@@ -10,7 +10,7 @@ from langchain_huggingface.chat_models.huggingface import HuggingFacePipeline
 from langchain.chat_models import init_chat_model
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 
-from agentic_rag.config.manager import LLMConfig, AgentConfigManager
+from src.agentic_rag.config.manager import LLMConfig
 
 from cardiology_gen_ai.utils.logger import get_logger
 
@@ -44,11 +44,23 @@ class LLMManager:
         self.config = config
         self.logger = get_logger("LLM manager based on LangChain and either Ollama or HuggingFace")
         self.logger.info("Initializing LLM..")
-        self.llm = self.init_ollama() if self.config.ollama else self.init_huggingface()
+        if self.config.model_name.startswith("gpt"):
+            self.llm = self.init_openai()
+        else:
+            self.llm = self.init_ollama() if self.config.ollama else self.init_huggingface()
         self.logger.info(f"LLM {self.config.model_name} initialized successfully")
         self.router = self.llm.bind(options={"temperature": self.config.router_temperature})
         self.generator = self.llm.bind(options={"temperature": self.config.generator_temperature})
         self.grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
+
+    def init_openai(self) -> BaseChatModel:
+        return init_chat_model(
+            model=self.config.model_name,
+            model_provider="azure_openai",
+            api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        )
 
     def init_ollama(self) -> BaseChatModel:
         """Initialize and return an :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` model.
@@ -148,6 +160,3 @@ class LLMManager:
         return 0
 
 
-if __name__ == "__main__":
-    agent_config = AgentConfigManager().config
-    llm_manager = LLMManager(agent_config.llm)

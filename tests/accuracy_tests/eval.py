@@ -75,7 +75,7 @@ class EvalTest(ABC):
     def get_predict_fn(self, **kwargs) -> Callable:
         pass
 
-    def get_metrics_quantiles(self, **kwargs) -> Dict[str, List[float]]:
+    def get_metrics_quantiles(self, save_results: bool = True, **kwargs) -> Dict[str, List[float]]:
         self.logger.info(f"Getting metric quantiles for metrics: {self.node_config.metrics}")
         data = self.get_data(**kwargs)
         predict_fn = self.get_predict_fn(**kwargs)
@@ -85,7 +85,21 @@ class EvalTest(ABC):
                 predict_fn=predict_fn,
                 scorers=[m.eval_fn for m in self.metrics],
             )
-        scores = [np.asarray(results.result_df[f"{m.name}/value"].tolist()) for m in self.metrics]
+        df_results = results.result_df
+        if save_results:
+            df_results_filename = (
+                    self.test_config.results_folder/ f"run_{self.test_config.test_id}" / f"{self.node_config.name}.csv"
+            )
+            df_results_filename.parent.mkdir(parents=True, exist_ok=True)
+            columns_to_save = ["request", "response", "execution_duration"] + [f"{m.name}/value" for m in self.metrics]
+            if "_output/value" in df_results.columns.tolist():
+                columns_to_save.append("_output/value")
+            df_results.to_csv(
+                str(df_results_filename),
+                columns=columns_to_save,
+                index=False
+            )
+        scores = [np.asarray(df_results[f"{m.name}/value"].tolist()) for m in self.metrics]
         return {metric.name: np.quantile(scores, q=[0.01, 0.25, 0.5, 0.75, 0.99]).tolist()
                 for metric, scores in zip(self.metrics, np.asarray(scores).T)}
 

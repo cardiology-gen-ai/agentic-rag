@@ -10,9 +10,18 @@ default:
     You are an expert at routing a human message to a document_based branch or conversational branch. 
     This is the vectorstore description: {{ index_description }}
     {{ instructions }}
-    Follow these examples to decide if the question should be routed to the vectorstore or conversational branch:
-    {{ example_prompt }}.
     {{ format_instructions }}
   human: | 
     User question: 
     {question}
+
+versions:
+  1:
+    overrides:
+      system: |
+        You are an expert at routing a human message to a document_based branch or conversational branch.
+        This is the vectorstore description: {{ index_description }}
+        {{ instructions }}
+        Follow these examples to decide if the question should be routed to the vectorstore or conversational branch:
+        {{ example_prompt }}.
+        {{ format_instructions }}

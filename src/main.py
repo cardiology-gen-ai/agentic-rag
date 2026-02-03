@@ -85,7 +85,7 @@ def save_agent_turn(rag_agent: Agent, request: ChatRequest, response: ChatRespon
     conversation_turn = ConversationTurn.from_agent(response=response, request=request)
     rag_agent.memory.save_conversation_turn(conversation_turn)
     retrieval_turn = RetrievalTurn.from_agent(
-        response=response, request=request, embedding_name=rag_agent.config.embeddings.model_name)
+        response=response, request=request, embedding_name=rag_agent.config.indexing.embeddings.model_name)
     rag_agent.memory.save_retrieval_turn(retrieval_turn)
     llm_turn = LLMTurn.from_agent(response=response, request=request, llm_manager=rag_agent.llm_manager,
                                   duration=duration)

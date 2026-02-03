@@ -3,70 +3,32 @@ import re
 import pathlib
 from typing import Any, Dict, List, Set, Callable
 
-from cardiology_gen_ai import EmbeddingConfig, IndexingConfig
-from langchain_core.documents.base import Document
+from cardiology_gen_ai import IndexingConfig
 from pydantic import BaseModel, ConfigDict
 
 from src.agentic_rag.managers.search_manager import SearchManager
 from src.agentic_rag.config.manager import SearchConfig
 from tests.accuracy_tests.eval import EvalTestConfig, EvalTest
 from tests.accuracy_tests.nodes_config import NodeOptimizationConfig
+from agentic_rag.utils.search import SearchResult
 
 
 class RetrieverTestConfig(EvalTestConfig):
-    index_config: IndexingConfig
+    index_config: IndexingConfig | List[IndexingConfig]
     search_config: SearchConfig
-    embeddings_config: EmbeddingConfig
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "RetrieverTestConfig":
-        embedding_dict = config_dict["embeddings"]
-        embedding_config = EmbeddingConfig.from_config(embedding_dict)
         indexing_dict = config_dict["indexing"]
-        indexing_config = IndexingConfig.from_config(indexing_dict)
+        indexing_config = [IndexingConfig.from_config(index) for index in indexing_dict] \
+            if isinstance(indexing_dict, list) else IndexingConfig.from_config(indexing_dict)
         search_dict = config_dict["search"]
         search_config = SearchConfig.from_config(search_dict)
         base_kwargs = {
             k: v for k, v in config_dict.items()
             if k in EvalTestConfig.model_fields
         }
-        return cls(
-            **base_kwargs, index_config=indexing_config, search_config=search_config, embeddings_config=embedding_config
-        )
-
-
-# TODO: maybe this is useful also for the graph
-class SearchResult(BaseModel):
-    chunks: List[Document]
-    normalize: bool = True
-
-    def extract_unique_chunks(self) -> List[Document]:
-        unique_chunks, unique_sources = set(), []
-        for chunk in self.chunks:
-            doc_info = chunk.metadata
-            if (doc_info["filename"], doc_info["chunk_id"]) not in unique_chunks:
-                unique_sources.append(chunk)
-                unique_chunks.add((doc_info["filename"], doc_info["chunk_id"]))
-        return unique_sources
-
-    def normalize_filename(self, filename: str) -> str:
-        return filename.split("/")[-1] if self.normalize else filename
-
-    def normalize_headers(self, headers: Dict[str, str]) -> Dict[str, str] | List[str]:
-        return list(headers.values()) if self.normalize else headers
-
-    def extract_unique_filenames(self) -> List[str]:
-        return list(set([chunk.metadata["filename"] for chunk in self.chunks]))
-
-    def group_by_filename(self) -> Dict[str, Set[str]]:
-        sections_by_filename = dict()
-        for chunk in self.chunks:
-            filename = self.normalize_filename(chunk.metadata["filename"])
-            chunk_sections = self.normalize_headers(chunk.metadata["headers"])
-            if filename not in list(sections_by_filename.keys()):
-                sections_by_filename[filename] = set()
-            sections_by_filename[filename].update(chunk_sections)
-        return sections_by_filename
+        return cls(**base_kwargs, index_config=indexing_config, search_config=search_config)
 
 
 class Source(BaseModel):
@@ -101,12 +63,10 @@ class RetrieverData(BaseModel):
 class EvalRetriever(EvalTest):
     def __init__(self, test_config_path: pathlib.Path, node_config: NodeOptimizationConfig):
         super().__init__(test_config_path=test_config_path, node_config=node_config)
-        search_manager = SearchManager(
+        self.search_manager = SearchManager(
             index_config=self.test_config.index_config,
             search_config=self.test_config.search_config,
-            embeddings=self.test_config.embeddings_config
         )
-        self.retriever = search_manager.vectorstore.retriever
 
     def get_config(self):
         config_dict = self._load_config()
@@ -166,22 +126,33 @@ class EvalRetriever(EvalTest):
 
     def get_predict_fn(self, **kwargs) -> Callable:
         def predict_fn(**inputs):
-            results = SearchResult(chunks=self.retriever.invoke(inputs.get("_input")))
+            results = self.search_manager.search(inputs.get("_input"))
             if "document" in self.node_config.output_keys or "sections" in self.node_config.output_keys:
                 results = self.post_process(results, _context=inputs["_context"]) if "_context" in inputs.keys() else self.post_process(results)
             return {"_output": results}
         return predict_fn
 
+    def _format_index_config(self, results_index_config: Dict):
+        _ = results_index_config.pop("folder")
+        results_index_config["type"] = results_index_config.get("type").value
+        results_index_config["distance"] = results_index_config.get("distance").value
+        results_index_config["retrieval_mode"] = results_index_config.get("retrieval_mode").value
+        if results_index_config.get("embeddings"):
+            _ = results_index_config["embeddings"].pop("model")
+            _ = results_index_config["embeddings"].pop("kwargs")
+        return results_index_config
+
     def run_eval(self, save: bool = True):
         results = self.get_eval_results()
         if save:
-            _ = results["index_config"].pop("folder")
-            results["index_config"]["type"] = results["index_config"].get("type").value
-            results["index_config"]["distance"] = results["index_config"].get("distance").value
-            results["index_config"]["retrieval_mode"] = results["index_config"].get("retrieval_mode").value
+            results["index_config"] = \
+                [self._format_index_config(result_index_config) for result_index_config in results["index_config"]] \
+                if isinstance(results["index_config"], list) else self._format_index_config(results["index_config"])
             results["search_config"]["type"] = results["search_config"].get("type").value
-            _ = results["embeddings_config"].pop("model")
-            _ = results["embeddings_config"].pop("kwargs")
+            results["search_config"]["fusion"] = results["search_config"].get("fusion").value
+            _ = results["search_config"].pop("kwargs")
+            _ = results["search_config"].pop("fetch_k")
+            _ = results["search_config"].pop("score_threshold")
             results_file = (
                     self.test_config.results_folder/ f"run_{self.test_config.test_id}" / f"{self.node_config.name}.json")
             results_file.parent.mkdir(parents=True, exist_ok=True)

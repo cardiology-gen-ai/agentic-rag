@@ -5,13 +5,25 @@
         "system_prompt": "You are an assistant specialized in answering questions about cardiology protocols.",
         "language": "italian",
         "allowed_languages": ["it", "en"],
-        "indexing": {
-            "name": "cardiology_protocols",
-            "type": "faiss",
-            "distance": "cosine"
-        },
+        "indexing": [
+            {
+                "name": "cardiology_protocols",
+                "folder": "${INDEX_ROOT}",
+                "type": "bm25",
+                "distance": "cosine",
+                "retrieval_mode": "sparse"
+            },
+            {
+                "name": "cardiology_protocols",
+                "folder": "${INDEX_ROOT}",
+                "type": "faiss",
+                "distance": "cosine",
+                "retrieval_mode": "dense"
+            }
+        ],
         "search": {
             "type": "similarity",
+            "fusion": "rrf",
             "top_k": 3
         },
         "llm": {

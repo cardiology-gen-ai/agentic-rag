@@ -98,7 +98,7 @@ class RetrievalTurn(BaseModel):
     session_id: uuid.UUID | str #: :class:`uuid.UUID` or :class:`str` : Conversation (session) identifier.
     question: str #: :class:`str` : The query text for which sources were retrieved.
     sources: List[Dict[str, Any]] = field(default_factory=list) #: :class:`list` of :class:`dict` : Retrieved sources with metadata (schema defined by retriever).
-    embedding_name: str = "" #: :class:`str` : Identifier of the embedding model/space used.
+    embedding_name: Optional[str] = "" #: :class:`str` : Identifier of the embedding model/space used.
 
     def model_post_init(self, __context: Any):
         """Normalize ids to :class:`uuid.UUID` after model initialization."""
@@ -106,7 +106,7 @@ class RetrievalTurn(BaseModel):
         self.session_id = uuid.UUID(str(self.session_id))
 
     @classmethod
-    def from_agent(cls, response: ChatResponse, request: ChatRequest, embedding_name: str) -> "RetrievalTurn":
+    def from_agent(cls, response: ChatResponse, request: ChatRequest, embedding_name: Optional[str] = "") -> "RetrievalTurn":
         """Build a :class:`~src.agentic_rag.persistence.message.RetrievalTurn` from agent I/O plus embedding name.
 
         Parameters

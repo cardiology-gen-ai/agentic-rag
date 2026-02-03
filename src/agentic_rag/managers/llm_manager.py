@@ -44,7 +44,7 @@ class LLMManager:
         self.config = config
         self.logger = get_logger("LLM manager based on LangChain and either Ollama or HuggingFace")
         self.logger.info("Initializing LLM..")
-        if self.config.model_name.startswith("gpt"):
+        if self.config.model_name.startswith("gpt") and (not "gpt-oss" in self.config.model_name):
             self.llm = self.init_openai()
         else:
             self.llm = self.init_ollama() if self.config.ollama else self.init_huggingface()
@@ -57,9 +57,10 @@ class LLMManager:
         return init_chat_model(
             model=self.config.model_name,
             model_provider="azure_openai",
-            api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+            temperature=0.,
         )
 
     def init_ollama(self) -> BaseChatModel:

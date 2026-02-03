@@ -8,11 +8,7 @@ from typing import TypedDict, Dict, List, Annotated
 
 import mlflow
 from langchain.agents.middleware import SummarizationMiddleware
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
-from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_core.language_models import BaseChatModel
-from langchain_core.prompts import PromptTemplate, FewShotPromptTemplate
 from langchain_core.vectorstores import VectorStoreRetriever
 from langgraph.graph import START, END, StateGraph, add_messages
 from langchain_core.messages import HumanMessage, AnyMessage, AIMessage
@@ -22,6 +18,7 @@ from langgraph.graph.state import CompiledStateGraph
 from cardiology_gen_ai.utils.logger import get_logger
 from langgraph.runtime import Runtime
 
+from agentic_rag.utils.search import SearchResult
 from src.agentic_rag.managers.nodes_manager import NodeFactory, NodeConfig
 from src.agentic_rag.config.manager import AgentConfigManager, AgentConfig
 from src.agentic_rag.managers.llm_manager import LLMManager
@@ -44,7 +41,7 @@ class GraphState(TypedDict, total=False):
     response: str #: Latest assistant response (when available).
     language: str #: Language used in the conversation, optional.
     messages: Annotated[List[AnyMessage], add_messages] #: Rolling chat history used for context (:class:`list` of :class:`~langchain_core.messages.base.AnyMessage` ).
-    documents: List[Document] #: Retrieved and filtered documents (:class:`list` of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`), optional (when applicable).
+    documents: SearchResult #: Retrieved and filtered documents (:class:`list` of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`), optional (when applicable).
     document_request: str #: Binary flag to denote whether the user is asking for an entire document.
     generation_count: int #: Number of generation attempts in the current turn.
 
@@ -98,9 +95,7 @@ class Agent:
         self.search_manager = SearchManager(
             index_config=self.config.indexing,
             search_config=self.config.search,
-            embeddings=self.config.embeddings
         )
-        self.retriever = self.search_manager.vectorstore.retriever if self.search_manager.vectorstore.vectorstore_exists() else None
 
         self.examples = self._load_examples()
 
@@ -245,13 +240,8 @@ class Agent:
         """
         question = state["contextual_question"]
         self.logger.info(f"Retrieving documents for contextualized question: {question}...")
-
-        if self.retriever is None:
-            self.logger.info("No vectorstore available. Returning empty document list.")
-            return {"documents": []}
-
-        documents = self.retriever.invoke(question)
-        self.logger.info(f"Retrieved {len(documents)} documents")
+        documents: SearchResult = self.search_manager.search(question)
+        self.logger.info(f"Retrieved {len(documents.chunks)} documents")
         return {"documents": documents}
 
     def _retrieval_grader(self, state: GraphState) -> Dict:
@@ -267,16 +257,16 @@ class Agent:
         :class:`dict`
             Key ``documents`` with only relevant items preserved.
         """
-        self.logger.info(f"Grading {len(state['documents'])} retrieved documents")
+        self.logger.info(f"Grading {len(state['documents'].chunks)} retrieved documents")
         question = state["contextual_question"]
-        documents_content = [doc.page_content for doc in state["documents"]]
-        documents_filename = [doc.metadata['filename'] for doc in state["documents"]]  # TODO: check correctness
+        documents_content = [doc.page_content for doc in state["documents"].chunks]
+        documents_filename = [doc.metadata["filename"] for doc in state["documents"].chunks]  # TODO: check correctness
         runnable = self.node_factory.build_node_from_config(
             self._get_node_config("retrieval_grader"), self.llm,
             structured_output=True, output_schema=output.GradeDocuments
         )
         filtered_docs = []
-        for idx, d in enumerate(state["documents"]):
+        for idx, d in enumerate(state["documents"].chunks):
             try:
                 response = runnable.invoke(
                     {"question": question, "document": documents_content[idx],
@@ -292,7 +282,7 @@ class Agent:
             except Exception as e:
                 self.logger.warning(f"Error grading document {idx}: {e}, assuming relevant")
                 filtered_docs.append(d)
-        return {"documents": filtered_docs}
+        return {"documents": SearchResult(chunks=filtered_docs)}
 
     def _document_request_detector(self, state: GraphState) -> Dict:
         """Detect whether the user explicitly requested documents.
@@ -337,7 +327,7 @@ class Agent:
             - ``\"at_least_one_doc_relevant\"``
             - ``\"generate_document_request_response\"``
         """
-        filtered_docs = state["documents"]
+        filtered_docs = state["documents"].chunks
         if len(filtered_docs) == 0:
             self.logger.info("All documents marked as not relevant")
             return "all_docs_not_relevant"
@@ -364,7 +354,7 @@ class Agent:
         self.logger.info("Generating document response message.")
         documents = state["documents"]
         question = state["contextual_question"]
-        files = list(set([doc.metadata["filename"] for doc in documents]))
+        files = documents.extract_unique_filenames()
         language = state["language"]
         runnable = self.node_factory.build_node_from_config(
             self._get_node_config("document_response_generator"), self.llm, structured_output=False,
@@ -392,7 +382,7 @@ class Agent:
 
         self.logger.info("Generating answer.")
         question = state["contextual_question"]
-        documents = state["documents"]
+        documents = state["documents"].chunks
         language = state["language"]
         retrieved_docs_as_context = [(f"Filename: {doc.metadata['filename']}\n"
                                       f"Content: {doc.page_content}") for doc in documents]
@@ -457,7 +447,7 @@ class Agent:
             {"language": language, "question": question},
             config=self.generator_config,
         )
-        return {"response": response, "documents": [], "messages": [AIMessage(content=response)]}
+        return {"response": response, "documents": SearchResult(chunks=[]), "messages": [AIMessage(content=response)]}
 
     def _router(self, state: GraphState) -> str | None:
         """Route the contextual question to conversational or document-based flow.
@@ -475,25 +465,27 @@ class Agent:
             - ``None`` if no route is determined
         """
         self.logger.info("Routing question.")
-        example_selector = SemanticSimilarityExampleSelector.from_examples(
-            examples=self.examples,
-            embeddings=self.config.embeddings.model,
-            vectorstore_cls=FAISS,
-            k=self.config.examples.top_k,
-            input_keys=self.config.examples.input_keys,
-        )
-        prompt_template = PromptTemplate.from_template(self.config.examples.template)
-        few_shot_prompt = FewShotPromptTemplate(
-            example_selector=example_selector,
-            example_prompt=prompt_template,
-            input_variables=["question"],
-            prefix="",
-            suffix="",
-        )
-        example_prompt = few_shot_prompt.format(input=state["contextual_question"])
+        # example_selector = SemanticSimilarityExampleSelector.from_examples(
+        #     examples=self.examples,
+        #     embeddings=self.config.indexing.embeddings.model,
+        #     vectorstore_cls=FAISS,
+        #     k=self.config.examples.top_k,
+        #     input_keys=self.config.examples.input_keys,
+        # )
+        # prompt_template = PromptTemplate.from_template(self.config.examples.template)
+        # few_shot_prompt = FewShotPromptTemplate(
+        #     example_selector=example_selector,
+        #     example_prompt=prompt_template,
+        #     input_variables=["question"],
+        #     prefix="",
+        #     suffix="",
+        # )
+        # example_prompt = few_shot_prompt.format(input=state["contextual_question"])
+        # TODO: index description should be improved
+        index_description = [index.description for index  in self.config.indexing] if isinstance(self.config.indexing, list) else self.config.indexing.description
         runnable = self.node_factory.build_node_from_config(
             self._get_node_config("router"), self.llm, structured_output=True, output_schema=output.RouteQuery,
-            index_description=self.config.indexing.description, example_prompt=example_prompt
+            index_description=index_description,
         )
         routing = (
             runnable.invoke({"question": state["contextual_question"]},  config=self.router_config, with_retry=True))
@@ -529,7 +521,7 @@ class Agent:
         generation = state["response"]
         generation_count = state["generation_count"]
         question = state["contextual_question"]
-        docs_string = "\n\n".join([doc.page_content for doc in documents])
+        docs_string = "\n\n".join([doc.page_content for doc in documents.chunks])
         validator_runnable = self.node_factory.build_node_from_config(
             self._get_node_config("groundedness_grader"), self.llm,
             structured_output=True, output_schema=output.GradeGrounding,
@@ -660,11 +652,10 @@ class Agent:
         """
         self.logger.info("Error Handler Node.")
         runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("error_handler"), self.llm,
-            structured_output=False, languages=self.config.allowed_languages,
+            self._get_node_config("error_handler"), self.llm, structured_output=False,
         )
         response = runnable.invoke(
-            {"exception": exception},
+            {"exception": exception, "languages": self.config.allowed_languages},
             config=self.generator_config,
         )
         return {"response": response}
@@ -741,19 +732,13 @@ class Agent:
                         response = event["payload"].get("values", {})
                     current_event_list = []
             attachments = {"sources": []}
-            unique_sources = []
-            if response.get("documents"):
-                for document in response["documents"]:
-                    document_info = {  # TODO: maybe it wil be worth adding more info about retrieved sources
-                        "filename": document.metadata.get("filename", "unknown"),
-                        "chunk_id": document.metadata.get("chunk_id", "unknown"),
-                    }
-                    attachments["sources"].append(document_info)
-                seen_chunks = set()
-                for doc_info in attachments["sources"]:
-                    if (doc_info["filename"], doc_info["chunk_id"]) not in seen_chunks:
-                        unique_sources.append(doc_info)
-                        seen_chunks.add((doc_info["filename"], doc_info["chunk_id"]))
+            unique_sources = response.get("documents", SearchResult()).extract_unique_chunks()
+            for document in unique_sources:
+                document_info = {  # TODO: maybe it wil be worth adding more info about retrieved sources
+                    "filename": document.metadata.get("filename", "unknown"),
+                    "chunk_id": document.metadata.get("chunk_idx", "unknown"),
+                }
+                attachments["sources"].append(document_info)
         except Exception as e:
             unique_sources = []
             self.logger.error(f"Error processing request: {str(e)}")
@@ -782,7 +767,7 @@ if __name__ == "__main__":
         user="gaia",
         user_id="2",
         conversation=ConversationRequest(
-            id="2",
+            id="3",
             chatbotId="1",
             history=[],
             question=MessageSchema(

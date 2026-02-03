@@ -3,24 +3,25 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List
+from typing import List, Optional, Dict
 
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_core.documents.base import Document
 from qdrant_client.http import models
 
+from agentic_rag.utils.search import FusionStrategyFactory, SearchResult
 from src.agentic_rag.config.manager import SearchConfig
 
 from cardiology_gen_ai.utils.singleton import Singleton
 from cardiology_gen_ai import IndexingConfig, IndexTypeNames, Vectorstore, QdrantVectorstore, FaissVectorstore, \
-    EmbeddingConfig
+    BM25Vectorstore, BM25Dict
 from cardiology_gen_ai.utils.logger import get_logger
 
 
 class SearchableVectorstore(Vectorstore, ABC):
     """Abstract class that adds search utilities to a :class:`cardiology_gen_ai.models.Vectorstore`."""
     search_config: SearchConfig #: :class:`~src.agentic_rag.config.manager.SearchConfig` : Configuration controlling the retrieval strategy (search type, kwargs, metadata filters, hybrid fusion).
-    retriever: VectorStoreRetriever = None #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Retriever used by :meth:`~src.agentic_rag.managers.search_manager.SearchableVectorstore.search`.
+    retriever: Optional[VectorStoreRetriever | Dict] = None #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Retriever used by :meth:`~src.agentic_rag.managers.search_manager.SearchableVectorstore.search`.
 
     @abstractmethod
     def get_retriever(self, **kwargs) -> VectorStoreRetriever:
@@ -114,6 +115,30 @@ class SearchableFaissVectorstore(SearchableVectorstore, FaissVectorstore):
         return self.retriever
 
 
+class SearchableBM25Vectorstore(SearchableVectorstore, BM25Vectorstore):
+
+    def get_retriever(self, **kwargs) -> BM25Dict:
+        self.retriever = self.vectorstore
+        return self.retriever
+
+    def search(self, query: str) -> List[Document]:
+        scores = self.vectorstore.bm25.get_scores(BM25Vectorstore.tokenize(query))
+        top_k = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:self.search_config.kwargs["k"]]
+        return [self.vectorstore.documents[i] for i in top_k]
+
+
+class SearchableVectorstoreFactory:
+    searchable_vectorstore_mapping = {
+        IndexTypeNames.qdrant: SearchableQdrantVectorstore,
+        IndexTypeNames.faiss: SearchableFaissVectorstore,
+        IndexTypeNames.bm25: SearchableBM25Vectorstore,
+    }
+
+    @classmethod
+    def get_searchable_vectorstore(cls, index_config: IndexingConfig, search_config: SearchConfig) -> SearchableVectorstore:
+        return cls.searchable_vectorstore_mapping[IndexTypeNames(index_config.type)](config=index_config, search_config=search_config)
+
+
 class SearchManager(metaclass=Singleton):
     """High-level orchestrator that selects and instantiates a searchable vector store.
 
@@ -126,26 +151,30 @@ class SearchManager(metaclass=Singleton):
         Configuration for index name, type, and retrieval mode.
     search_config : :class:`~src.agentic_rag.config.manager.SearchConfig`
         Configuration for search type, kwargs, filters, and hybrid fusion.
-    embeddings : :class:`cardiology_gen_ai.models.EmbeddingConfig`
-        Embedding model/configuration used when loading the index.
     """
     logger: logging.Logger #: :class:`logging.Logger` : Logger for lifecycle and diagnostics.
-    indexing_config: IndexingConfig #: :class:`cardiology_gen_ai.models.IndexingConfig` : Indexing configuration.
+    index_config: List[IndexingConfig] #: :class:`cardiology_gen_ai.models.IndexingConfig` : Indexing configuration.
     search_config: SearchConfig #: :class:`~src.agentic_rag.config.manager.SearchConfig` : Search configuration.
-    embeddings: EmbeddingConfig #: :class:`cardiology_gen_ai.models.EmbeddingConfig` : Embedding configuration.
-    vectorstore: SearchableVectorstore #: :class:`SearchableVectorstore` : Concrete searchable vector store.
-    def __init__(self, index_config: IndexingConfig, search_config: SearchConfig, embeddings: EmbeddingConfig):
+    # embeddings: EmbeddingConfig #: :class:`cardiology_gen_ai.models.EmbeddingConfig` : Embedding configuration.
+    vectorstores: SearchableVectorstore #: :class:`SearchableVectorstore` : Concrete searchable vector store.
+    def __init__(self, index_config: IndexingConfig | List[IndexingConfig], search_config: SearchConfig):
         self.logger = get_logger("Searching based on LangChain VectorStores")
-        self.index_config = index_config
+        self.index_config = [index_config] if isinstance(index_config, IndexingConfig) else index_config
         self.search_config = search_config
-        self.embeddings = embeddings
-        self.vectorstore: SearchableVectorstore = (
-            SearchableQdrantVectorstore(config=self.index_config, search_config=self.search_config)) \
-            if IndexTypeNames(self.index_config.type) == IndexTypeNames.qdrant \
-            else SearchableFaissVectorstore(config=self.index_config, search_config=self.search_config)
+        # self.embeddings = index_config.embeddings
+        self.vectorstores: List[SearchableVectorstore] = self._init_vectorstores()
         self.make_searchable()
 
-    def get_n_documents_in_vectorstore(self):
+    def _init_vectorstores(self) -> List[SearchableVectorstore]:
+        vectorstores = []
+        for index_config in self.index_config:
+            current_vectorstore = SearchableVectorstoreFactory.get_searchable_vectorstore(
+                index_config=index_config, search_config=self.search_config,
+            )
+            vectorstores.append(current_vectorstore)
+        return vectorstores
+
+    def get_n_documents_in_vectorstores(self) -> List[int]:
         """Return the number of documents currently stored in the vector index.
 
         Returns
@@ -153,49 +182,56 @@ class SearchManager(metaclass=Singleton):
         int
             Document count (as reported by the underlying vector store).
         """
-        return self.vectorstore.get_n_documents_in_vectorstore()
+        n_docs_in_vectorstores = []
+        for vectorstore in self.vectorstores:
+            n_docs_in_vectorstores.append(vectorstore.get_n_documents_in_vectorstore())
+        return n_docs_in_vectorstores
 
-    def load_index(self):
+    def load_indexes(self):
         """Load an existing index from disk/remote using the configured embeddings.
 
         .. rubric:: Notes
 
         If the index does not exist yet, the method logs and returns without error.
         """
-        if not self.vectorstore.vectorstore_exists():
-            self.logger.info(f"Index {self.index_config.name} does not exist yet. Will be created when documents are added.")
-            return
-        try:
-            self.vectorstore.load_vectorstore(embeddings_model=self.embeddings,
-                                              retrieval_mode=self.index_config.retrieval_mode.value)
-            self.logger.info(f"Index {self.index_config.name} loaded successfully.")
-        except Exception as e:
-            self.logger.info(f"Error loading {self.index_config.name} index: {str(e)}")
-            raise
+        for idx, index_config in zip(range(len(self.vectorstores)), self.index_config):
+            if not self.vectorstores[idx].vectorstore_exists():
+                self.logger.info(f"Index {index_config.name} (of type {index_config.type.value}) "
+                                 f"does not exist yet. Will be created when documents are added.")
+                return
+            try:
+                self.vectorstores[idx].load_vectorstore(
+                    embeddings_model=index_config.embeddings, retrieval_mode=index_config.retrieval_mode.value
+                )
+                self.logger.info(f"Index {index_config.name} (of type {index_config.type.value}) loaded successfully.")
+            except Exception as e:
+                self.logger.info(f"Error loading index {index_config.name} (of type {index_config.type.value}): {str(e)}")
+                raise
 
-    def get_retriever(self):
+    def get_retrievers(self):
         """Instantiate the retriever on the current vector store.
 
         .. rubric:: Notes
 
         If the index does not exist yet, logs an informational message and returns.
         """
-        if not self.vectorstore.vectorstore_exists():
-            self.logger.info("No vectorstore available yet. Retriever will be created when documents are added.")
-            return
-        try:
-            self.vectorstore.get_retriever()
-            self.logger.info("Retriever instantiated successfully.")
-        except Exception as e:
-            self.logger.info(f"Error getting retriever: {str(e)}")
-            raise
+        for idx, vectorstore in enumerate(self.vectorstores):
+            if not self.vectorstores[idx].vectorstore_exists():
+                self.logger.info("No vectorstore available yet. Retriever will be created when documents are added.")
+                return
+            try:
+                self.vectorstores[idx].get_retriever()
+                self.logger.info("Retriever instantiated successfully.")
+            except Exception as e:
+                self.logger.info(f"Error getting retriever: {str(e)}")
+                raise
 
     def make_searchable(self):
         """Ensure the index is loaded and the retriever is ready."""
-        self.load_index()
-        self.get_retriever()
+        self.load_indexes()
+        self.get_retrievers()
 
-    def search(self, query: str) -> List[Document]:
+    def search(self, query: str) -> SearchResult:
         """Run a search query against the selected vector store.
 
         Parameters
@@ -208,7 +244,18 @@ class SearchManager(metaclass=Singleton):
         list of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`
             Retrieved documents.
         """
-        return self.vectorstore.search(query)
+        if len(self.vectorstores) == 1:
+            self.logger.info("Retrieving documents from a single vectorstore..")
+            results = self.vectorstores[0].search(query)
+            return SearchResult(chunks=results)
+        else:
+            assert len(self.vectorstores) > 1
+            self.logger.info(f"Retrieving documents from {len(self.vectorstores)} vectorstores..")
+            results_list = [SearchResult(chunks=vectorstore.search(query)) for vectorstore in self.vectorstores]
+            self.logger.info(f"Fusing search results with {self.search_config.fusion.value} function..")
+            fusion_fn = FusionStrategyFactory.get_fusion_strategy(self.search_config)
+            fused_results: SearchResult = fusion_fn(results_list)
+            return fused_results
 
 
 if __name__ == "__main__":

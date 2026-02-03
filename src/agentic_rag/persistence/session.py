@@ -22,7 +22,7 @@ class SessionORM(BaseORM):
     username: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Username associated with the session.
     user_role: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`\[:class:`str`\] : Role of the user.
     model_name: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Name of the LLM model deployment used in the session.
-    embedding_name: Mapped[str] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Name of the embedding model deployment used in the session.
+    embedding_name: Mapped[str] = mapped_column(nullable=True) #: :class:`~sqlalchemy.orm.Mapped`[:class:`str`] : Name of the embedding model deployment used in the session.
     created_at: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Creation timestamp (stored as naive UTC).
     updated_at: Mapped[datetime] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`datetime`] : Last update timestamp (stored as naive UTC).
     message_count: Mapped[int] = mapped_column() #: :class:`~sqlalchemy.orm.Mapped`[:class:`int`] : Number of messages exchanged in the session.
@@ -36,7 +36,7 @@ class SessionSchema(BaseModel):
     username: str #: :class:`str` : Username associated with the session.
     user_role: Literal["user", "admin", "assistant"] #: :class:`typing.Literal`\[{``user``, ``admin``, ``assistant``}\] : Role of the user for this session.
     model_name: str #: :class:`str` : Name of the LLM model deployment used in the session.
-    embedding_name: str #: :class:`str` : Name of the embedding model deployment used in the session.
+    embedding_name: Optional[str] = "" #: :class:`str` : Name of the embedding model deployment used in the session.
     created_at: datetime #: :class:`datetime.datetime` : Creation timestamp (naive UTC).
     updated_at: datetime #: :class:`datetime.datetime` : Last update timestamp (naive UTC).
     message_count: int #: :class:`int` : Number of messages exchanged in the session.
@@ -50,7 +50,7 @@ class SessionSchema(BaseModel):
             username=session_orm.username,
             user_role=session_orm.user_role,
             model_name=session_orm.model_name,
-            embedding_name=session_orm.embedding_name,
+            embedding_name=session_orm.embedding_name or "",
             created_at=session_orm.created_at,
             updated_at=session_orm.updated_at,
             message_count=session_orm.message_count,

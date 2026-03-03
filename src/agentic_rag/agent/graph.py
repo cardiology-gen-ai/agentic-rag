@@ -19,12 +19,12 @@ from agentic_rag.agent.services.service_container import ServiceContainer
 from agentic_rag.agent.state import GraphState
 from agentic_rag.config.manager import NodePromptConfig
 from agentic_rag.utils.search import SearchResult
-from src.agentic_rag.config.manager import AgentConfigManager
-from src.agentic_rag.managers.llm_manager import LLMManager
-from src.agentic_rag.managers.search_manager import SearchManager
-from src.agentic_rag.persistence.db import ensure_database
-from src.agentic_rag.persistence.message import AgentMemory
-from src.agentic_rag.utils.chat import ChatRequest, ChatResponse, format_chat_request
+from agentic_rag.config.manager import AgentConfigManager
+from agentic_rag.managers.llm_manager import LLMManager
+from agentic_rag.managers.search_manager import SearchManager
+from agentic_rag.persistence.db import ensure_database
+from agentic_rag.persistence.message import AgentMemory
+from agentic_rag.utils.chat import ChatRequest, ChatResponse, format_chat_request
 
 
 GENERATION_LIMIT = 1

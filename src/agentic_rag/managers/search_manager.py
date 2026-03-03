@@ -13,8 +13,8 @@ from qdrant_client.http import models
 from agentic_rag.config.manager import FusionStrategy
 from agentic_rag.managers.llm_manager import LLMManager
 from agentic_rag.utils.search import build_cross_encoder
-from src.agentic_rag.utils.search import FusionStrategyFactory, SearchResult
-from src.agentic_rag.config.manager import SearchConfig
+from agentic_rag.utils.search import FusionStrategyFactory, SearchResult
+from agentic_rag.config.manager import SearchConfig
 from cardiology_gen_ai import IndexingConfig, IndexTypeNames, Vectorstore, QdrantVectorstore, FaissVectorstore, \
     BM25Vectorstore, BM25Dict
 from cardiology_gen_ai.utils.logger import get_logger

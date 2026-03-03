@@ -5,8 +5,8 @@ import dspy
 import mlflow
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from src.agentic_rag.agent.prompts.dspy.dspy_prompts import node_names
-from src.agentic_rag.utils.nodes import NodeType, deep_merge, load_yaml, render_template
+from agentic_rag.agent.prompts.dspy.dspy_prompts import node_names
+from agentic_rag.utils.nodes import NodeType, deep_merge, load_yaml, render_template
 
 
 class PromptFactory:

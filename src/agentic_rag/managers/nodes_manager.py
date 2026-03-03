@@ -9,9 +9,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, Runnable, RunnableConfig
 from pydantic import BaseModel, ConfigDict
 
-from src.agentic_rag.agent.prompts.output_schemas import node_output_schemas
-from src.agentic_rag.managers.prompt_manager import PromptFactory
-from src.agentic_rag.utils.nodes import _strip_think, _get_final, NodeType
+from agentic_rag.agent.prompts.output_schemas import node_output_schemas
+from agentic_rag.managers.prompt_manager import PromptFactory
+from agentic_rag.utils.nodes import _strip_think, _get_final, NodeType
 
 
 def get_llm_with_structured_output(llm: BaseChatModel, output_schema: BaseModel | Dict | Any, prompt: ChatPromptTemplate):

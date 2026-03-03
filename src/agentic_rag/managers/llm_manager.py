@@ -11,7 +11,7 @@ from langchain.chat_models import init_chat_model
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 
 from agentic_rag.config.manager import LLMProvider
-from src.agentic_rag.config.manager import LLMConfig
+from agentic_rag.config.manager import LLMConfig
 
 from cardiology_gen_ai.utils.logger import get_logger
 

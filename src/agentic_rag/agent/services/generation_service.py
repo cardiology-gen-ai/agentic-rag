@@ -68,7 +68,7 @@ class GenerateRagResponse(GenerationServiceNode):
         )
         formatted_sources = documents.format_sources()
         if formatted_sources:
-            response = f"{response}\n\n---\n{formatted_sources}"
+            response = f"{response}\n\n\n---\n\n{formatted_sources}"
         self.logger.info(f"Generated response: {response}")
         return {"response": response, "generation_count": state["generation_count"] + 1}
 

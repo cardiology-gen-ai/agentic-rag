@@ -3,6 +3,7 @@ from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Literal
+from importlib.resources import files
 
 from pydantic import BaseModel, ConfigDict
 
@@ -101,12 +102,12 @@ class MemoryConfig(BaseModel):
 
 class NodePromptConfig(BaseModel):
     config: Path | str
-    prompts: Path | str
+    prompts: str
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "NodePromptConfig":
         config = Path(config_dict["config"]) if isinstance(config_dict["config"], str) else config_dict["config"]
-        prompts = Path(config_dict["prompts"]) if isinstance(config_dict["prompts"], str) else config_dict["prompts"]
+        prompts = config_dict["prompts"]
         return cls(config=config, prompts=prompts)
 
 

@@ -139,7 +139,7 @@ class LLMManager:
         try:
             self.logger.info(f"Pulling model {self.config.model_name} from Ollama server..")
             client = Client(host=os.getenv("OLLAMA_URL"))
-            client.pull(self.config.model_name)  # TODO: maybe move from here and pre-pull somewhere else
+            # client.pull(self.config.model_name)  # TODO: maybe move from here and pre-pull somewhere else
             self.logger.info(f"Model {self.config.model_name} pulled.")
             return init_chat_model(
                 model=self.config.model_name,

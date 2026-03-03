@@ -7,7 +7,31 @@ from typing import Optional, Dict, Any, List, Literal
 from pydantic import BaseModel, ConfigDict
 
 from cardiology_gen_ai.config.manager import ConfigManager
-from cardiology_gen_ai import IndexingConfig
+from cardiology_gen_ai import IndexingConfig, RetrievalTypeNames, IndexTypeNames
+
+
+class LLMProvider(Enum):
+    ollama = "ollama"
+    huggingface = "huggingface"
+    vllm = "vllm"
+    openai = "openai"
+
+
+class LLMConfig(BaseModel):
+    """Configuration for the chat LLM backend."""
+    model_name: str #: :class:`str` : Name or identifier of the underlying model deployment.
+    provider: LLMProvider
+    nbits: Optional[Literal[4, 8, 16, 32]] = 8 #: :class:`typing.Literal`\[{``4``,``8``,``16``,``32``}\], optional : Precision/quantization setting (only applies to HF pipelines). Defaults to ``8``.
+    generator_temperature: Optional[float] = None #: :class:`float` :  Temperature for the generator runnable.
+    router_temperature: Optional[float] = None #: :class:`float` : Temperature for the router runnable.
+    grader_temperature: Optional[float] = None #: :class:`float` : Temperature for the grader runnable.
+    temperature: float = 0.0
+
+    @classmethod
+    def from_config(cls, config_dict: Dict[str, Any]) -> "LLMConfig":
+        model_name = config_dict.get("deployment", "")
+        other_config_dict = {k:v for k, v in config_dict.items() if k not in ["deployment"]}
+        return cls(model_name=model_name, **other_config_dict)
 
 
 class SearchTypeNames(Enum):
@@ -19,44 +43,42 @@ class SearchTypeNames(Enum):
 
 class FusionStrategy(Enum):
     rrf = "rrf"
+    reranking = "reranking"
+    cross_encoder = "cross_encoder"
+    bm25 = "bm25"
 
 
 class SearchConfig(BaseModel):
     """Configuration for vector store search/retrieval."""
     type: SearchTypeNames = SearchTypeNames.similarity #: :class:`~src.agentic_rag.config.manager.SearchTypeNames`, optional : Retrieval strategy to use. Defaults to :data:`~src.agentic_rag.config.manager.SearchTypeNames.similarity`.
     top_k: int #: :class:`int` : Number of results to return.
+    k: int #: :class:`int` : Number of chunks to retrieve.
     kwargs: Dict[str, Any] = None #: :class:`dict`, optional : Backend-specific arguments passed to the retriever.
     fetch_k: Optional[int] = None #: :class:`int`, optional : Candidate pool size for certain strategies (e.g., MMR).
     score_threshold: Optional[float] = None #: :class:`float`, optional : Minimum similarity score when ``type`` is ``similarity_score_threshold``.
-    fusion: Optional[FusionStrategy] = FusionStrategy.rrf #: :class:`bool`, optional:  Enable hybrid fusion (e.g., RRF) when supported by the backend.
+    fusion: Optional[FusionStrategy] = None #: :class:`bool`, optional:  Enable hybrid fusion (e.g., RRF) when supported by the backend.
     metadata_filter: Optional[Dict[str, str]] = None #: :class:`dict`, optional : Structured metadata filter applied at retrieval time.
+    reranker: Optional[LLMConfig] = None
+    cross_encoder: Optional[str] = None
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "SearchConfig":
         search_type = SearchTypeNames(config_dict.get("type", None)) if config_dict.get("type") \
             else SearchTypeNames.similarity
-        kwargs = {"k": config_dict["top_k"]}
+        kwargs = {"k": config_dict["k"]}
         for k in ["fetch_k", "score_threshold"]:
             if config_dict.get(k, None) is not None:
                 kwargs[k] = config_dict[k]
-        other_config_dict = {k:v for k, v in config_dict.items() if k not in ["type"]}
-        return cls(type=search_type, kwargs=kwargs, **other_config_dict)
-
-
-class LLMConfig(BaseModel):
-    """Configuration for the chat LLM backend."""
-    model_name: str #: :class:`str` : Name or identifier of the underlying model deployment.
-    ollama: bool = False #: :class:`bool`, optional :  If ``True``, use :ollama:`Ollama <>` backend; otherwise use :huggingface:`HuggingFace <>`. Default ``False``.
-    nbits: Optional[Literal[4, 8, 16, 32]] = 8 #: :class:`typing.Literal`\[{``4``,``8``,``16``,``32``}\], optional : Precision/quantization setting (only applies to HF pipelines). Defaults to ``8``.
-    generator_temperature: float #: :class:`float` :  Temperature for the generator runnable.
-    router_temperature: float #: :class:`float` : Temperature for the router runnable.
-    grader_temperature: float #: :class:`float` : Temperature for the grader runnable.
-
-    @classmethod
-    def from_config(cls, config_dict: Dict[str, Any]) -> "LLMConfig":
-        model_name = config_dict.get("deployment")
-        other_config_dict = {k:v for k, v in config_dict.items() if k not in ["deployment"]}
-        return cls(model_name=model_name, **other_config_dict)
+        reranker_config, cross_encoder, reranker = [None for _ in range(3)]
+        fusion_strategy = FusionStrategy(config_dict["fusion"]) if config_dict.get("fusion") else None
+        if fusion_strategy == FusionStrategy.reranking:
+            reranker = config_dict.get("reranker", {})
+            reranker_config = LLMConfig.from_config(reranker) if reranker is not {} else None
+        elif fusion_strategy == FusionStrategy.cross_encoder:
+            cross_encoder = config_dict["cross_encoder"]
+        other_config_dict = {k:v for k, v in config_dict.items() if k not in ["type", "reranker", "cross_encoder", "fusion"]}
+        return cls(type=search_type, kwargs=kwargs, reranker=reranker_config, cross_encoder=cross_encoder,
+                   fusion=fusion_strategy, **other_config_dict)
 
 
 class ContextConfig(BaseModel):
@@ -95,7 +117,6 @@ class AgentConfig(BaseModel):
     system_prompt: str = "" #: :class:`str`, optional :  Global system prompt used by the agent.
     language: str = "" #: :class:`str`, optional : Default language, used when detection is unavailable.
     allowed_languages: List[str] = field(default_factory=list) #: :class:`list` of :class:`str`, optional : Whitelist of languages the agent may use.
-    # embeddings: Optional[EmbeddingConfig] = None #: :class:`cardiology_gen_ai.models.EmbeddingConfig` :  Embedding model configuration.
     search: SearchConfig = field(default_factory=SearchConfig) #: :class:`~src.agentic_rag.config.manager.SearchConfig` : Retrieval/search configuration.
     indexing: IndexingConfig | List[IndexingConfig] = field(default_factory=IndexingConfig) #: :class:`cardiology_gen_ai.models.IndexingConfig` : Index backend configuration.
     llm: LLMConfig = field(default_factory=LLMConfig) #: :class:`~src.agentic_rag.config.manager.LLMConfig` : LLM backend configuration.
@@ -107,8 +128,6 @@ class AgentConfig(BaseModel):
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "AgentConfig":
-        # embedding_dict = config_dict.get("embeddings")
-        # embedding_config = EmbeddingConfig.from_config(embedding_dict) if embedding_dict else None
         indexing_dict = config_dict["indexing"]
         indexing_config = IndexingConfig.from_config(indexing_dict) if isinstance(indexing_dict, Dict) \
             else [IndexingConfig.from_config(index) for index in indexing_dict]
@@ -145,12 +164,13 @@ class AgentConfigManager(ConfigManager):
         loaded_config = self._load_config(config_path=index_folder)
         if loaded_config is not None:
             assert (loaded_config["indexing"]["name"] == info_config["name"])
-            assert (loaded_config["indexing"]["distance"] == info_config["distance"])
+            if loaded_config["indexing"].get("distance") and info_config.get("distance"):
+                assert (loaded_config["indexing"]["distance"] == info_config["distance"])
             loaded_type = loaded_config["indexing"]["type"] if isinstance(loaded_config["indexing"]["type"], list) \
                 else [loaded_config["indexing"]["type"]]
             assert (info_config["type"] in loaded_type)
             loaded_config["indexing"]["type"] = info_config["type"]
-            return loaded_config["indexing"]
+            return loaded_config
         return None
 
     def _load_indexing_config(self, filename="config.json"):
@@ -159,11 +179,15 @@ class AgentConfigManager(ConfigManager):
             loaded_config = self._load_single_indexing_config(info_config, filename)
             info_folder = info_config.get("folder")
             retrieval_mode = info_config.get("retrieval_mode")
-            self._config["indexing"] = loaded_config
+            self._config["indexing"] = loaded_config["indexing"]
             if info_folder:
                 self._config["indexing"]["folder"] = info_folder
             if retrieval_mode:
                 self._config["indexing"]["retrieval_mode"] = retrieval_mode
+            if (retrieval_mode in [RetrievalTypeNames.dense.value, RetrievalTypeNames.hybrid.value]
+                    or info_config["type"] != IndexTypeNames.bm25.value):
+                self._config["indexing"]["embeddings"] = loaded_config["embeddings"]
+
         else:
             assert isinstance(info_config, List)
             index_configs = []
@@ -172,8 +196,11 @@ class AgentConfigManager(ConfigManager):
                 index_retrieval_mode = index_config.get("retrieval_mode")
                 current_loaded_config = self._load_single_indexing_config(index_config, filename)
                 if index_folder:
-                    current_loaded_config["folder"] = index_folder
+                    current_loaded_config["indexing"]["folder"] = index_folder
                 if index_retrieval_mode:
-                    current_loaded_config["retrieval_mode"] = index_retrieval_mode
-                index_configs.append(current_loaded_config)
+                    current_loaded_config["indexing"]["retrieval_mode"] = index_retrieval_mode
+                if (index_retrieval_mode in [RetrievalTypeNames.dense.value, RetrievalTypeNames.hybrid.value]
+                        or index_config["type"] != IndexTypeNames.bm25.value):
+                    current_loaded_config["indexing"]["embeddings"] = current_loaded_config["embeddings"]
+                index_configs.append(current_loaded_config["indexing"])
             self._config["indexing"] = index_configs

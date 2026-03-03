@@ -1,21 +1,29 @@
+import asyncio
 import json
+import os
 import re
 import pathlib
 from typing import Any, Dict, List, Set, Callable
 
 from cardiology_gen_ai import IndexingConfig
+from langchain_core.documents import Document
 from pydantic import BaseModel, ConfigDict
+import torch
 
+from src.agentic_rag.agent.graph import Agent
+from agentic_rag.utils.chat import format_chat_request
 from src.agentic_rag.managers.search_manager import SearchManager
 from src.agentic_rag.config.manager import SearchConfig
+from src.agentic_rag.utils.search import SearchResult
 from tests.accuracy_tests.eval import EvalTestConfig, EvalTest
 from tests.accuracy_tests.nodes_config import NodeOptimizationConfig
-from agentic_rag.utils.search import SearchResult
+from tests.accuracy_tests.search_agent import SearchAgent
 
 
 class RetrieverTestConfig(EvalTestConfig):
     index_config: IndexingConfig | List[IndexingConfig]
     search_config: SearchConfig
+    eval_agent: bool = False
 
     @classmethod
     def from_config(cls, config_dict: Dict[str, Any]) -> "RetrieverTestConfig":
@@ -24,11 +32,12 @@ class RetrieverTestConfig(EvalTestConfig):
             if isinstance(indexing_dict, list) else IndexingConfig.from_config(indexing_dict)
         search_dict = config_dict["search"]
         search_config = SearchConfig.from_config(search_dict)
+        eval_agent = config_dict["eval_agent"] if config_dict.get("eval_agent") else False
         base_kwargs = {
             k: v for k, v in config_dict.items()
             if k in EvalTestConfig.model_fields
         }
-        return cls(**base_kwargs, index_config=indexing_config, search_config=search_config)
+        return cls(**base_kwargs, index_config=indexing_config, search_config=search_config, eval_agent=eval_agent)
 
 
 class Source(BaseModel):
@@ -39,6 +48,7 @@ class Source(BaseModel):
 class RetrieverData(BaseModel):
     question: str
     sources: List[Source]
+    normalize: bool = True
     model_config = ConfigDict(extra="ignore")
 
     @classmethod
@@ -48,6 +58,8 @@ class RetrieverData(BaseModel):
         return cls(question=question, sources=sources)
 
     def extract_unique_filenames(self) -> List[str]:
+        if self.normalize:
+            return list(set([pathlib.Path(source.document).stem for source in self.sources]))
         return list(set([source.document for source in self.sources]))
 
     def group_sources_by_filename(self) -> Dict[str, Set[str]]:
@@ -61,12 +73,16 @@ class RetrieverData(BaseModel):
 
 
 class EvalRetriever(EvalTest):
-    def __init__(self, test_config_path: pathlib.Path, node_config: NodeOptimizationConfig):
+    def __init__(self, test_config_path: pathlib.Path, node_config: NodeOptimizationConfig, eval_agent: bool = False):
         super().__init__(test_config_path=test_config_path, node_config=node_config)
+        assert isinstance(self.test_config, RetrieverTestConfig)
         self.search_manager = SearchManager(
             index_config=self.test_config.index_config,
             search_config=self.test_config.search_config,
         )
+        self.eval_agent = eval_agent  # self.test_config.eval_agent
+        if self.eval_agent:
+            self.agent = SearchAgent(agent_id=os.getenv("AGENT_ID", ""), search_manager=self.search_manager)
 
     def get_config(self):
         config_dict = self._load_config()
@@ -126,16 +142,24 @@ class EvalRetriever(EvalTest):
 
     def get_predict_fn(self, **kwargs) -> Callable:
         def predict_fn(**inputs):
-            results = self.search_manager.search(inputs.get("_input"))
+            assert isinstance(self.test_config, RetrieverTestConfig)
+            if self.eval_agent:
+                agent_input = format_chat_request(query=inputs.get("_input", ""))
+                agent_results = asyncio.run(self.agent.answer(agent_input))
+                results = SearchResult(chunks=[Document(page_content="", metadata=d) for d in agent_results.metadata["sources"]])
+            else:
+                results = self.search_manager.search(inputs.get("_input", ""))
             if "document" in self.node_config.output_keys or "sections" in self.node_config.output_keys:
-                results = self.post_process(results, _context=inputs["_context"]) if "_context" in inputs.keys() else self.post_process(results)
+                    results = self.post_process(results, _context=inputs["_context"]) if "_context" in inputs.keys() else self.post_process(results)
             return {"_output": results}
         return predict_fn
 
-    def _format_index_config(self, results_index_config: Dict):
+    @staticmethod
+    def _format_index_config(results_index_config: Dict):
         _ = results_index_config.pop("folder")
         results_index_config["type"] = results_index_config.get("type").value
-        results_index_config["distance"] = results_index_config.get("distance").value
+        if results_index_config.get("distance", None) is not None:
+            results_index_config["distance"] = results_index_config.get("distance").value
         results_index_config["retrieval_mode"] = results_index_config.get("retrieval_mode").value
         if results_index_config.get("embeddings"):
             _ = results_index_config["embeddings"].pop("model")
@@ -154,8 +178,11 @@ class EvalRetriever(EvalTest):
             _ = results["search_config"].pop("fetch_k")
             _ = results["search_config"].pop("score_threshold")
             results_file = (
-                    self.test_config.results_folder/ f"run_{self.test_config.test_id}" / f"{self.node_config.name}.json")
+                    self.test_config.results_folder/ f"run_{self.test_config.test_id}" / f"{self.node_config.name}.json"
+            )
             results_file.parent.mkdir(parents=True, exist_ok=True)
             with open(results_file, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, ensure_ascii=False)
             self.logger.info(f"Eval results saved in: {results_file}")
+        del self.search_manager
+        torch.cuda.empty_cache()

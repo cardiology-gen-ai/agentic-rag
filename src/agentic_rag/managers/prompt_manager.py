@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 import dspy
 import mlflow
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from src.agentic_rag.agent.prompts.dspy.dspy_prompts import node_names
 from src.agentic_rag.utils.nodes import NodeType, deep_merge, load_yaml, render_template
@@ -48,8 +48,10 @@ class PromptFactory:
 
     @staticmethod
     def build_langchain_prompt(rendered_components: Dict):
-        messages = [(role, text) for role, text in rendered_components.items()
-                    if role in ["human", "user", "ai", "assistant", "system"]]
+        messages = [(role, text) for role, text in rendered_components.items() if role in ["system"]]
+        messages += [MessagesPlaceholder("history", optional=True)]
+        messages += [(role, text) for role, text in rendered_components.items()
+                     if role in ["human", "user", "ai", "assistant"]]
         return ChatPromptTemplate.from_messages(messages)
 
     @staticmethod

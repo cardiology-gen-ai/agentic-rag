@@ -1,0 +1,820 @@
+[
+    {
+        "question": "Qual è il target di emoglobina glicata (HbA1c) raccomandato per la maggior parte dei pazienti adulti con diabete di tipo 2 per ridurre il rischio cardiovascolare?",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4.8 Diabetes mellitus",
+                    "4.8.1 Key risk factor concepts and newer paradigms",
+                    "4.8.1.2 Glycaemic control",
+                    "9. ‘What to do’ and ‘what not to do’ messages from the guidelines",
+                    "Recommendations for the treatment of patients with diabetes mellitus"
+                ]
+            },
+            {
+                "document": "Dyslipidaemias_2019.md",
+                "sections": [
+                    "9.4 Diabetes and metabolic syndrome"
+                ]
+            }
+        ],
+        "answer": "Per la maggior parte degli adulti con diabete di tipo 1 o di tipo 2, è raccomandato un target di emoglobina glicata (HbA1c) **<7.0% (<53 mmol/mol)** per ridurre il rischio di malattie cardiovascolari (CVD) e complicanze microvascolari (Classe I, Livello A) [1]. Questo obiettivo dovrebbe essere individualizzato in base alle comorbidità, alla durata del diabete e all'aspettativa di vita; ad esempio, obiettivi meno stringenti possono essere considerati per pazienti anziani o fragili, mentre un target più stretto (<6.5%) può essere considerato alla diagnosi in assenza di CVD [2], [3]."
+    },
+    {
+        "question": "Quali sono i farmaci ipoglicemizzanti di prima scelta raccomandati per ridurre le ospedalizzazioni per insufficienza cardiaca nei pazienti con diabete di tipo 2?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.5. Safety profile of glucose-lowering agents in patients with heart failure and diabetes",
+                    "7.5.1. Sodium–glucose co-transporter-2 inhibitors",
+                    "Recommendation Table 22 — Recommendations for glucose-lowering medications in patients with type 2 diabetes with and without heart failure"
+                ]
+            }
+        ],
+        "answer": "Gli **inibitori del co-trasportatore sodio-glucosio di tipo 2 (SGLT2)** sono i farmaci di prima scelta raccomandati per ridurre il rischio di ospedalizzazione per insufficienza cardiaca. Nello specifico:\n*   Nei pazienti con diabete di tipo 2 e fattori di rischio multipli per ASCVD o ASCVD stabilita, sono raccomandati **empagliflozin, canagliflozin, dapagliflozin, ertugliflozin o sotagliflozin** (Classe I A) [4].\n*   Nei pazienti con insufficienza cardiaca a frazione di eiezione ridotta (HFrEF), sono raccomandati **dapagliflozin, empagliflozin o sotagliflozin** (Classe I A) [4].\n*   Nei pazienti con frazione di eiezione >40% (HFmrEF e HFpEF), sono raccomandati **empagliflozin o dapagliflozin** (Classe I A) [4], [5]."
+    },
+    {
+        "question": "Nei pazienti con diabete di tipo 2 e rischio cardiovascolare molto alto, qual è il target raccomandato per il colesterolo LDL?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.5.3. Novel cholesterol-lowering drugs",
+                    "Recommendation Table 11 — Recommendations for the management of dyslipidaemia in patients with diabetes"
+                ]
+            },
+            {
+                "document": "Dyslipidaemias_2019.md",
+                "sections": [
+                    "9.4.4 Management of dyslipidaemia for pregnant women with diabetes",
+                    "Recommendations for the treatment of dyslipidaemias in diabetes mellitus"
+                ]
+            },
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4.6 Lipids",
+                    "4.6.4. Important groups",
+                    "4.6.4.3 Diabetes mellitus"
+                ]
+            }
+        ],
+        "answer": "Nei pazienti con diabete di tipo 2 classificati a **rischio cardiovascolare molto alto** (ad esempio, quelli con malattia cardiovascolare aterosclerotica stabilita o grave danno d'organo bersaglio), è raccomandato un trattamento ipolipemizzante intensivo con un duplice obiettivo:\n1.  Raggiungere un livello di colesterolo LDL **<1.4 mmol/L (<55 mg/dL)** [6], [7], [8], [9].\n2.  Ottenere una riduzione dell'LDL di **almeno il 50%** rispetto al valore basale [6], [7], [8], [9].\nQuesta raccomandazione è classificata come Classe I A nelle linee guida di prevenzione e dislipidemie [6], [9] e Classe I B nelle linee guida specifiche per il diabete del 2023 [8]."
+    },
+    {
+        "question": "È raccomandato l'uso di inibitori SGLT2 nei pazienti con diabete e insufficienza cardiaca a frazione di eiezione conservata (HFpEF)?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.4.3. Treatment of heart failure with preserved ejection fraction",
+                    "Recommendation Table 21 — Recommendations for heart failure treatments in patients with diabetes and left ventricular ejection fraction over 40%"
+                ]
+            },
+            {
+                "document": "Focused_Update_on_Heart_Failure_2023.md",
+                "sections": [
+                    "3. Chronic heart failure",
+                    "Recommendation Table 2 — Recommendation for the treatment of patients with symptomatic heart failure with preserved ejection fraction"
+                ]
+            }
+        ],
+        "answer": "Sì, l'uso di inibitori SGLT2 è **fortemente raccomandato** (Classe I, Livello A) in questa popolazione. Le linee guida raccomandano specificamente **empagliflozin** o **dapagliflozin** nei pazienti con diabete di tipo 2 e frazione di eiezione ventricolare sinistra >40% (che include sia l'insufficienza cardiaca a frazione di eiezione conservata, HFpEF, che quella lievemente ridotta, HFmrEF) per ridurre il rischio di ospedalizzazione per insufficienza cardiaca o morte cardiovascolare [10], [11], [12]. Questa raccomandazione deriva dai risultati dei trial EMPEROR-Preserved e DELIVER."
+    },
+    {
+        "question": "Qual è la classe di raccomandazione per l'uso di Saxagliptin nei pazienti diabetici a rischio di o con pregressa insufficienza cardiaca?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.5.3. Dipeptidyl peptidase-4 inhibitors",
+                    "7.5.8. Special consideration: hypoglycaemia and risk of heart failure hospitalization",
+                    "Recommendation Table 22 — Recommendations for glucose-lowering medications in patients with type 2 diabetes with and without heart failure"
+                ]
+            }
+        ],
+        "answer": "L'uso di **Saxagliptin** non è raccomandato nei pazienti diabetici a rischio di insufficienza cardiaca (HF) o con pregressa HF. Questa è una raccomandazione di **Classe III, Livello di Evidenza B** [13]. Le linee guida specificano che il Saxagliptin è associato a un aumentato rischio di ospedalizzazione per insufficienza cardiaca [14], [13]."
+    },
+    {
+        "question": "Come deve essere gestito un paziente con diabete di tipo 2 che è già in trattamento con farmaci senza beneficio cardiovascolare dimostrato, se sviluppa una malattia cardiovascolare aterosclerotica (ASCVD)?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.3. Atherosclerotic cardiovascular disease risk reduction by glucose-lowering medications in diabetes",
+                    "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications",
+                    "Recommendation Table 8 — Recommendations for glucose-lowering treatment for patients with type 2 diabetes and atherosclerotic cardiovascular disease to reduce cardiovascular risk",
+                    "7.5.8. Special consideration: hypoglycaemia and risk of heart failure hospitalization",
+                    "Recommendation Table 22 — Recommendations for glucose-lowering medications in patients with type 2 diabetes with and without heart failure"
+                ]
+            }
+        ],
+        "answer": "È raccomandato modificare la terapia ipoglicemizzante passando da farmaci senza beneficio cardiovascolare dimostrato a farmaci con **beneficio cardiovascolare comprovato** (Classe I C) [8], [9], [3].\n\nNello specifico, per i pazienti con diabete di tipo 2 e ASCVD, si raccomanda l'uso di **GLP-1 receptor agonists** o **SGLT2 inhibitors** con beneficio cardiovascolare dimostrato per ridurre gli eventi CV (Classe I A) [10], [11], [12], [13]. Questa raccomandazione si applica indipendentemente dall'HbA1c basale o target e indipendentemente dalla terapia ipoglicemizzante concomitante [10]."
+    },
+    {
+        "question": "Qual è l'approccio terapeutico raccomandato per la gestione della pressione arteriosa nei pazienti diabetici per ridurre il rischio CV, e qual è il target sistolico ideale se tollerato?",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4.7. Blood pressure",
+                    "4.7.5. Treatment of hypertension",
+                    "4.7.5.3 Blood pressure treatment targets"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.4.3. Management of hypertension",
+                    "5.4.2. Treatment targets",
+                    "5.4.4. Sex-specific aspects",
+                    "Recommendation Table 10 — Recommendations for blood pressure management in patients with diabetes"
+                ]
+            }
+        ],
+        "answer": "L'approccio raccomandato è l'individualizzazione del trattamento (Classe I A). Per la maggior parte dei pazienti adulti con diabete, il trattamento farmacologico è raccomandato quando la pressione arteriosa (BP) in ufficio è ≥140/90 mmHg [14], [13].\n\nIl target sistolico (SBP) raccomandato è **130 mmHg**, e valori inferiori (<130 mmHg) se tollerati, ma **non <120 mmHg** (Classe I A) [15], [13], [16].\nPer le persone anziane (età ≥65 anni), si raccomanda un target di SBP nel range **130–139 mmHg** [15], [13].\nLe linee guida di prevenzione 2021 indicano specificamente un range 120-130 mmHg per la fascia d'età 18-69 anni [17]."
+    },
+    {
+        "question": "In un paziente con diabete di tipo 2 e insufficienza cardiaca a frazione di eiezione ridotta (HFrEF), l'uso degli inibitori SGLT2 è subordinato ai livelli di HbA1c basale?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.5.7. Thiazolidinediones",
+                    "7.4.1.1. Sodium–glucose co-transporter-2 inhibitors",
+                    "Recommendation Table 22 — Recommendations for glucose-lowering medications in patients with type 2 diabetes with and without heart failure"
+                ]
+            }
+        ],
+        "answer": "No, l'uso degli inibitori SGLT2 **non è subordinato** ai livelli di HbA1c basale.\n\nGli inibitori SGLT2 (dapagliflozin, empagliflozin, sotagliflozin) sono raccomandati nei pazienti con diabete di tipo 2 e HFrEF per ridurre il rischio di ospedalizzazione per insufficienza cardiaca e morte cardiovascolare (Classe I A) [18], [19]. Le evidenze dai trial clinici (come DAPA-HF) mostrano che i benefici clinici sono indipendenti dai livelli di HbA1c al basale e dalla terapia ipoglicemizzante concomitante [20], [19]."
+    },
+    {
+        "question": "Qual è la raccomandazione per lo screening della fibrillazione atriale nei pazienti con diabete?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "8.1.2. Screening and managing atrial fibrillation in patients with diabetes",
+                    "8.1.3. Preventing stroke in patients with atrial fibrillation and diabetes",
+                    "Recommendation Table 23 — Recommendations for atrial fibrillation in patients with diabetes"
+                ]
+            }
+        ],
+        "answer": "Lo screening opportunistico per la fibrillazione atriale (FA) tramite palpazione del polso o ECG è raccomandato nei pazienti con diabete **<65 anni di età** (Classe I C), in particolare quando sono presenti altri fattori di rischio, poiché i pazienti diabetici mostrano una frequenza di FA più elevata in età più giovane [21], [22], [23].\n\nPer i pazienti di età **≥65 anni**, lo screening opportunistico è raccomandato (Classe I B) [22].\nInoltre, lo screening sistematico mediante ECG dovrebbe essere considerato nei pazienti di età **≥75 anni** o ad alto rischio di ictus (Classe IIa B) [21]."
+    },
+    {
+        "question": "Oltre al controllo glicemico, quali farmaci sono indicati in classe I A per ridurre il rischio di ospedalizzazione e morte nei pazienti con HFrEF e diabete?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.4.1. Treatment of heart failure with reduced ejection fraction",
+                    "Recommendation Table 20 — Recommendations for heart failure treatments in patients with heart failure with reduced ejection fraction and diabetes",
+                    "7.5.7. Thiazolidinediones",
+                    "7.5.8. Special consideration: hypoglycaemia and risk of heart failure hospitalization",
+                    "Recommendation Table 22 — Recommendations for glucose-lowering medications in patients with type 2 diabetes with and without heart failure"
+                ]
+            }
+        ],
+        "answer": "Oltre alla terapia medica ottimale (OMT) standard per l'HFrEF (che include ARNI/ACE-inibitori, beta-bloccanti e antagonisti del recettore mineralocorticoide) [24], gli **inibitori SGLT2** (dapagliflozin, empagliflozin o sotagliflozin) sono specificamente indicati con una raccomandazione di **Classe I, Livello A** per i pazienti con HFrEF e diabete di tipo 2 [25], [18], [26].\n\nQuesti farmaci sono raccomandati per ridurre il rischio di ospedalizzazione per insufficienza cardiaca e morte cardiovascolare, indipendentemente dal controllo glicemico [19]."
+    },
+    {
+        "question": "Qual è l'esame strumentale fondamentale raccomandato come parte della valutazione del rischio cardiovascolare basale in tutti i pazienti che iniziano una terapia antitumorale?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "4.3. Electrocardiogram",
+                    "Recommendation Table 2 — Recommendations for electrocardiogram baseline assessment"
+                ]
+            }
+        ],
+        "answer": "L'**elettrocardiogramma (ECG)** è raccomandato in **tutti** i pazienti che iniziano una terapia antitumorale come parte della valutazione basale del rischio cardiovascolare (Classe I, Livello C)[1, 2]. Mentre l'ecocardiografia è raccomandata per i pazienti a rischio alto/molto alto o per specifiche terapie, l'ECG è universale[1, 3]."
+    },
+    {
+        "question": "Qual è la soglia dell'intervallo QTc (formula di Fridericia) oltre la quale è raccomandata la sospensione temporanea del farmaco antitumorale causativo?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias",
+                    "Recommendation Table 32 — Recommendations for the management of long corrected QT interval and ventricular arrhythmias in patients receiving anticancer treatment"
+                ]
+            }
+        ],
+        "answer": "La sospensione temporanea del farmaco antitumorale è raccomandata se l'intervallo **QTcF è ≥500 ms** (Classe I, Livello C)[4, 5]. In questo caso, è necessario correggere eventuali squilibri elettrolitici o fattori di rischio concomitanti e ripetere l'ECG fino alla risoluzione del prolungamento[4, 6]."
+    },
+    {
+        "question": "Nei pazienti con cancro attivo e fibrillazione atriale, quali anticoagulanti orali sono preferiti rispetto agli antagonisti della vitamina K (VKA)?",
+        "sources": [
+            {
+                "document": "Atrial_Fibrillation_2024.md",
+                "sections": [
+                    "9.12. AF-CARE in cancer",
+                    "11. Key messages"
+                ]
+            }
+        ],
+        "answer": "I **DOAC** (anticoagulanti orali diretti: apixaban, dabigatran, edoxaban e rivaroxaban) sono preferiti rispetto agli antagonisti della vitamina K (VKA), eccetto nei pazienti con valvole cardiache meccaniche o stenosi mitralica[7, 8]. Studi e meta-analisi indicano che i DOAC hanno un'efficacia simile e una sicurezza migliore rispetto ai VKA anche nella popolazione oncologica[7]."
+    },
+    {
+        "question": "Come deve essere gestita la terapia anticoagulante in un paziente oncologico con fibrillazione atriale e un punteggio CHA2DS2-VASc di 0 (uomini) o 1 (donne)?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.1. Atrial fibrillation",
+                    "Recommendation Table 31 — Recommendations for the management of atrial fibrillation in patients receiving anticancer treatment"
+                ]
+            }
+        ],
+        "answer": "Nei pazienti con cancro, un punteggio CHA2DS2-VASc di 0 (uomini) o 1 (donne) **può sottostimare il rischio tromboembolico**, che è intrinsecamente aumentato dalla neoplasia e dai trattamenti[9, 10]. Pertanto, l'anticoagulazione terapeutica **può essere considerata** (Classe IIb, Livello C) anche in questi pazienti, dopo un'attenta valutazione del rischio emorragico individuale[10, 11]."
+    },
+    {
+        "question": "Qual è l'algoritmo di monitoraggio ECG raccomandato dopo aver ripreso una terapia antitumorale che aveva precedentemente causato un prolungamento del QTc?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias",
+                    "Recommendation Table 32 — Recommendations for the management of long corrected QT interval and ventricular arrhythmias in patients receiving anticancer treatment"
+                ]
+            }
+        ],
+        "answer": "Se, dopo discussione multidisciplinare, si decide di riprendere il farmaco (idealmente a dose ridotta), è raccomandato un monitoraggio ECG **settimanale per le prime 4-6 settimane** e successivamente **mensile** (Classe I, Livello C)[12, 13]."
+    },
+    {
+        "question": "Descrivi l'approccio \"ABC\" raccomandato per la gestione della fibrillazione atriale nei pazienti oncologici.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.1. Atrial fibrillation"
+                ]
+            }
+        ],
+        "answer": "La gestione della fibrillazione atriale (FA) nei pazienti oncologici dovrebbe seguire l'approccio olistico \"ABC\" (Atrial fibrillation Better Care):\n*   **A (Anticoagulation):** Anticoagulazione per prevenire ictus ed embolia sistemica.\n*   **B (Better symptom control):** Migliore controllo dei sintomi attraverso farmaci per il controllo della frequenza o del ritmo e interventi.\n*   **C (Comorbidities):** Gestione delle comorbidità e dei fattori di rischio cardiovascolare, inclusi i cambiamenti dello stile di vita [1]."
+    },
+    {
+        "question": "Qual è il ruolo delle eparine a basso peso molecolare (LMWH) nella prevenzione dell'ictus a lungo termine nei pazienti con cancro e fibrillazione atriale?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.1. Atrial fibrillation",
+                    "Recommendation Table 31 — Recommendations for the management of atrial fibrillation in patients receiving anticancer treatment"
+                ]
+            }
+        ],
+        "answer": "Le LMWH costituiscono un'opzione valida per l'anticoagulazione a **breve termine**, specialmente in pazienti ospedalizzati, con diagnosi recente, trombocitopenia o durante trattamenti chemioterapici specifici [2]. Tuttavia, l'efficacia delle LMWH per la prevenzione dell'ictus nella FA **non è stata stabilita** (a differenza del tromboembolismo venoso) [3]. Pertanto, l'uso profilattico di LMWH non è raccomandato per la prevenzione dell'ictus a lungo termine (Classe III C), a meno che il paziente non sia idoneo ai NOAC o ai VKA per motivi specifici (es. interazioni farmacologiche o grave disfunzione renale), nel qual caso possono essere considerate (Classe IIa C) [4], [5]."
+    },
+    {
+        "question": "Quali farmaci sono preferiti per il controllo della frequenza cardiaca nei pazienti che sviluppano fibrillazione atriale durante il trattamento attivo del cancro, specialmente se c'è rischio di interazioni farmacologiche?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.1. Atrial fibrillation",
+                    "Recommendation Table 31 — Recommendations for the management of atrial fibrillation in patients receiving anticancer treatment"
+                ]
+            }
+        ],
+        "answer": "I **beta-bloccanti** sono i farmaci preferiti per il controllo della frequenza cardiaca (Classe IIa C), specialmente se le terapie oncologiche presentano un rischio di disfunzione cardiaca [6], [5]. Al contrario, i calcio-antagonisti non diidropiridinici come **diltiazem e verapamil dovrebbero essere evitati** ove possibile, a causa delle significative interazioni farmacologiche (es. inibizione del CYP3A4) e dei loro effetti inotropi negativi [6], [7]."
+    },
+    {
+        "question": "In quali circostanze può essere considerata la chiusura percutanea dell'auricola sinistra (LAA occlusion) in un paziente oncologico?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.1. Atrial fibrillation",
+                    "Recommendation Table 31 — Recommendations for the management of atrial fibrillation in patients receiving anticancer treatment"
+                ]
+            }
+        ],
+        "answer": "La chiusura percutanea dell'auricola sinistra può essere considerata (Classe IIb, Livello C) per la prevenzione dell'ictus nei pazienti con cancro e fibrillazione atriale che presentano **controindicazioni all'anticoagulazione a lungo termine** (ad es. rischio di sanguinamento molto elevato), a condizione che abbiano un'aspettativa di vita **>12 mesi** [8], [5]."
+    },
+    {
+        "question": "Un paziente con cancro sviluppa ipertensione indotta da inibitori delle tirosin-chinasi (TKI). Qual è la raccomandazione generale per il follow-up e la gestione?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.5. Arterial hypertension",
+                    "Recommendation Table 33 — Recommendations for the management of arterial hypertension in patients receiving anticancer treatment",
+                    "7.5. The role of cardiac rehabilitation",
+                    "Recommendation Table 39 — Recommendations for end-of-cancer therapy cardiovascular risk assessment"
+                ]
+            }
+        ],
+        "answer": "La gestione prevede l'inizio tempestivo di una terapia antipertensiva (preferibilmente con **ACE-inibitori o ARB** come prima linea, seguiti da **calcio-antagonisti diidropiridinici**) per evitare l'interruzione del trattamento oncologico (Classe I C) [9], [7]. Se la pressione sistolica è ≥180 mmHg o la diastolica ≥110 mmHg, la terapia antitumorale deve essere temporaneamente sospesa fino al controllo pressorio [10]. È raccomandato un follow-up cardiovascolare con ottimizzazione del trattamento anche dopo il completamento della terapia oncologica in pazienti che hanno sviluppato ipertensione mediata da TKI (Classe I C) [11]."
+    },
+    {
+        "question": "In tutti i pazienti con ACS, qual è il parametro raccomandato per valutare la funzionalità renale?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "12.3.8. Coronavirus disease (COVID-19)",
+                    "Recommendation Table 15 — Recommendations for acute coronary syndrome comorbid conditions"
+                ]
+            }
+        ],
+        "answer": "In tutti i pazienti con sindrome coronarica acuta (ACS), è raccomandato valutare la funzionalità renale utilizzando la **velocità di filtrazione glomerulare stimata (eGFR)** (Classe I, Livello C) [12], [13]."
+    },
+    {
+        "question": "Quale tipo di mezzo di contrasto è raccomandato nei pazienti con malattia renale cronica (CKD) che si sottopongono a procedure invasive per ACS?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "12.3.8. Coronavirus disease (COVID-19)",
+                    "Recommendation Table 15 — Recommendations for acute coronary syndrome comorbid conditions"
+                ]
+            },
+            {
+                "document": "ESC_EACTS_Myocardial_Revascularization_2018.md",
+                "sections": [
+                    "10.2 Prevention of contrast-induced nephropathy",
+                    "10.3 Gaps in the evidence",
+                    "Recommendations for the prevention of contrast-induced nephropathy"
+                ]
+            }
+        ],
+        "answer": "È raccomandato l'uso di mezzi di contrasto a **bassa osmolarità o iso-osmolari** (Classe I A) per minimizzare il rischio di nefropatia indotta da contrasto,,. Inoltre, è fondamentale utilizzare il **volume più basso possibile** di mezzo di contrasto,."
+    },
+    {
+        "question": "Qual è la strategia di idratazione raccomandata per prevenire la nefropatia da contrasto nei pazienti con ACS e insufficienza renale (eGFR <30 mL/min/1.73 m²)?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "12.3.8. Coronavirus disease (COVID-19)",
+                    "Recommendation Table 15 — Recommendations for acute coronary syndrome comorbid conditions"
+                ]
+            },
+            {
+                "document": "ESC_EACTS_Myocardial_Revascularization_2018.md",
+                "sections": [
+                    "10.2 Prevention of contrast-induced nephropathy",
+                    "10.3 Gaps in the evidence",
+                    "Recommendations for the prevention of contrast-induced nephropathy"
+                ]
+            }
+        ],
+        "answer": "L'idratazione con soluzione salina isotonica endovenosa deve essere considerata (Classe IIa B/C) durante e dopo l'angiografia nei pazienti a rischio di nefropatia da contrasto, in particolare quelli con eGFR <30 mL/min/1.73 m²,,. Il protocollo suggerito prevede la somministrazione di **soluzione salina isotonica (1 mL/kg/h)** iniziata 12 ore prima e continuata per 24 ore dopo la procedura (ridotta a 0.5 mL/kg/h in caso di LVEF ≤35% o scompenso cardiaco NYHA >2),."
+    },
+    {
+        "question": "Nei pazienti anziani fragili con NSTE-ACS, come dovrebbe essere presa la decisione tra strategia invasiva e conservativa?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "12.3.8. Coronavirus disease (COVID-19)",
+                    "Recommendation Table 15 — Recommendations for acute coronary syndrome comorbid conditions",
+                    "12.3.6. Older adults"
+                ]
+            }
+        ],
+        "answer": "La decisione deve basarsi su un approccio olistico e individualizzato che includa la valutazione della fragilità e delle comorbidità (Classe I B). Si suggerisce di offrire una strategia invasiva (più terapia medica ottimale) ai pazienti fragili che presentano un **alto rischio di futuri eventi cardiovascolari ma un basso rischio di complicanze procedurali**,. Al contrario, per coloro che sono a basso rischio di eventi futuri ma ad alto rischio di complicanze procedurali, è preferibile la sola terapia medica ottimale. Una strategia conservativa o palliativa dovrebbe essere considerata se il trattamento è ritenuto futile."
+    },
+    {
+        "question": "È raccomandata la vaccinazione antinfluenzale nei pazienti con ACS?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "13.3.8. Vaccination",
+                    "13.3.10. Hormone replacement therapy",
+                    "Recommendation Table 16 — Recommendations for long-term management"
+                ]
+            }
+        ],
+        "answer": "Sì, la vaccinazione antinfluenzale è raccomandata per **tutti i pazienti con ACS** (Classe I A),,. È preferibile somministrarla durante il ricovero indice se avviene nella stagione influenzale e se il paziente non è ancora protetto, in quanto associata a una riduzione della mortalità per tutte le cause e cardiovascolare,."
+    },
+    {
+        "question": "In un paziente con cancro e presentazione di ACS ad alto rischio, quando è raccomandata una strategia invasiva rispetto a una conservativa in base all'aspettativa di vita?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "12.3.8. Coronavirus disease (COVID-19)",
+                    "Recommendation Table 15 — Recommendations for acute coronary syndrome comorbid conditions",
+                    "12.3.7. Patients with cancer"
+                ]
+            }
+        ],
+        "answer": "Una strategia invasiva è raccomandata nei pazienti con cancro che presentano ACS ad alto rischio se l'aspettativa di sopravvivenza è **≥6 mesi** (Classe I B),,. Una strategia conservativa non invasiva dovrebbe invece essere considerata nei pazienti con prognosi oncologica infausta (sopravvivenza attesa <6 mesi) e/o rischio di sanguinamento molto alto (Classe IIa C),."
+    },
+    {
+        "question": "Qual è il rapporto volume di contrasto/GFR raccomandato da non superare per minimizzare il rischio di danno renale acuto?",
+        "sources": [
+            {
+                "document": "ESC_EACTS_Myocardial_Revascularization_2018.md",
+                "sections": [
+                    "10.2 Prevention of contrast-induced nephropathy",
+                    "10.3 Gaps in the evidence",
+                    "Recommendations for the prevention of contrast-induced nephropathy"
+                ]
+            }
+        ],
+        "answer": "È raccomandato che il rapporto tra il volume totale di mezzo di contrasto (in mL) e la velocità di filtrazione glomerulare (GFR, in mL/min) non superi il valore di **3.7** (Classe I B),,. Superare questa soglia aumenta significativamente il rischio di nefropatia indotta da contrasto."
+    },
+    {
+        "question": "L'emodialisi profilattica è raccomandata nei pazienti con grave CKD per prevenire la nefropatia da contrasto?",
+        "sources": [
+            {
+                "document": "ESC_EACTS_Myocardial_Revascularization_2018.md",
+                "sections": [
+                    "10.2 Prevention of contrast-induced nephropathy",
+                    "10.3 Gaps in the evidence",
+                    "Recommendations for the prevention of contrast-induced nephropathy"
+                ]
+            }
+        ],
+        "answer": "No, l'emodialisi profilattica **non è raccomandata** come misura preventiva per la nefropatia indotta da contrasto, nemmeno nei pazienti con grave malattia renale cronica (CKD). Questa è una raccomandazione di **Classe III, Livello di Evidenza B**,[1],[2]. Le linee guida sottolineano invece l'importanza dell'idratazione e della minimizzazione del volume di contrasto."
+    },
+    {
+        "question": "Per i pazienti con ACS e LVEF pre-dimissione ≤40%, quando è raccomandata la rivalutazione ecocardiografica per considerare l'impianto di ICD?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "5. Management of acute coronary syndrome",
+                    "13.3.10. Hormone replacement therapy",
+                    "Recommendation Table 16 — Recommendations for long-term management"
+                ]
+            }
+        ],
+        "answer": "La rivalutazione della frazione di eiezione ventricolare sinistra (LVEF) è raccomandata **6–12 settimane** dopo l'evento ACS, a condizione che il paziente abbia completato la rivascolarizzazione e sia in terapia medica ottimale (Classe I C),[3],[4]. Questa tempistica è cruciale per discriminare tra stordimento miocardico (stunning) recuperabile e danno permanente prima di indicare l'impianto di un ICD per la prevenzione primaria della morte cardiaca improvvisa."
+    },
+    {
+        "question": "Quali scale di valutazione sono suggerite per aiutare il processo decisionale nei pazienti anziani con ACS (es. fragilità e comorbidità)?",
+        "sources": [
+            {
+                "document": "Acute_Coronary_Syndromes_(ACS)_2023.md",
+                "sections": [
+                    "12.3.4. Older adults with frailty and multimorbidity",
+                    "12.3.4.2. Frailty and multimorbidity"
+                ]
+            }
+        ],
+        "answer": "Per aiutare nel processo decisionale e individualizzare i trattamenti interventistici e farmacologici, le linee guida suggeriscono l'uso routinario di scale specifiche: il **Rockwood Frailty Score** per la valutazione della fragilità e il **Charlson Comorbidity Index** per la valutazione del carico di comorbidità,[5]. Un approccio olistico è raccomandato per bilanciare rischi e benefici."
+    },
+    {
+        "question": "Nei pazienti con fibrillazione atriale e cancro, il punteggio CHA2DS2-VASc sovrastima o sottostima il rischio tromboembolico reale?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4. Cardiac arrhythmias",
+                    "6.4.1. Atrial fibrillation",
+                    "Recommendation Table 31 — Recommendations for the management of atrial fibrillation in patients receiving anticancer treatment"
+                ]
+            }
+        ],
+        "answer": "Il punteggio CHA2DS2-VASc tende a **sottostimare** il rischio tromboembolico reale nei pazienti con cancro attivo e fibrillazione atriale,[6],[7]. Sebbene debba essere considerato per la stratificazione (Classe IIa C), è importante notare che anche pazienti con punteggio basso (0 o 1) possono avere un rischio tromboembolico aumentato a causa della neoplasia stessa e dei trattamenti,[8]."
+    },
+    {
+        "question": "Quali farmaci ipoglicemizzanti hanno dimostrato un effetto neutro sulle ospedalizzazioni per scompenso cardiaco e possono essere considerati se è necessario un controllo glicemico aggiuntivo?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.5.7. Thiazolidinediones",
+                    "Recommendation Table 22 — Recommendations for glucose-lowering medications in patients with type 2 diabetes with and without heart failure",
+                    "7.5. Safety profile of glucose-lowering agents in patients with heart failure and diabetes"
+                ]
+            }
+        ],
+        "answer": "Se è necessario un controllo glicemico aggiuntivo in pazienti con diabete di tipo 2 e rischio di o con scompenso cardiaco, i farmaci con un effetto neutro dimostrato sulle ospedalizzazioni per scompenso cardiaco (e quindi sicuri da considerare) sono:\n*   **Agonisti del recettore GLP-1** (lixisenatide, liraglutide, semaglutide, exenatide ER, dulaglutide, efpeglenatide) (Classe IIa A),[9].\n*   **Inibitori della DPP-4**, specificamente **sitagliptin e linagliptin** (Classe IIa A),[10].\n*   **Insuline basali**, come glargine e degludec (Classe IIa B),[10]."
+    },
+    {
+        "question": "Nei pazienti con sindrome coronarica cronica (CCS) e angina vasospastica isolata, quale classe farmacologica è raccomandata per prevenire l'ischemia?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.2. Angina/ischaemia with non-obstructive coronary arteries",
+                    "9. ‘What to do’ and ‘What not to do’ messages from the guidelines",
+                    "Table 10 ‘What to do’ and ‘What not to do’",
+                    "Recommendations for antianginal drugs in patients with chronic coronary syndrome"
+                ]
+            }
+        ],
+        "answer": "Per il trattamento dell'angina vasospastica isolata, i **calcio-antagonisti (CCB)** sono la classe farmacologica raccomandata (Classe I A) per controllare i sintomi e prevenire l'ischemia e le complicazioni potenzialmente fatali,[11],[12],[13]. I nitrati possono essere considerati per prevenire episodi ricorrenti, ma i CCB sono la prima scelta."
+    },
+    {
+        "question": "Qual è il target di frequenza cardiaca a riposo iniziale raccomandato (\"lenient control\") nei pazienti con fibrillazione atriale?",
+        "sources": [
+            {
+                "document": "Atrial_Fibrillation_2024.md",
+                "sections": [
+                    "7.1. Management of heart rate in patients with AF",
+                    "Recommendation Table 14 — Recommendations for heart rate control in patients with AF"
+                ]
+            }
+        ],
+        "answer": "Il target iniziale raccomandato per il controllo della frequenza (\"lenient rate control\") è una **frequenza cardiaca a riposo <110 b.p.m.** (battiti per minuto) [1], [2]. Un controllo più rigoroso è riservato ai pazienti che continuano a presentare sintomi correlati alla fibrillazione atriale o in caso di sospetta cardiomiopatia indotta da tachicardia [2]."
+    },
+    {
+        "question": "Per i pazienti con HFrEF e diabete che non tollerano sacubitril/valsartan o ACE-inibitori, quale classe di farmaci è raccomandata per ridurre il rischio di morte e ospedalizzazione?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.4. Treatment of heart failure in patients with diabetes",
+                    "7.4.1. Treatment of heart failure with reduced ejection fraction",
+                    "Recommendation Table 20 — Recommendations for heart failure treatments in patients with heart failure with reduced ejection fraction and diabetes"
+                ]
+            }
+        ],
+        "answer": "Per i pazienti sintomatici con insufficienza cardiaca a frazione di eiezione ridotta (HFrEF) e diabete che non tollerano sacubitril/valsartan o ACE-inibitori, è raccomandato l'uso di **ARB (bloccanti del recettore dell'angiotensina)** per ridurre il rischio di ospedalizzazione per insufficienza cardiaca e morte cardiovascolare [3], [4]."
+    },
+    {
+        "question": "Nei pazienti anziani (≥75 anni) con sindrome coronarica cronica, a cosa bisogna prestare particolare attenzione durante la terapia farmacologica?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "9. ‘What to do’ and ‘What not to do’ messages from the guidelines",
+                    "Table 10 ‘What to do’ and ‘What not to do’",
+                    "Recommendations for older, female, high bleeding risk, comorbid, and socially/geographically diverse patients"
+                ]
+            }
+        ],
+        "answer": "Nei pazienti anziani (≥75 anni), è raccomandata una particolare attenzione agli **effetti collaterali dei farmaci**, all'**intolleranza**, alle **interazioni farmacologiche**, al **sovradosaggio** e alle **complicanze procedurali** [5], [6]."
+    },
+    {
+        "question": "Qual è la raccomandazione per l'uso dei diuretici nei pazienti con insufficienza cardiaca e diabete che presentano segni di congestione?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.4. Treatment of heart failure in patients with diabetes",
+                    "7.4.1. Treatment of heart failure with reduced ejection fraction",
+                    "Recommendation Table 20 — Recommendations for heart failure treatments in patients with heart failure with reduced ejection fraction and diabetes",
+                    "7.4.3. Treatment of heart failure with preserved\nejection fraction",
+                    "Recommendation Table 21 — Recommendations for heart failure treatments in patients with diabetes and left ventricular ejection fraction over 40%"
+                ]
+            }
+        ],
+        "answer": "L'uso di diuretici è raccomandato nei pazienti con insufficienza cardiaca (sia HFrEF che HFpEF/HFmrEF) e diabete che presentano segni e/o sintomi di congestione fluidica per **migliorare i sintomi**, la **capacità di esercizio** e ridurre le **ospedalizzazioni per insufficienza cardiaca** [4], [7]."
+    },
+    {
+        "question": "In caso di fallimento della rivascolarizzazione o sintomi refrattari alla terapia medica in pazienti con CCS non candidabili a PCI, quale opzione chirurgica può essere considerata?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.4.7. Institutional protocols, clinical pathways, and quality of care",
+                    "Recommendation Table 23 — Recommendations for mode of revascularization in patients with chronic coronary syndrome"
+                ]
+            }
+        ],
+        "answer": "Nei pazienti sintomatici con sindrome coronarica cronica (CCS) che presentano malattia di uno o due vasi (non coinvolgente la discendente anteriore prossimale) e risposta insufficiente alla terapia medica, non suscettibili di rivascolarizzazione tramite PCI, può essere considerato il **CABG (bypass aorto-coronarico)** per migliorare i sintomi [8]. Inoltre, per i sintomi refrattari in assenza di opzioni di rivascolarizzazione standard, può essere considerato l'impianto di un dispositivo riduttore del seno coronarico [9]."
+    },
+    {
+        "question": "Quali sono i quattro pilastri farmacologici raccomandati in classe I A per i pazienti con HFrEF e diabete?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.4. Treatment of heart failure in patients with diabetes",
+                    "7.4.1. Treatment of heart failure with reduced ejection fraction",
+                    "Recommendation Table 20 — Recommendations for heart failure treatments in patients with heart failure with reduced ejection fraction and diabetes"
+                ]
+            }
+        ],
+        "answer": "I quattro pilastri farmacologici raccomandati (Classe I A) per ridurre il rischio di ospedalizzazione e morte nei pazienti con HFrEF e diabete sono:\n1. **Inibitori SGLT2** (dapagliflozin, empagliflozin o sotagliflozin) [10].\n2. **Sacubitril/valsartan o ACE-inibitori** [10].\n3. **Beta-bloccanti** [10].\n4. **MRA** (antagonisti del recettore mineralocorticoide) [10], [11]."
+    },
+    {
+        "question": "Nei pazienti con sospetta sindrome coronarica cronica e sintomi refrattari o alto rischio di eventi avversi, quale esame è raccomandato per la stratificazione del rischio?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "9. ‘What to do’ and ‘What not to do’ messages from the guidelines",
+                    "Table 10 ‘What to do’ and ‘What not to do’"
+                ]
+            }
+        ],
+        "answer": "Nei pazienti con sindrome coronarica cronica (CCS) che presentano sintomi refrattari alla terapia medica o un alto rischio di eventi avversi, è raccomandata l'**angiografia coronarica invasiva** (con misurazione della riserva frazionale di flusso [FFR] o del rapporto istantaneo wave-free [iFR] quando necessario) (Classe I C). Questo esame è indicato per la stratificazione del rischio e per valutare le opzioni di rivascolarizzazione volte a migliorare i sintomi e la prognosi,."
+    },
+    {
+        "question": "Qual è il target primario di colesterolo LDL per i pazienti a rischio cardiovascolare molto alto (es. prevenzione secondaria)?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.5.3. Novel cholesterol-lowering drugs",
+                    "Recommendation Table 11 — Recommendations for the management of dyslipidaemia in patients with diabetes",
+                    "17. ‘What to do’ and ‘What not to do’ messages from the Guidelines",
+                    "Table 12 ‘What to do’ and ‘What not to do’",
+                    "Lipid-lowering treatment in patients with diabetes"
+                ]
+            },
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4.6. Lipids",
+                    "4.6.4 Specific risk factor scenarios, 4.6.4.3 Diabetes mellitus",
+                    "9. ‘What to do’ and ‘what not to do’ messages from the guidelines",
+                    "Recommendations for pharmacological low-density lipoprotein cholesterol lowering"
+                ]
+            },
+            {
+                "document": "Dyslipidaemias_2019.md",
+                "sections": [
+                    "7 Lifestyle modifications to improve the plasma lipid profile",
+                    "Recommendations for treatment goals for low-density lipoprotein cholesterol"
+                ]
+            }
+        ],
+        "answer": "Per i pazienti a **rischio cardiovascolare molto alto** (inclusi quelli in prevenzione secondaria con ASCVD stabilita o diabete con grave danno d'organo), le linee guida raccomandano un target di colesterolo LDL **<1.4 mmol/L (<55 mg/dL)** e una riduzione di almeno il 50% rispetto al valore basale (Classe I A/B),,,,,. \n\nPer i pazienti con ASCVD che subiscono un secondo evento vascolare entro 2 anni durante terapia statinica massimale, può essere considerato un target ancora più basso di **<1.0 mmol/L (<40 mg/dL)** (Classe IIb B),."
+    },
+    {
+        "question": "Se il target di colesterolo LDL non viene raggiunto, quale riduzione percentuale minima rispetto al basale è raccomandata per i pazienti ad alto e molto alto rischio?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.5.3. Novel cholesterol-lowering drugs",
+                    "Recommendation Table 11 — Recommendations for the management of dyslipidaemia in patients with diabetes",
+                    "17. ‘What to do’ and ‘What not to do’ messages from the Guidelines",
+                    "Table 12 ‘What to do’ and ‘What not to do’",
+                    "Lipid-lowering treatment in patients with diabetes"
+                ]
+            },
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "9. ‘What to do’ and ‘what not to do’ messages from the guidelines",
+                    "Recommendations for pharmacological low-density lipoprotein cholesterol lowering",
+                    "4.6 Lipids",
+                    "4.6.4 Specific risk factor scenarios",
+                    "4.6.4.3 Diabetes mellitus"
+                ]
+            }
+        ],
+        "answer": "Sia per i pazienti a rischio **alto** che per quelli a rischio **molto alto**, è raccomandata una riduzione del colesterolo LDL di **almeno il 50%** rispetto al valore basale (Classe I), in aggiunta al raggiungimento dei rispettivi target assoluti (<70 mg/dL per rischio alto e <55 mg/dL per rischio molto alto),,,. Questa strategia a doppio obiettivo (valore assoluto + percentuale di riduzione) assicura un trattamento intensivo per chi parte da livelli basali molto elevati."
+    },
+    {
+        "question": "Qual è il target pressorio sistolico raccomandato per la maggior parte dei pazienti adulti trattati per ipertensione (Step 1 e Step 2)?",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4.7. Blood pressure",
+                    "4.7.5. Treatment of hypertension",
+                    "4.7.5.3 Blood pressure treatment targets",
+                    "Table 18 Recommended office blood pressure target ranges"
+                ]
+            },
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "Recommendation Table 14 — Blood pressure treatment targets"
+                ]
+            }
+        ],
+        "answer": "Le linee guida raccomandano un approccio a step:\n*   **Step 1:** L'obiettivo iniziale per tutti i pazienti è abbassare la pressione arteriosa a **<140/90 mmHg** (Classe I A),.\n*   **Step 2 (Target finale):** Per la maggior parte dei pazienti adulti (18-69 anni), si raccomanda di abbassare la pressione sistolica (SBP) in un range di **120–129 mmHg** (secondo le linee guida 2024) o **120–130 mmHg** (secondo le linee guida 2021), purché il trattamento sia ben tollerato,.\n\nPer i pazienti anziani (≥70 anni), il target raccomandato è più cauto: **<140 mmHg**, scendendo a 130 mmHg (o nel range 130–139 mmHg) se tollerato,."
+    },
+    {
+        "question": "Nei pazienti con diabete di tipo 2, quali criteri definiscono un \"rischio molto alto\" che giustifica target di LDL più aggressivi?",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "3.2.3. Cardiovascular disease risk classification",
+                    "Table 4 Patient categories and associated cardiovascular disease risk",
+                    "4.6 Lipids",
+                    "4.6.4 Specific risk factor scenarios",
+                    "4.6.4.3 Diabetes mellitus"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "4.1. Assessing cardiovascular risk in type 2 diabetes",
+                    "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+                    "Table 7 Cardiovascular risk categories in type 2 diabetes"
+                ]
+            }
+        ],
+        "answer": "Un paziente con diabete di tipo 2 è definito a **rischio cardiovascolare molto alto** se presenta almeno uno dei seguenti criteri:\n1.  **Malattia cardiovascolare aterosclerotica (ASCVD) clinicamente stabilita**,,.\n2.  **Grave danno d'organo bersaglio (TOD)**, definito come:\n    *   eGFR <45 mL/min/1.73 m² (indipendentemente dall'albuminuria).\n    *   eGFR 45–59 mL/min/1.73 m² con microalbuminuria (UACR 30–300 mg/g).\n    *   Proteinuria (UACR >300 mg/g).\n    *   Presenza di malattia microvascolare in almeno tre siti diversi (es. microalbuminuria più retinopatia più neuropatia),,.\n3.  Un rischio di CVD a 10 anni **≥20%** calcolato tramite il punteggio SCORE2-Diabetes,."
+    },
+    {
+        "question": "Qual è il target secondario di non-HDL-C per i pazienti a rischio molto alto?",
+        "sources": [
+            {
+                "document": "Dyslipidaemias_2019.md",
+                "sections": [
+                    "7 Lifestyle modifications to\nimprove the plasma lipid profile",
+                    "Recommendations for treatment goals for low-density lipoprotein cholesterol",
+                    "Table 7 Treatment goals for low-density lipoprotein cholesterol across categories of total cardiovascular disease risk"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.5.3. Novel cholesterol-lowering drugs",
+                    "Recommendation Table 11 — Recommendations for the management of dyslipidaemia in patients with diabetes",
+                    "17. ‘What to do’ and ‘What not to do’ messages from the Guidelines",
+                    "Table 12 ‘What to do’ and ‘What not to do’",
+                    "Lipid-lowering treatment in patients with diabetes"
+                ]
+            }
+        ],
+        "answer": "Il target secondario raccomandato per il colesterolo non-HDL (non-HDL-C) nei pazienti a rischio cardiovascolare molto alto è **<2.2 mmol/L (<85 mg/dL)**,,,."
+    },
+  {
+        "question": "Per i pazienti con ipercolesterolemia familiare (FH), quali sono i target di pressione arteriosa raccomandati?",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4. Risk factors and interventions at the individual level",
+                    "4.1. Treatment recommendations: classes, grades, and freedom of choice",
+                    "Table 6 Treatment goals for different patient categories"
+                ]
+            }
+        ],
+        "answer": "Per i pazienti con ipercolesterolemia familiare (FH), l'approccio raccomandato per la gestione della pressione arteriosa segue una strategia a step:\n*   **Step 1:** Si raccomanda di abbassare la pressione arteriosa sistolica (SBP) a **<140 mmHg**, fino a **130 mmHg** se tollerato (Classe I)[1].\n*   **Step 2 (Intensificazione):** Se il trattamento è ben tollerato, l'obiettivo intensificato è una **SBP <130 mmHg** (Classe I)[1]."
+    },
+    {
+        "question": "Come varia l'obiettivo di LDL-C in base all'età in persone apparentemente sane tra i 50 e i 69 anni con un rischio cardiovascolare a 10 anni (SCORE2) ≥ 10%?",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "3.2.3. Cardiovascular disease risk classification",
+                    "3.2.3.3 Translating cardiovascular disease risk to treatment thresholds",
+                    "Table 5 Cardiovascular disease risk categories based on SCORE2 and SCORE2-OP in apparently healthy people according to age",
+                    "4. Risk factors and interventions at the individual level",
+                    "4.1. Treatment recommendations: classes, grades, and freedom of choice",
+                    "Table 6 Treatment goals for different patient categories"
+                ]
+            }
+        ],
+        "answer": "Per le persone tra i 50 e i 69 anni, un rischio cardiovascolare a 10 anni (SCORE2) **≥ 10%** corrisponde alla categoria di rischio **molto alto**[2]. In questi pazienti, gli obiettivi di LDL-C raccomandati sono:\n*   **Step 1:** Raggiungere un livello di LDL-C **<2.6 mmol/L (<100 mg/dL)**[3].\n*   **Step 2 (Obiettivo finale):** Raggiungere un livello di LDL-C **<1.4 mmol/L (<55 mg/dL)** e ottenere una riduzione **≥50%** rispetto al valore basale[3]."
+    },
+    {
+        "question": "Qual è il livello di trigliceridi considerato indicatore di rischio inferiore?",
+        "sources": [
+            {
+                "document": "Dyslipidaemias_2019.md",
+                "sections": [
+                    "7 Lifestyle modifications to improve the plasma lipid profile",
+                    "Recommendations for treatment goals for low-density lipoprotein cholesterol"
+                ]
+            },
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4.6 Lipids",
+                    "4.6.2. Defining lipid goals",
+                    "4.6.2.2 Triglyceride-rich lipoproteins and their remnants"
+                ]
+            }
+        ],
+        "answer": "Non esistono obiettivi di trattamento specifici per i trigliceridi, ma un livello **<1.7 mmol/L (<150 mg/dL)** è considerato indicatore di un **rischio cardiovascolare inferiore**[4], [5]. Livelli superiori a questa soglia suggeriscono la necessità di indagare altri fattori di rischio."
+    },
+    {
+        "question": "Descrivi l'approccio \"a step\" (Step 1 e Step 2) per il trattamento dei fattori di rischio nei pazienti con diabete di tipo 2.",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4. Risk factors and interventions at the individual level",
+                    "4.1. Treatment recommendations: classes, grades, and freedom of choice",
+                    "Table 6 Treatment goals for different patient categories"
+                ]
+            }
+        ],
+        "answer": "L'approccio a step per i pazienti con diabete di tipo 2 prevede:\n*   **Step 1 (Obiettivi di prevenzione base):** Per tutti i pazienti, si raccomanda la cessazione del fumo e l'ottimizzazione dello stile di vita. Gli obiettivi includono **HbA1c <7.0%** (<53 mmol/mol), **SBP <140 mmHg** (fino a 130 mmHg se tollerato) e **LDL-C <2.6 mmol/L** (<100 mg/dL)[6], [7].\n*   **Step 2 (Obiettivi intensificati):** L'intensificazione del trattamento dipende dal rischio a 10 anni, dal rischio a vita, dalle comorbidità e dalle preferenze del paziente. Gli obiettivi includono **SBP <130 mmHg** (se tollerato) e target di LDL-C più stringenti: **<1.8 mmol/L** (<70 mg/dL) per i pazienti ad alto rischio e **<1.4 mmol/L** (<55 mg/dL) con una riduzione ≥50% per quelli a rischio molto alto[8], [7]. Inoltre, si raccomanda l'uso di farmaci specifici come SGLT2i o GLP-1RA per la protezione cardiorenal[6], [8]."
+    },
+    {
+        "question": "In quali pazienti diabetici è raccomandato l'uso di inibitori PCSK9?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.5. Lipid abnormalities",
+                    "5.5.3. Novel cholesterol-lowering drugs",
+                    "Recommendation Table 11 — Recommendations for the management of dyslipidaemia in patients with diabetes"
+                ]
+            }
+        ],
+        "answer": "L'uso di inibitori PCSK9 è raccomandato (Classe I A) nei pazienti con diabete a **rischio cardiovascolare molto alto** che presentano livelli di LDL-C persistentemente al di sopra del target nonostante il trattamento con la massima dose tollerata di statina in combinazione con ezetimibe, oppure nei pazienti con intolleranza alle statine[9], [10]."
+    }
+]

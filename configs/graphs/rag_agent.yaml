@@ -63,6 +63,10 @@ nodes:
     prompt_filename: question_ambiguity_detector
     prompt_version: default
 
+  - name: history_summarizer
+    prompt_filename: history_summarizer
+    prompt_version: default
+
   - name: error_handler
     prompt_filename: error_handler
     prompt_version: default

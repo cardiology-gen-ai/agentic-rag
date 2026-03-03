@@ -1,5 +1,6 @@
+import uuid
 from datetime import datetime
-from typing import Literal, Any, List, Dict
+from typing import Literal, Any, List, Dict, Optional
 
 from pydantic import BaseModel
 
@@ -39,3 +40,21 @@ class ChatResponse(BaseModel):
     content: str #: str : Generated text produced in the response.
     metadata: Dict #: :class:`typing.Dict` : Additional response metadata.
     is_faulted: bool = False #: bool, default ``False`` :  Whether the request completed with an application error.
+
+
+def format_chat_request(query: str, conversation_id: Optional[str] = None) -> ChatRequest:
+    return ChatRequest(
+        user="user_id",
+        user_id="1",
+        conversation=ConversationRequest(
+            id=conversation_id or str(uuid.uuid4()),
+            chatbotId="1",
+            history=[],
+            question=MessageSchema(
+                id=str(uuid.uuid4()),
+                role="user",
+                content=query,
+                datetime=datetime.now(),
+            )
+        )
+    )

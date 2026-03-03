@@ -6,10 +6,9 @@ default:
     If you don't know something, say so clearly rather than guessing. 
     If a question is unclear, ask for clarification. 
     Stay focused on being helpful and direct in your responses.
-    {{ fragments.language }}
   system: |
     {{ agent_prompt }}
     {{ instructions }}
+    Use the provided language in your answer.
   human: | 
     Question: {question}
-    Chat history: {history}

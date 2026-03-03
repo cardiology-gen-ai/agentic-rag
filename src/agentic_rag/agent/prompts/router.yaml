@@ -1,11 +1,9 @@
 default:
   instructions: |
-    Determine whether the user's question is a conversational inquiry, meaning it is general, casual, or social. 
-    This can include, but it is not limited to greetings (e.g., 'Hello'), small talk 
-    (e.g., 'How are you?', 'What information can you give me?, 'What documentation can you provide me?'), 
-    personal opinions, and polite expressions of gratitude (e.g., 'Thank you').
-    Return 'conversational' if the user question is a conversational inquiry.
-    Return 'document_based' if the user question is NOT a conversational inquiry
+    Classify the user's question into one of the following branches:
+    1) Conversational: general, casual, or social. Includes greetings, small talk, personal opinions, and polite expressions of gratitude. Return 'conversational'.
+    2) Document Request: the user wants to know **where** a specific information is located (e.g., which file contains X). Return 'document_request'.
+    3) Document Based: the user wants an answer **grounded in documents** using retrieval or RAG. Return 'document_based'.
   system: |
     You are an expert at routing a human message to a document_based branch or conversational branch. 
     This is the vectorstore description: {{ index_description }}
@@ -25,3 +23,13 @@ versions:
         Follow these examples to decide if the question should be routed to the vectorstore or conversational branch:
         {{ example_prompt }}.
         {{ format_instructions }}
+
+  2:
+    overrides:
+      system: |
+        Determine whether the user's question is a conversational inquiry, meaning it is general, casual, or social. 
+        This can include, but it is not limited to greetings (e.g., 'Hello'), small talk 
+        (e.g., 'How are you?', 'What information can you give me?, 'What documentation can you provide me?'), 
+        personal opinions, and polite expressions of gratitude (e.g., 'Thank you').
+        Return 'conversational' if the user question is a conversational inquiry.
+        Return 'document_based' if the user question is NOT a conversational inquiry

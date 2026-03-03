@@ -1,756 +1,179 @@
-import os
 import json
-import pathlib
-import datetime
+import os
 import asyncio
 from logging import Logger
-from typing import TypedDict, Dict, List, Annotated
+from pathlib import Path
 
 import mlflow
-from langchain.agents.middleware import SummarizationMiddleware
-from langchain_core.language_models import BaseChatModel
-from langchain_core.vectorstores import VectorStoreRetriever
-from langgraph.graph import START, END, StateGraph, add_messages
-from langchain_core.messages import HumanMessage, AnyMessage, AIMessage
-from langchain_core.runnables.config import RunnableConfig
+from langgraph.graph import START, END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from cardiology_gen_ai.utils.logger import get_logger
-from langgraph.runtime import Runtime
 
+from agentic_rag.agent.services.context_service import ContextualizeQuestion, DetectLanguage
+from agentic_rag.agent.services.generation_service import GenerateRagResponse, GenerateDefaultResponse, \
+    GenerateDocumentResponse, GenerateConversationalResponse
+from agentic_rag.agent.services.retrieval_service import Retrieve, RetrievalFilter
+from agentic_rag.agent.services.routing_service import RagRouter, RagResponseRouter, AgentRouter
+from agentic_rag.agent.services.service_container import ServiceContainer
+from agentic_rag.agent.state import GraphState
+from agentic_rag.config.manager import NodePromptConfig
 from agentic_rag.utils.search import SearchResult
-from src.agentic_rag.managers.nodes_manager import NodeFactory, NodeConfig
-from src.agentic_rag.config.manager import AgentConfigManager, AgentConfig
+from src.agentic_rag.config.manager import AgentConfigManager
 from src.agentic_rag.managers.llm_manager import LLMManager
 from src.agentic_rag.managers.search_manager import SearchManager
 from src.agentic_rag.persistence.db import ensure_database
 from src.agentic_rag.persistence.message import AgentMemory
-from src.agentic_rag.agent import output
-from src.agentic_rag.utils.chat import ChatRequest, ConversationRequest, MessageSchema, ChatResponse
-from src.agentic_rag.utils.nodes import load_yaml
+from src.agentic_rag.utils.chat import ChatRequest, ChatResponse, format_chat_request
 
-GENERATION_LIMIT = 2
+
+GENERATION_LIMIT = 1
 os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
 
-class GraphState(TypedDict, total=False):
-    """Shared state passed between :langgraph:`LangGraph <reference/graphs>` nodes."""
-    question: str #: Original user question as received by the agent.
-    contextual_question: str #: Question enriched with context (if needed) for retrieval/generation.
-    transform_query_count: int #: How many times the question has been rewritten so far.
-    response: str #: Latest assistant response (when available).
-    language: str #: Language used in the conversation, optional.
-    messages: Annotated[List[AnyMessage], add_messages] #: Rolling chat history used for context (:class:`list` of :class:`~langchain_core.messages.base.AnyMessage` ).
-    documents: SearchResult #: Retrieved and filtered documents (:class:`list` of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`), optional (when applicable).
-    document_request: str #: Binary flag to denote whether the user is asking for an entire document.
-    generation_count: int #: Number of generation attempts in the current turn.
+class AgentBuilder:
+    def __init__(self, services: ServiceContainer, logger: Logger):
+        self.services = services
+        self.logger = logger
+
+    def build(self) -> StateGraph:
+        graph = StateGraph(GraphState)
+        graph.add_node("question_contextualizer", ContextualizeQuestion(self.services.context_service, logger=self.logger))
+        graph.add_node("language_detector", DetectLanguage(self.services.context_service, logger=self.logger))
+        # graph.add_node("document_request_detector", DocumentRouter(self.services.routing_service, logger=self.logger))
+        graph.add_node("rag_router", RagRouter(self.services.routing_service, self.logger))
+        graph.add_node("retriever", Retrieve(self.services.retrieval_service, logger=self.logger))
+        graph.add_node("retrieval_filter", RetrievalFilter(self.services.retrieval_service, logger=self.logger))
+        graph.add_node("rag_response_generator", GenerateRagResponse(self.services.generation_service, logger=self.logger))
+        graph.add_node("default_response_generator", GenerateDefaultResponse(self.services.generation_service, logger=self.logger))
+        graph.add_node("document_response_generator", GenerateDocumentResponse(self.services.generation_service, logger=self.logger))
+        graph.add_node("conversational_response_generator", GenerateConversationalResponse(self.services.generation_service, logger=self.logger))
+
+        graph.add_edge(START, "language_detector")
+        graph.add_edge("language_detector", "question_contextualizer")
+        graph.add_edge("question_contextualizer", "rag_router")
+        graph.add_conditional_edges(
+            "rag_router",
+            AgentRouter(self.services.routing_service, self.logger),
+            {
+                "rag": "retriever",
+                "conversational": "conversational_response_generator",
+            }
+        )
+        # graph.add_edge("retriever", "retrieval_filter")
+        # graph.add_conditional_edges(
+        #     "retrieval_filter",
+        #     ResponseRouter(self.services.retrieval_service, self.logger),
+        #     {
+        #         "rag_or_document_response": "document_request_detector",
+        #         "default_response": "default_response_generator",
+        #     }
+        # )
+        graph.add_conditional_edges(
+            "retriever",  # "retrieval_filter",
+            RagResponseRouter(self.services.routing_service, self.logger),
+            {
+                "document_response": "document_response_generator",
+                "rag_response": "rag_response_generator",
+                "default_response": "default_response_generator",
+            }
+        )
+        graph.add_edge("conversational_response_generator", END)
+        graph.add_edge("default_response_generator", END)
+        graph.add_edge("document_response_generator", END)
+        graph.add_edge("rag_response_generator", END)
+
+        return graph
+
+
+class GraphExecutor:
+    def __init__(self, compiled_graph: CompiledStateGraph, logger: Logger):
+        self.compiled_graph = compiled_graph
+        self.logger = logger
+
+    async def run(self, input_state, config, step_logger_fn=None):
+        response = {}
+        current_event_list = []
+        for event in self.compiled_graph.stream(input=input_state, config=config, stream_mode="debug"):
+            current_event_list.append(event)
+            if event["type"] == "checkpoint":
+                if step_logger_fn:
+                    try:
+                        await step_logger_fn(current_event_list)
+                    except Exception as e:
+                        self.logger.error(f"Step logger error: {e}")
+                if not event["payload"]["metadata"].get("next"):
+                    response = event["payload"].get("values", {})
+                current_event_list = []
+        return response
 
 
 class Agent:
-    """RAG/conversational agent orchestrated with :langgraph:`LangGraph <reference/graphs>`.
-
-    The agent connects an LLM manager (router/generator/grader), a vector store
-    search manager (retriever), and a memory/checkpoint backend to compile
-    a :langgraph:`CompiledStateGraph <reference/graphs/?h=compiled#langgraph.graph.state.CompiledStateGraph>` that handles
-    conversation turns end-to-end.
-
-    Parameters
-    ----------
-    agent_id : :class:`str`
-        Identifier used to load configuration via :class:`~src.agentic_rag.config.manager.AgentConfigManager`.
-    """
-    agent_id: str #: :class:`str` : Identifier of this agent instance.
-    agent_name: str #: :class:`str` : Human-friendly name from configuration.
-    config: AgentConfig #: :class:`~src.agentic_rag.config.manager.AgentConfig` : Loaded configuration (system prompt, embeddings, indexing, search, etc.).
-    logger: Logger #: :class:`logging.Logger` : Logger for lifecycle and diagnostics.
-    llm_manager: LLMManager #: :class:`~src.agentic_rag.managers.llm_manager.LLMManager` :  LLM manager exposing ``router``, ``generator``, and ``grader`` :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>`.
-    llm: BaseChatModel
-    router_config: RunnableConfig
-    generator_config: RunnableConfig
-    grader_config: RunnableConfig
-    node_factory: NodeFactory
-    search_manager: SearchManager #: :class:`~src.agentic_rag.managers.search_manager.SearchManager` : Index loader and retriever factory for the vector store.
-    retriever: VectorStoreRetriever #: :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` : Configured retriever if the vector store exists.
-    examples: List[Dict[str, str]] #: :class:`list` : Few-shot examples loaded for the router prompt.
-    memory: AgentMemory #: :class:`~src.agentic_rag.persistence.message.AgentMemory` : Store + checkpointer used by :langgraph:`LangGraph <reference/graphs>`.
-    graph: StateGraph #: :langgraph:`StateGraph <reference/graphs/?h=state#langgraph.graph.state.StateGraph>` : Declarative graph (nodes + edges) before compilation.
-    compiler: CompiledStateGraph #: :langgraph:`CompiledStateGraph <reference/graphs/?h=compiled#langgraph.graph.state.CompiledStateGraph>` : Executable state machine with persistence.
     def __init__(self, agent_id: str, config_path: str = None):
-        self.agent_id = agent_id
-        self.config = AgentConfigManager(
-            app_id=self.agent_id, config_path=config_path).config
-        self.agent_name = self.config.name
-        self.logger = get_logger(f"Agent {self.agent_name}")
-
+        self.config = AgentConfigManager(app_id=agent_id, config_path=config_path).config
+        self.logger = get_logger(f"Agent {self.config.name}")
         self.llm_manager = LLMManager(self.config.llm)
-        self.llm = self.llm_manager.llm
-        self.router_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.router_temperature})
-        self.generator_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.generator_temperature})
-        self.grader_config = RunnableConfig(configurable={"temperature": self.llm_manager.config.grader_temperature})
-
-        self.nodes_config = self._load_nodes_config()
-        self.node_factory = NodeFactory(prompt_folder=self.config.nodes.prompts)
-
-        self.summarizer = SummarizationMiddleware(model=self.llm, messages_to_keep=5)
-        self.search_manager = SearchManager(
-            index_config=self.config.indexing,
-            search_config=self.config.search,
-        )
-
-        self.examples = self._load_examples()
-
+        self.search_manager = SearchManager(index_config=self.config.indexing, search_config=self.config.search)
+        self.nodes_config: NodePromptConfig = self.config.nodes
         self.memory = AgentMemory()
 
-        self.graph: StateGraph = self._create_graph()
-        self.compiled_graph: CompiledStateGraph = self.graph.compile(
-            checkpointer=self.memory.checkpointer,
-            # store=self.memory.store
+        agent_prompt = self.config.system_prompt
+        index_description = [index.description for index  in self.config.indexing] \
+            if isinstance(self.config.indexing, list) else self.config.indexing.description
+        self.services = ServiceContainer(
+            llm_manager=self.llm_manager, nodes_prompt_config=self.nodes_config, search_manager=self.search_manager,
+            agent_prompt=agent_prompt, index_description=index_description,
+            allowed_languages=self.config.allowed_languages,
         )
 
-        self.logger.info("Agent initialization completed")
-
-    def _load_nodes_config(self) -> List[NodeConfig]:
-        nodes_config_dict = load_yaml(self.config.nodes.config)
-        return [NodeConfig.from_config(node_config) for node_config in nodes_config_dict["nodes"]]
-
-    def _get_node_config(self, name: str) -> NodeConfig:
-        return next(node_config for node_config in self.nodes_config if node_config.name == name)
-
-    def _load_examples(self) -> List[Dict[str, str]]:
-        """Load few-shot examples for router prompting.
-
-        Returns
-        -------
-        :class:`list`
-            Examples loaded from the path configured at :attr:`config` ``.examples.file``.
-        """
-        # TODO: few shot examples should be moved in a more appropriate place
-        with open(pathlib.Path.cwd() / self.config.examples.file) as f:
-            examples = json.load(f)
-        return examples
+        graph = AgentBuilder(self.services, self.logger).build()
+        self.compiled_graph = graph.compile(checkpointer=self.memory.checkpointer)
+        self.executor = GraphExecutor(self.compiled_graph, self.logger)
 
     def draw_graph(self, filename: str = None) -> None:
-        """Export the compiled graph as Mermaid syntax.
-
-        Parameters
-        ----------
-        filename : :class:`str`, optional
-            Destination file path.
-        """
         if not filename:
             filename = f"{type(self).__name__}.txt"
         mermaid_syntax = self.compiled_graph.get_graph().draw_mermaid()
         with open(filename, "w") as file:
             file.write(mermaid_syntax)
 
-    def _detect_language(self, state: GraphState) -> Dict:
-        """Detect the language of the current question.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Current state; must include ``question``.
-
-        Returns
-        -------
-        :class:`dict`
-            Mapping with key ``\"language\"`` set to the detected language.
-        """
-        self.logger.info("Detecting language...")
-        question = state["question"]
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("language_detector"), self.llm,
-            structured_output=True, output_schema=output.DetectedLanguage,
-        )
-        response = runnable.invoke({"text": question}, config=self.generator_config, with_retry=True)
-        language = response.language
-        self.logger.info(f"Detected language: {language}")
-        return {"language": language}
-
-    def _conversational_agent(self, state: GraphState) -> Dict:
-        """Answer a conversational query without retrieval.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must contain ``question``, optionally ``messages`` and ``language``.
-
-        Returns
-        -------
-        :class:`dict`
-            Keys: ``response`` (assistant text) and ``messages`` (list with new :langchain_core:`AIMessage <messages/langchain_core.messages.ai.AIMessage.html>`).
-        """
-        self.logger.info("Agent is answering conversational question.")
-        agent_prompt = self.config.system_prompt
-        language = state["language"] or self.config.language
-        question = state["question"]
-        messages = state["messages"]
-        history = "\n".join([f"{msg.type}: {msg.content}" for msg in messages[:-1]]) if messages else ""
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("conversational_agent"), self.llm, structured_output=False, agent_prompt=agent_prompt
-        )
-        response = runnable.invoke(
-            {"question": question, "language": language, "history": history},
-            config=self.generator_config,
-        )
-        return {"response": response, "messages": [AIMessage(content=response)]}
-
-    def _contextualize_question(self, state: GraphState) -> Dict:
-        """Add minimal context to the question based on history (if needed).
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must contain ``question``, ``language``, and ``messages``.
-
-        Returns
-        -------
-        :class:`dict`
-            Keys: ``contextual_question``, ``generation_count`` (set to 0), ``transform_query_count`` (set to 0).
-        """
-        self.logger.info("Generating contextual question...")
-        self.logger.info(f"Original question: {state['question']}")
-        question = state["question"]
-        language = state["language"]
-        self.summarizer.before_model(state, Runtime())
-        messages = [(msg.type, msg.content) for msg in state["messages"]]
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("question_contextualizer"), self.llm,
-            structured_output=False, context_prompt=self.config.context.system_prompt,
-        )
-        response = runnable.invoke(
-            {"question": question, "language": language, "messages": messages},
-            config=self.generator_config,
-        )
-        self.logger.info(f"Contextual question: {response}")
-        return {"generation_count": 0, "transform_query_count": 0, "contextual_question": response}
-
-    def _retrieve(self, state: GraphState) -> Dict:
-        """Retrieve candidate documents for the contextualized question.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``contextual_question``.
-
-        Returns
-        -------
-        :class:`dict`
-            Key ``documents`` with a list of :langchain:`Document <core/documents/langchain_core.documents.base.Document.html>`.
-        """
-        question = state["contextual_question"]
-        self.logger.info(f"Retrieving documents for contextualized question: {question}...")
-        documents: SearchResult = self.search_manager.search(question)
-        self.logger.info(f"Retrieved {len(documents.chunks)} documents")
-        return {"documents": documents}
-
-    def _retrieval_grader(self, state: GraphState) -> Dict:
-        """Filter retrieved documents by relevance using the grader runnable.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``contextual_question`` and ``documents``.
-
-        Returns
-        -------
-        :class:`dict`
-            Key ``documents`` with only relevant items preserved.
-        """
-        self.logger.info(f"Grading {len(state['documents'].chunks)} retrieved documents")
-        question = state["contextual_question"]
-        documents_content = [doc.page_content for doc in state["documents"].chunks]
-        documents_filename = [doc.metadata["filename"] for doc in state["documents"].chunks]  # TODO: check correctness
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("retrieval_grader"), self.llm,
-            structured_output=True, output_schema=output.GradeDocuments
-        )
-        filtered_docs = []
-        for idx, d in enumerate(state["documents"].chunks):
-            try:
-                response = runnable.invoke(
-                    {"question": question, "document": documents_content[idx],
-                     "document_filename": documents_filename[idx]},
-                    config=self.grader_config, with_retry=True,
-                )
-                grade = response.binary_score
-                if grade == "yes":
-                    self.logger.info(f"Document {idx + 1} ({documents_filename[idx]}) is relevant to the question.")
-                    filtered_docs.append(d)
-                else:
-                    self.logger.info(f"Document {idx + 1} ({documents_filename[idx]}) is not relevant to the question.")
-            except Exception as e:
-                self.logger.warning(f"Error grading document {idx}: {e}, assuming relevant")
-                filtered_docs.append(d)
-        return {"documents": SearchResult(chunks=filtered_docs)}
-
-    def _document_request_detector(self, state: GraphState) -> Dict:
-        """Detect whether the user explicitly requested documents.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``contextual_question``.
-
-        Returns
-        -------
-        :class:`dict`
-            Key ``document_request`` with value ``\"yes\"`` or ``\"no\"``.
-        """
-        self.logger.info("Checking if user question requires a document.")
-        question = state["contextual_question"]
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("document_request_detector"), self.llm,
-            structured_output=True, output_schema=output.DocumentRequest
-        )
-        score =  runnable.invoke({"question": question}, config=self.router_config, with_retry=True)
-        binary_score = score.binary_score
-        if binary_score == "yes":
-            self.logger.info("User question implies a document request.")
-        else:
-            self.logger.info("The user question does not imply a document request.")
-        return {"document_request": binary_score}
-
-    def _decide_to_generate(self, state: GraphState) -> str:
-        """Branch selector after grading: choose next step based on document relevance.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``documents`` and ``document_request``.
-
-        Returns
-        -------
-        :class:`str`
-            One of:
-            - ``\"all_docs_not_relevant\"``
-            - ``\"at_least_one_doc_relevant\"``
-            - ``\"generate_document_request_response\"``
-        """
-        filtered_docs = state["documents"].chunks
-        if len(filtered_docs) == 0:
-            self.logger.info("All documents marked as not relevant")
-            return "all_docs_not_relevant"
-        else:
-            self.logger.info(f"{len(filtered_docs)} documents marked as relevant")
-            if state["document_request"] == "no":
-                return "at_least_one_doc_relevant"
-            else:
-                return "generate_document_request_response"
-
-    def _generate_document_response(self, state: GraphState) -> Dict:
-        """Generate a polite response acknowledging a document request.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``documents``, ``contextual_question``, and ``language``.
-
-        Returns
-        -------
-        :class:`dict`
-            Key ``response`` with assistant text.
-        """
-        self.logger.info("Generating document response message.")
-        documents = state["documents"]
-        question = state["contextual_question"]
-        files = documents.extract_unique_filenames()
-        language = state["language"]
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("document_response_generator"), self.llm, structured_output=False,
-        )
-        response = runnable.invoke(
-            {"question": question, "documents": files, "language": language},
-            config=self.generator_config,
-        )
-        self.logger.info(f"Generated response: {response}")
-        return {"response": response, "messages": [AIMessage(content=response)]}
-
-    def _generate(self, state: GraphState) -> Dict:
-        """Generate an answer grounded in retrieved documents.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``contextual_question``, ``documents``, and ``language``.
-
-        Returns
-        -------
-        :class:`dict`
-            Keys: ``response`` (assistant text) and ``generation_count`` (incremented).
-        """
-
-        self.logger.info("Generating answer.")
-        question = state["contextual_question"]
-        documents = state["documents"].chunks
-        language = state["language"]
-        retrieved_docs_as_context = [(f"Filename: {doc.metadata['filename']}\n"
-                                      f"Content: {doc.page_content}") for doc in documents]
-        context = "\n\n".join([string for string in retrieved_docs_as_context])
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("generator"), self.llm, structured_output=False,
-        )
-        response = runnable.invoke(
-            {"documents": context, "question": question, "language": language},
-            config=self.generator_config,
-        )
-        return {"response": response, "generation_count": state["generation_count"] + 1, "messages": [AIMessage(content=response)]}
-
-    def _question_rewriter(self, state: GraphState) -> Dict:
-        """Rewrite the question to improve retrieval when needed.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``contextual_question`` and ``transform_query_count``.
-
-        Returns
-        -------
-        :class:`dict`
-            Keys: ``contextual_question`` (rewritten) and ``transform_query_count`` (incremented).
-        """
-        self.logger.info("Transforming query.")
-        question = state["contextual_question"]
-        self.logger.info(f"Original question: {question}")
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("question_rewriter"), self.llm, structured_output=False
-        )
-        response = runnable.invoke(
-            {"question": question},
-            config=self.generator_config,
-        )
-        return {
-            "contextual_question": response,
-            "transform_query_count": state["transform_query_count"] + 1,
+    async def answer(self, request: ChatRequest, step_logger_fn=None) -> ChatResponse:
+        config = {
+            "configurable": {
+                "user_id": request.user_id,
+                "thread_id": request.conversation.id,
+            }
         }
-
-    def _generate_default_response(self, state: GraphState) -> Dict:
-        """Produce a safe default reply when generation should stop.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``language`` and ``question``.
-
-        Returns
-        -------
-        :class:`dict`
-            Keys: ``response`` (fallback message) and ``documents`` (empty list).
-        """
-        self.logger.info("Generating default response.")
-        language = state["language"]
-        question = state["question"]
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("default_response_generator"), self.llm, structured_output=False
+        messages = self.services.context_service.convert_conversation_to_messages(request.conversation)
+        summary, history = self.services.context_service.summarize_history(
+            history=messages, messages_to_keep=self.config.memory.length, summary="",
         )
-        response = runnable.invoke(
-            {"language": language, "question": question},
-            config=self.generator_config,
-        )
-        return {"response": response, "documents": SearchResult(chunks=[]), "messages": [AIMessage(content=response)]}
-
-    def _router(self, state: GraphState) -> str | None:
-        """Route the contextual question to conversational or document-based flow.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``contextual_question``.
-
-        Returns
-        -------
-        :class:`str` or ``None``
-            - ``\"conversational_question\"`` → node ``conversational_agent``
-            - ``\"document_based_question\"`` → node ``document_request_detector``
-            - ``None`` if no route is determined
-        """
-        self.logger.info("Routing question.")
-        # example_selector = SemanticSimilarityExampleSelector.from_examples(
-        #     examples=self.examples,
-        #     embeddings=self.config.indexing.embeddings.model,
-        #     vectorstore_cls=FAISS,
-        #     k=self.config.examples.top_k,
-        #     input_keys=self.config.examples.input_keys,
-        # )
-        # prompt_template = PromptTemplate.from_template(self.config.examples.template)
-        # few_shot_prompt = FewShotPromptTemplate(
-        #     example_selector=example_selector,
-        #     example_prompt=prompt_template,
-        #     input_variables=["question"],
-        #     prefix="",
-        #     suffix="",
-        # )
-        # example_prompt = few_shot_prompt.format(input=state["contextual_question"])
-        # TODO: index description should be improved
-        index_description = [index.description for index  in self.config.indexing] if isinstance(self.config.indexing, list) else self.config.indexing.description
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("router"), self.llm, structured_output=True, output_schema=output.RouteQuery,
-            index_description=index_description,
-        )
-        routing = (
-            runnable.invoke({"question": state["contextual_question"]},  config=self.router_config, with_retry=True))
-        if routing.branch == "conversational":
-            self.logger.info("Conversational question is routed to the Agent.")
-            return "conversational_question"
-        elif routing.branch == "document_based":
-            self.logger.info("Question is routed to the RAG Architecture.")
-            return "document_based_question"
-        else:
-            self.logger.info("Question is not routed to any branch.")
-            return None
-
-    def _validator(self, state: GraphState) -> str:
-        """Validate grounding and task resolution; decide next step.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``documents``, ``response``, ``generation_count``, and ``contextual_question``.
-
-        Returns
-        -------
-        :class:`str`
-            One of:
-            - ``\"grounded_and_addressed_question\"`` → terminal success
-            - ``\"generation_not_grounded\"`` → re-generate
-            - ``\"grounded_but_not_addressed_question\"`` → rewrite question
-            - ``\"generate_default_response\"`` → stop with fallback
-        """
-        self.logger.info("Checking hallucinations.")
-        documents = state["documents"]
-        generation = state["response"]
-        generation_count = state["generation_count"]
-        question = state["contextual_question"]
-        docs_string = "\n\n".join([doc.page_content for doc in documents.chunks])
-        validator_runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("groundedness_grader"), self.llm,
-            structured_output=True, output_schema=output.GradeGrounding,
-        )
-        grader_runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("answer_grader"), self.llm,
-            structured_output=True, output_schema=output.GradeAnswer,
-        )
-        if generation_count <= GENERATION_LIMIT:
-            ground_validation = validator_runnable.invoke(
-                {"documents": docs_string, "generation": generation}, config=self.grader_config, with_retry=True)
-            ground_validation_score = ground_validation.binary_score
-            if ground_validation_score == "yes":
-                self.logger.info("Generated answer is grounded in documents.")
-                answer_grade = grader_runnable.invoke(
-                    {"question": question, "generation": generation}, config=self.grader_config, with_retry=True)
-                answer_question = answer_grade.binary_score
-                if answer_question == "yes":
-                    self.logger.info(f"Generated answer addresses the question.")
-                    return "grounded_and_addressed_question"
-                else:
-                    self.logger.info(f"Generated answer does not address the question.")
-                    return "grounded_but_not_addressed_question"
-            else:
-                self.logger.info("Generated answer is not grounded in documents")
-                return "generation_not_grounded"
-        else:
-            self.logger.info("Generation count exceeds limit. Generating default response...")
-            return "generate_default_response"
-
-    @staticmethod
-    def _verify_generation_limit(state: GraphState) -> str:
-        """Guard on query-rewrite attempts.
-
-        Parameters
-        ----------
-        state : :class:`~src.agentic_rag.agent.graph.GraphState`
-            Must include ``transform_query_count``.
-
-        Returns
-        -------
-        :class:`str`
-            ``\"retrieve\"`` if under the limit, else ``\"generate_default_response\"``.
-        """
-        if state["transform_query_count"] <= GENERATION_LIMIT:
-            return "retrieve"
-        else:
-            return "generate_default_response"
-
-    def _create_graph(self) -> StateGraph:
-        """Declare the LangGraph nodes and edges and return the graph.
-
-        Returns
-        -------
-        :langgraph:`StateGraph <reference/graphs/?h=state#langgraph.graph.state.StateGraph>`
-            Graph with nodes/edges set up and terminal edges to :langgraph:`END <reference/constants/?h=end#langgraph.constants.END>`.
-        """
-        graph = StateGraph(GraphState)
-
-        graph.add_node("language_detector", self._detect_language)
-        graph.add_node("conversational_agent", self._conversational_agent)
-        graph.add_node("contextualize_question", self._contextualize_question)
-        graph.add_node("retrieve", self._retrieve)
-        graph.add_node("retrieval_grader", self._retrieval_grader)
-        graph.add_node("transform_question", self._question_rewriter)
-        graph.add_node("generate", self._generate)
-        graph.add_node("document_request_detector", self._document_request_detector)
-        graph.add_node("generate_document_response", self._generate_document_response)
-        graph.add_node("generate_default_response", self._generate_default_response)
-
-        graph.add_edge(START, "language_detector")
-        graph.add_edge("language_detector", "contextualize_question")
-        graph.add_conditional_edges(
-            "contextualize_question",
-            self._router,
-            {
-                "conversational_question": "conversational_agent",
-                "document_based_question": "document_request_detector",
-            }
-        )
-        graph.add_edge("document_request_detector", "retrieve")
-        graph.add_edge("retrieve", "retrieval_grader")
-        graph.add_conditional_edges(
-            "retrieval_grader",
-            self._decide_to_generate,
-            {
-                "all_docs_not_relevant": "transform_question",
-                "at_least_one_doc_relevant": "generate",
-                "generate_document_request_response": "generate_document_response",
-            },
-        )
-        graph.add_edge("generate_document_response", END)
-        graph.add_conditional_edges(
-            "generate",
-            self._validator,
-            {
-                "grounded_and_addressed_question": END,
-                "generation_not_grounded": "generate",
-                "grounded_but_not_addressed_question": "transform_question",
-                "generate_default_response": "generate_default_response",
-            }
-        )
-        graph.add_conditional_edges(
-            "transform_question",
-            self._verify_generation_limit,
-            {
-                "retrieve": "retrieve",
-                "generate_default_response": "generate_default_response",
-            }
-        )
-        graph.add_edge("generate_default_response", END)
-        graph.add_edge("conversational_agent", END)
-
-        return graph
-
-    def error_handler(self, exception: str) -> Dict:
-        """Generate a user-friendly error message via the error handler node.
-
-        Parameters
-        ----------
-        exception : :class:`str`
-            Exception text to summarize for the user.
-
-        Returns
-        -------
-        :class:`dict`
-            Mapping with key ``response`` holding the error message.
-        """
-        self.logger.info("Error Handler Node.")
-        runnable = self.node_factory.build_node_from_config(
-            self._get_node_config("error_handler"), self.llm, structured_output=False,
-        )
-        response = runnable.invoke(
-            {"exception": exception, "languages": self.config.allowed_languages},
-            config=self.generator_config,
-        )
-        return {"response": response}
-
-    def _convert_conversation_to_messages(self, conversation: ConversationRequest) -> List[AnyMessage]:
-        """Convert a :class:`~src.agentic_rag.utils.chat.ConversationRequest` into LangChain messages.
-
-        Parameters
-        ----------
-        conversation : :class:`~src.agentic_rag.utils.chat.ConversationRequest`
-            Container with history and the current question.
-
-        Returns
-        -------
-        list of :class:`~langchain_core.messages.base.AnyMessage`
-            Tail slice of messages limited by :attr:`~src.agentic_rag.agent.graph.Agent.config` ``.memory.length``.
-        """
-        messages: List[AnyMessage] = []
-        for message in conversation.history:
-            if message.role == "user":
-                messages.append(HumanMessage(content=message.content))
-            elif message.role == "assistant":
-                messages.append(AIMessage(content=message.content))
-        if conversation.question.role == "user":
-            messages.append(HumanMessage(content=conversation.question.content))
-        elif conversation.question.role == "assistant":
-            messages.append(AIMessage(content=conversation.question.content))
-        else:
-            messages.append(AnyMessage(content=conversation.question.content))
-        return messages[- 2 * self.config.memory.length:]
-
-    async def answer(self, request: ChatRequest, step_logger_fn = None) -> ChatResponse:
-        """Run the compiled graph for a user request and return a response.
-
-        Parameters
-        ----------
-        request : :class:`~src.agentic_rag.utils.chat.ChatRequest`
-            Top-level request containing user info and conversation payload.
-        step_logger_fn : function, optional
-            Logger to trace graph execution steps.
-
-        Returns
-        -------
-        :class:`~src.agentic_rag.utils.chat.ChatResponse`
-            Assistant response with metadata about sources, generation count, and contextual question.
-        """
-        config: RunnableConfig = \
-            {"configurable": {"user_id": request.user_id, "thread_id": request.conversation.id}}
-        # memories = nodes.search_memory(question, config, self.store)
         input_state: GraphState = {
-                "question": request.conversation.question.content,
-                "messages": self._convert_conversation_to_messages(request.conversation),
-                "language": self.config.language,
-            }
-        self.logger.info(f"User {request.user} in conversation {request.conversation.id} sent a request:"
-                         f" {request.conversation.question.content}")
+            "question": request.conversation.question.content,
+            "messages": history,
+            "summary": summary,
+            "generation_count": 0,
+        }
         try:
+            graph_response = await self.executor.run(
+                input_state=input_state,
+                config=config,
+                step_logger_fn=step_logger_fn,
+            )
+            response, contextual_question = graph_response["response"], graph_response["contextual_question"]
+            sources = graph_response.get("documents", SearchResult(chunks=[])).to_sources_payload()
             is_faulted = False
-            # response = self.compiled_graph.invoke(
-            #     input=input_state,
-            #     config=config
-            # )
-            response = {}
-            current_event_list = []
-            for event in self.compiled_graph.stream(input=input_state, config=config, stream_mode="debug"):  # type: ignore
-                current_event_list.append(event)
-                if event["type"]== "checkpoint":
-                    if step_logger_fn is not None:
-                        try:
-                            await step_logger_fn(current_event_list)
-                        except Exception as e:
-                            self.logger.error(f"Exception while logging step: {e}")
-                    if len(event["payload"]["metadata"].get("next", [])) == 0:
-                        response = event["payload"].get("values", {})
-                    current_event_list = []
-            attachments = {"sources": []}
-            unique_sources = response.get("documents", SearchResult()).extract_unique_chunks()
-            for document in unique_sources:
-                document_info = {  # TODO: maybe it wil be worth adding more info about retrieved sources
-                    "filename": document.metadata.get("filename", "unknown"),
-                    "chunk_id": document.metadata.get("chunk_idx", "unknown"),
-                }
-                attachments["sources"].append(document_info)
         except Exception as e:
-            unique_sources = []
             self.logger.error(f"Error processing request: {str(e)}")
-            response = self.error_handler(str(e))
-            is_faulted = True
+            is_faulted, sources, contextual_question = True, [], ""
+            response = self.services.context_service.handle_error(e, self.config.allowed_languages)
         return ChatResponse(
             role="assistant",
-            content=response["response"],
+            content=response,
             metadata={
-                "sources": unique_sources,
-                "n_gen": response.get("generation_count"),
-                "contextual_question": response.get("contextual_question"),
+                "sources": sources,
+                # "n_gen": response.get("generation_count"),
+                "contextual_question": contextual_question,
             },
             is_faulted=is_faulted
         )
@@ -760,24 +183,14 @@ if __name__ == "__main__":
     if os.getenv("MLFLOW_DB", None):
         ensure_database(db_name=os.getenv("MLFLOW_DB"))
         mlflow.set_tracking_uri(f"postgresql+psycopg://{os.getenv("POSTGRES_USER")}:{os.getenv("POSTGRES_PASSWORD")}@{os.getenv("POSTGRES_HOST")}:5432/{os.getenv("MLFLOW_DB")}")
-        mlflow.set_experiment(f"{os.getenv('AGENT_ID')}_observability")
+        mlflow.set_experiment(f"{os.getenv('AGENT_ID')}_tracing")
         mlflow.langchain.autolog()
-    agent = Agent("cardiology_protocols")
-    chat_request = ChatRequest(
-        user="gaia",
-        user_id="2",
-        conversation=ConversationRequest(
-            id="3",
-            chatbotId="1",
-            history=[],
-            question=MessageSchema(
-                id="2",
-                role="user",
-                content="Quale è la cura per la cardiopatia?",
-                datetime=datetime.datetime.now(),
-            )
-        )
-    )
-    # metadata["chunk_idx"]
-    agent_response = asyncio.run(agent.answer(chat_request))
-    print(agent_response.content)
+    agent = Agent(agent_id="cardiology_protocols", config_path=os.getenv("CONFIG_PATH"))
+    with open(Path("tests/data/synthetic_data.json"), "r", encoding="utf-8") as f:
+        items = json.load(f)
+    with mlflow.start_run(run_name=f"test_graph_synthetic_data_no_grade", nested=True):
+        for item in items:
+            chat_request = format_chat_request(item["question"])
+            # metadata["chunk_idx"]
+            agent_response = asyncio.run(agent.answer(chat_request))
+            # print(agent_response.content)

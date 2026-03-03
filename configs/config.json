@@ -5,30 +5,22 @@
         "system_prompt": "You are an assistant specialized in answering questions about cardiology protocols.",
         "language": "italian",
         "allowed_languages": ["it", "en"],
-        "indexing": [
-            {
-                "name": "cardiology_protocols",
-                "folder": "${INDEX_ROOT}",
-                "type": "bm25",
-                "distance": "cosine",
-                "retrieval_mode": "sparse"
-            },
-            {
-                "name": "cardiology_protocols",
-                "folder": "${INDEX_ROOT}",
-                "type": "faiss",
-                "distance": "cosine",
-                "retrieval_mode": "dense"
-            }
-        ],
+        "indexing": {
+            "name": "cardiology_protocols",
+            "folder": "${INDEX_ROOT}",
+            "type": "faiss",
+            "distance": "cosine",
+            "retrieval_mode": "dense"
+        },
         "search": {
             "type": "similarity",
-            "fusion": "rrf",
-            "top_k": 3
+            "fusion": "bm25",
+            "k": 30,
+            "top_k": 5
         },
         "llm": {
             "deployment": "gpt-oss:20b",
-            "ollama": true,
+            "provider": "ollama",
             "nbits": 16,
             "generator_temperature": 0.01,
             "router_temperature": 0.5,

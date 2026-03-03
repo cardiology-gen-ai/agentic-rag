@@ -20,6 +20,17 @@ class GradeDocuments(BaseModel):
         return "Return ONLY a valid JSON object with exactly one key 'binary_score' whose value is either 'yes' or 'no'."
 
 
+class GradeDocumentsBatch(BaseModel):
+    """Relevance grades for a batch of retrieved documents."""
+    grades: List[GradeDocuments] = Field(
+        description="List of grades, one per document, in the same order as the input documents."
+    )
+
+    @staticmethod
+    def format_instruction() -> str:
+        return "Return ONLY a valid JSON object with exactly one key 'grades' which contain a list whose values is either 'yes' or 'no'."
+
+
 class DocumentRequest(BaseModel):
     """Binary score to assess whether the user's question implies a request for a document."""
     binary_score: Literal["yes", "no"] = Field(description="Return 'yes' if the user is asking for or referring to a document, 'no' otherwise.") #: :class:`typing.Literal`\[`yes`, `no`\] : Return 'yes' if the user is asking for or referring to a document, 'no' otherwise.
@@ -49,14 +60,16 @@ class GradeAnswer(BaseModel):
 
 class RouteQuery(BaseModel):
     """Route a user query to the most relevant branch."""
-    branch: Literal["document_based", "conversational", "other"] = Field(
-        description="Given a human question choose to route it to conversational branch "
-                    "or a document retrieving mechanism."
+    branch: Literal["conversational", "document_request", "document_based"] = Field(
+        description=("Given a human question, choose the most appropriate branch:\n "
+                     "- 'conversational': general, casual, social, greetings, small talk, personal opinions, gratitude.\n"
+                     "- 'document_request': user asks where to find a specific piece of information in documents (e.g., which file contains X).\n"
+                     "- 'document_based': user wants a retrieval or RAG-based answer from documents.")
     ) #: :class:`typing.Literal`\[`document_based`, `conversational`, `other`\] :  Given a human question choose to route it to conversational branch or a document retrieving mechanism.
 
     @staticmethod
     def format_instruction() -> str:
-        return "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational' or 'document_based'."
+        return "Return ONLY a valid JSON object with exactly one key 'branch' whose value is either 'conversational', 'document_based' or 'document_request'"
 
 
 class MultipleQueries(BaseModel):

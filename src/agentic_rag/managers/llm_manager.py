@@ -1,15 +1,16 @@
 import logging
 import os
-from typing import List
+from typing import List, Optional
 
 import torch
 from ollama import Client
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableConfig
 from langchain_core.language_models import BaseChatModel
-from langchain_huggingface.chat_models.huggingface import HuggingFacePipeline
+from langchain_huggingface.chat_models.huggingface import HuggingFacePipeline, ChatHuggingFace
 from langchain.chat_models import init_chat_model
 from transformers import BitsAndBytesConfig, pipeline, AutoTokenizer, AutoModelForCausalLM
 
+from agentic_rag.config.manager import LLMProvider
 from src.agentic_rag.config.manager import LLMConfig
 
 from cardiology_gen_ai.utils.logger import get_logger
@@ -36,22 +37,70 @@ class LLMManager:
     """
     config: LLMConfig #: : :class:`~src.agentic_rag.config.manager.LLMConfig` : The configuration instance provided at construction time.
     logger: logging.Logger #: :class:`logging.Logger` : Logger used to emit lifecycle and diagnostic messages.
-    llm: BaseChatModel #: :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` or :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`: The underlying chat model, selected according to ``config.ollama``.
-    router: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.router_temperature``.
-    generator: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.generator_temperature``.
-    grader: Runnable #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.grader_temperature``.
+    _llm: Optional[BaseChatModel] #: :langchain:`ChatOllama <ollama/chat_models/langchain_ollama.chat_models.ChatOllama.html>` or :langchain:`ChatHuggingFace <huggingface/chat_models/langchain_huggingface.chat_models.huggingface.ChatHuggingFace.html#langchain_huggingface.chat_models.huggingface.ChatHuggingFace>`: The underlying chat model, selected according to ``config.ollama``.
+    _router: Optional[Runnable] #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.router_temperature``.
+    _generator: Optional[Runnable] #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.generator_temperature``.
+    _grader: Optional[Runnable] #: :langchain_core:`Runnable <runnables/langchain_core.runnables.base.Runnable.html>` : Runnable bound with ``temperature=config.grader_temperature``.
     def __init__(self, config: LLMConfig):
         self.config = config
         self.logger = get_logger("LLM manager based on LangChain and either Ollama or HuggingFace")
         self.logger.info("Initializing LLM..")
-        if self.config.model_name.startswith("gpt") and (not "gpt-oss" in self.config.model_name):
-            self.llm = self.init_openai()
-        else:
-            self.llm = self.init_ollama() if self.config.ollama else self.init_huggingface()
+        self.temperature = self.config.temperature
+        self.provider_init_factory = {
+            LLMProvider.ollama.value: self.init_ollama,
+            LLMProvider.huggingface.value: self.init_huggingface,
+            LLMProvider.openai.value: self.init_openai,
+            LLMProvider.vllm.value: self.init_vllm,
+        }
+        self._llm = None
+        self._router = None
+        self._generator = None
+        self._grader = None
+
+    @property
+    def llm(self) -> BaseChatModel:
+        self._lazy_init_llm()
+        return self._llm
+
+    @property
+    def generator(self) -> Runnable:
+        self._lazy_init_llm()
+        if self._generator is None:
+            raise RuntimeError("Generator not configured")
+        return self._generator
+
+    @property
+    def router(self) -> Runnable:
+        self._lazy_init_llm()
+        if self._router is None:
+            raise RuntimeError("Router not configured")
+        return self._router
+
+    @property
+    def grader(self) -> Runnable:
+        self._lazy_init_llm()
+        if self._grader is None:
+            raise RuntimeError("Grader not configured")
+        return self._grader
+
+    def _lazy_init_llm(self):
+        if self._llm is not None:
+            return
+        # if self.config.model_name.startswith("gpt") and (not "gpt-oss" in self.config.model_name):
+        #     self._llm = self.init_openai()
+        # else:
+        #     self._llm = self.init_ollama() if self.config.ollama else self.init_huggingface()
+        self._llm = self.provider_init_factory[self.config.provider.value]()
         self.logger.info(f"LLM {self.config.model_name} initialized successfully")
-        self.router = self.llm.bind(options={"temperature": self.config.router_temperature})
-        self.generator = self.llm.bind(options={"temperature": self.config.generator_temperature})
-        self.grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
+        if self.config.router_temperature is not None:
+            self.router_config = RunnableConfig(configurable={"temperature": self.config.router_temperature})
+            self._router = self.llm.bind(options={"temperature": self.config.router_temperature})
+        if self.config.generator_temperature is not None:
+            self.generator_config = RunnableConfig(configurable={"temperature": self.config.generator_temperature})
+            self._generator = self.llm.bind(options={"temperature": self.config.generator_temperature})
+        if self.config.grader_temperature is not None:
+            self.grader_config = RunnableConfig(configurable={"temperature": self.config.grader_temperature})
+            self._grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
 
     def init_openai(self) -> BaseChatModel:
         return init_chat_model(
@@ -60,7 +109,16 @@ class LLMManager:
             api_key=os.getenv("AZURE_OPENAI_API_KEY"),
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-            temperature=0.,
+            temperature=self.config.temperature,
+        )
+
+    def init_vllm(self) -> BaseChatModel:
+        return init_chat_model(
+            model=self.config.model_name,
+            model_provider="openai",
+            base_url=os.getenv("VLLM_URL"),
+            api_key="no_need_for_vllm",
+            temperature=self.config.temperature,
         )
 
     def init_ollama(self) -> BaseChatModel:
@@ -86,7 +144,7 @@ class LLMManager:
             return init_chat_model(
                 model=self.config.model_name,
                 model_provider="ollama",
-                temperature=0,
+                temperature=self.config.temperature,
                 base_url=os.getenv("OLLAMA_URL"),
             )
         except Exception as e:
@@ -143,18 +201,29 @@ class LLMManager:
                 tokenizer=tokenizer,
                 max_new_tokens=1024,
                 do_sample=True,
-                temperature=0.01,
+                temperature=self.config.temperature,
                 return_full_text=False,
             )
             llm = HuggingFacePipeline(pipeline=pip)
-            return init_chat_model(
-                model=self.config.model_name,
-                model_provider="huggingface",
-                llm=llm,
-            )
+            return ChatHuggingFace(llm=llm)
+            # return init_chat_model(
+            #    model=self.config.model_name,
+            #    model_provider="huggingface",
+            #    llm=llm,
+            # )
         except Exception as e:
             self.logger.info(f"Model {self.config.model_name} could not be initialized: {e}")
             raise
+
+    def unload(self):
+        if self._llm is not None:
+            self.logger.info("Unloading LLM from memory")
+            del self._llm
+            self._llm = None
+            self._router = None
+            self._generator = None
+            self._grader = None
+            torch.cuda.empty_cache()
 
     def count_tokens(self, message_list: List[str]) -> int:
         # TODO: implement

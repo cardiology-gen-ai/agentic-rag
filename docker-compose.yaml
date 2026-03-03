@@ -1,11 +1,20 @@
 services:
   agentic-rag:
+    user: root # TODO: remove in production
     build:
       context: .
       dockerfile: Dockerfile
-    user: root # TODO: remove in production
-    # command: [ "python", "-m", "src.agentic_rag.agent.graph" ]
-    command: ["python", "-m", "tests.accuracy_tests.main_test"]
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    command: [ "python", "-m", "src.agentic_rag.agent.graph" ]
+    # command: ["python", "-m", "tests.accuracy_tests.main_test"]
     profiles: ["default", "ollama_models", "qdrant_vectorstore"]
     env_file:
       - .env

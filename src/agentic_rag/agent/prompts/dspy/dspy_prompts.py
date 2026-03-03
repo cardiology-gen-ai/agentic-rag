@@ -1,29 +1,30 @@
-import os
+# import os
 from typing import List, Tuple
 
 import dspy
 
-from src.agentic_rag.config.manager import AgentConfigManager
-from src.agentic_rag.agent import output
+# from agentic_rag.config.manager import LLMProvider
+# from agentic_rag.config.manager import AgentConfigManager
+from agentic_rag.agent import output
 
-config = AgentConfigManager(
-    app_id=os.getenv("AGENT_ID"), config_path=os.getenv("CONFIG_PATH")
-).config
-lm_config = config.llm
-
-if lm_config.ollama:
-    lm = dspy.LM(
-        f"ollama_chat/{lm_config.model_name}",
-        api_base="http://localhost:11434",
-        api_key="",
-    )
-else:
-    lm = dspy.LM(
-        f"huggingface/{lm_config.model_name}",
-        quantization=f"{lm_config.nbits}bit" if lm_config.nbits < 16 else None,
-        # device="cuda",
-    )
-dspy.configure(lm=lm, adapter=dspy.JSONAdapter())
+# config = AgentConfigManager(
+#     app_id=os.getenv("AGENT_ID"), config_path=os.getenv("CONFIG_PATH")
+# ).config
+# lm_config = config.llm
+#
+# if lm_config.provider.value == LLMProvider.ollama.value:
+#     lm = dspy.LM(
+#         f"ollama_chat/{lm_config.model_name}",
+#         api_base="http://localhost:11434",
+#         api_key="",
+#     )
+# else:
+#     lm = dspy.LM(
+#         f"huggingface/{lm_config.model_name}",
+#         quantization=f"{lm_config.nbits}bit" if lm_config.nbits < 16 else None,
+#         # device="cuda",
+#     )
+# dspy.configure(lm=lm, adapter=dspy.JSONAdapter())
 
 node_names = {
     "contextualize_question": "ContextualizeQuestion",

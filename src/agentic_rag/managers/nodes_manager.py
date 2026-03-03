@@ -110,7 +110,7 @@ class LangChainNode(Node):
 
 
 class NodeFactory:
-    def __init__(self, prompt_folder=files("src.agentic_rag.agent.prompts"),
+    def __init__(self, prompt_folder=files("agentic_rag.agent.prompts"),
                  node_type: NodeType = NodeType.langchain):
         self.prompt_factory = PromptFactory(prompt_folder=prompt_folder)
         self.node_type = node_type

@@ -12,7 +12,7 @@ from agentic_rag.utils.nodes import load_yaml
 class LLMService:
     def __init__(self, llm_manager: LLMManager, nodes_prompt_config: NodePromptConfig):
         self.llm = llm_manager.llm
-        self.node_factory = NodeFactory(prompt_folder=nodes_prompt_config.prompts)
+        self.node_factory = NodeFactory() # prompt_folder=nodes_prompt_config.prompts)
         self.nodes_config = self._load_nodes_config(nodes_prompt_config)
         self.config = llm_manager.config
 

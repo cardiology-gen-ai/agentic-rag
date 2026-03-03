@@ -10,7 +10,7 @@ from agentic_rag.utils.nodes import NodeType, deep_merge, load_yaml, render_temp
 
 
 class PromptFactory:
-    def __init__(self, prompt_folder=files("src.agentic_rag.agent.prompts")):
+    def __init__(self, prompt_folder=files("agentic_rag.agent.prompts")):
         self.prompt_folder = prompt_folder
         self.fragments = load_yaml(self.prompt_folder / "fragments.yaml").get("fragments", {})
 

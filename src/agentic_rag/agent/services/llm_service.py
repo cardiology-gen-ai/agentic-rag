@@ -18,7 +18,7 @@ class LLMService:
 
     @staticmethod
     def _load_nodes_config(nodes_prompt_config: NodePromptConfig) -> List[NodeConfig]:
-        nodes_config_dict = load_yaml(Path(nodes_prompt_config.config))
+        nodes_config_dict = load_yaml(Path(Path.cwd() / nodes_prompt_config.config))
         return [NodeConfig.from_config(node_config) for node_config in nodes_config_dict["nodes"]]
 
     def _get_node_config(self, name: str) -> NodeConfig:

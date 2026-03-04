@@ -116,9 +116,6 @@ class GraphExecutor:
                 config=config,
                 version="v2"
         ):
-            if event["event"] == "on_chain_end":
-                print(json.dumps(event, indent=2, default=str))
-            print(event["event"], event.get("name"))
             current_event_list.append(event)
             if event["event"] == "on_chain_end":
                 if step_logger_fn:

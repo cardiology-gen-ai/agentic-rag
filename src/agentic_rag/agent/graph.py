@@ -31,6 +31,13 @@ from agentic_rag.utils.chat import ChatRequest, ChatResponse, format_chat_reques
 GENERATION_LIMIT = 1
 os.environ["TOKENIZERS_PARALLELISM"] = "False"
 
+GENERATOR_NODES = {
+    "rag_response_generator",
+    "default_response_generator",
+    "document_response_generator",
+    "conversational_response_generator",
+}
+
 
 class AgentBuilder:
     def __init__(self, services: ServiceContainer, logger: Logger):
@@ -45,10 +52,10 @@ class AgentBuilder:
         graph.add_node("rag_router", RagRouter(self.services.routing_service, self.logger))
         graph.add_node("retriever", Retrieve(self.services.retrieval_service, logger=self.logger))
         graph.add_node("retrieval_filter", RetrievalFilter(self.services.retrieval_service, logger=self.logger))
-        graph.add_node("rag_response_generator", GenerateRagResponse(self.services.generation_service, logger=self.logger), tags=["final_answer"])
-        graph.add_node("default_response_generator", GenerateDefaultResponse(self.services.generation_service, logger=self.logger), tags=["final_answer"])
+        graph.add_node("rag_response_generator", GenerateRagResponse(self.services.generation_service, logger=self.logger))
+        graph.add_node("default_response_generator", GenerateDefaultResponse(self.services.generation_service, logger=self.logger))
         graph.add_node("document_response_generator", GenerateDocumentResponse(self.services.generation_service, logger=self.logger))
-        graph.add_node("conversational_response_generator", GenerateConversationalResponse(self.services.generation_service, logger=self.logger), tags=["final_answer"])
+        graph.add_node("conversational_response_generator", GenerateConversationalResponse(self.services.generation_service, logger=self.logger))
 
         graph.add_edge(START, "language_detector")
         graph.add_edge("language_detector", "question_contextualizer")
@@ -111,11 +118,8 @@ class GraphExecutor:
     async def stream(self, input_state, config, step_logger_fn=None):
         response = {}
         current_event_list = []
-        async for event in self.compiled_graph.astream_events(
-                input_state,
-                config=config,
-                version="v2"
-        ):
+
+        async for event in self.compiled_graph.astream_events(input_state, config=config, version="v2"):
             current_event_list.append(event)
             if event["event"] == "on_chain_end":
                 if step_logger_fn:
@@ -127,10 +131,18 @@ class GraphExecutor:
                 if event.get("name") == "LangGraph":
                     response = event["data"].get("output", {})
             elif event["event"] == "on_chat_model_stream":
-                if "final_answer" in event.get("tags", []):
+                node = event.get("metadata", {}).get("langgraph_node", "")
+                if node in GENERATOR_NODES:
                     chunk = event["data"]["chunk"]
                     if chunk.content:
                         yield {"type": "token", "content": chunk.content}
+
+        documents = response.get("documents")
+        if documents:
+            formatted_sources = documents.format_sources()
+            if formatted_sources:
+                yield {"type": "token", "content": f"\n\n\n---\n\n{formatted_sources}"}
+
         yield {"type": "final", "content": response}
 
 

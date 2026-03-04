@@ -145,9 +145,9 @@ class Agent:
             }
         }
         messages = self.services.context_service.convert_conversation_to_messages(request.conversation)
-        summary, history = self.services.context_service.summarize_history(
-            history=messages, messages_to_keep=self.config.memory.length, summary="",
-        )
+        # summary, history = self.services.context_service.summarize_history(
+        #     history=messages, messages_to_keep=self.config.memory.length, summary="",
+        # )
         input_state: GraphState = {
             "question": request.conversation.question.content,
             "messages": history,

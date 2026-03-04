@@ -45,10 +45,10 @@ class AgentBuilder:
         graph.add_node("rag_router", RagRouter(self.services.routing_service, self.logger))
         graph.add_node("retriever", Retrieve(self.services.retrieval_service, logger=self.logger))
         graph.add_node("retrieval_filter", RetrievalFilter(self.services.retrieval_service, logger=self.logger))
-        graph.add_node("rag_response_generator", GenerateRagResponse(self.services.generation_service, logger=self.logger))
-        graph.add_node("default_response_generator", GenerateDefaultResponse(self.services.generation_service, logger=self.logger))
+        graph.add_node("rag_response_generator", GenerateRagResponse(self.services.generation_service, logger=self.logger), tags=["final_answer"])
+        graph.add_node("default_response_generator", GenerateDefaultResponse(self.services.generation_service, logger=self.logger), tags=["final_answer"])
         graph.add_node("document_response_generator", GenerateDocumentResponse(self.services.generation_service, logger=self.logger))
-        graph.add_node("conversational_response_generator", GenerateConversationalResponse(self.services.generation_service, logger=self.logger))
+        graph.add_node("conversational_response_generator", GenerateConversationalResponse(self.services.generation_service, logger=self.logger), tags=["final_answer"])
 
         graph.add_edge(START, "language_detector")
         graph.add_edge("language_detector", "question_contextualizer")
@@ -116,6 +116,9 @@ class GraphExecutor:
                 config=config,
                 version="v2"
         ):
+            if event["event"] == "on_chain_end":
+                print(json.dumps(event, indent=2, default=str))
+            print(event["event"], event.get("name"))
             current_event_list.append(event)
             if event["event"] == "on_chain_end":
                 if step_logger_fn:
@@ -123,13 +126,14 @@ class GraphExecutor:
                         await step_logger_fn(current_event_list)
                     except Exception as e:
                         self.logger.error(f"Step logger error: {e}")
-                current_event_list = []  # ← reset solo qui
+                current_event_list = []
                 if event.get("name") == "LangGraph":
                     response = event["data"].get("output", {})
             elif event["event"] == "on_chat_model_stream":
-                chunk = event["data"]["chunk"]
-                if chunk.content:
-                    yield {"type": "token", "content": chunk.content}
+                if "final_answer" in event.get("tags", []):
+                    chunk = event["data"]["chunk"]
+                    if chunk.content:
+                        yield {"type": "token", "content": chunk.content}
         yield {"type": "final", "content": response}
 
 

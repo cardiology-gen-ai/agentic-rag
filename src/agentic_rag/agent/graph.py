@@ -3,6 +3,7 @@ import os
 import asyncio
 from logging import Logger
 from pathlib import Path
+import traceback
 
 import mlflow
 from langgraph.graph import START, END, StateGraph
@@ -115,28 +116,21 @@ class GraphExecutor:
                 config=config,
                 version="v2"
         ):
+            current_event_list.append(event)
             if event["event"] == "on_chain_end":
                 if step_logger_fn:
                     try:
                         await step_logger_fn(current_event_list)
                     except Exception as e:
                         self.logger.error(f"Step logger error: {e}")
-            else:
-                current_event_list.append(event)
-            if event["event"] == "on_chat_model_stream":
+                current_event_list = []  # ← reset solo qui
+                if event.get("name") == "LangGraph":
+                    response = event["data"].get("output", {})
+            elif event["event"] == "on_chat_model_stream":
                 chunk = event["data"]["chunk"]
                 if chunk.content:
-                    yield {
-                        "type": "token",
-                        "content": chunk.content
-                    }
-            if event["event"] == "on_chain_end" and event.get("name") == "LangGraph":
-                response = event["data"].get("output", {})
-            current_event_list = []
-        yield {
-            "type": "final",
-            "content": response
-        }
+                    yield {"type": "token", "content": chunk.content}
+        yield {"type": "final", "content": response}
 
 
 class Agent:
@@ -146,7 +140,7 @@ class Agent:
         self.llm_manager = LLMManager(self.config.llm)
         self.search_manager = SearchManager(index_config=self.config.indexing, search_config=self.config.search)
         self.nodes_config: NodePromptConfig = self.config.nodes
-        self.memory = AgentMemory()
+        # self.memory = AgentMemory()
 
         agent_prompt = self.config.system_prompt
         index_description = [index.description for index  in self.config.indexing] \
@@ -158,7 +152,7 @@ class Agent:
         )
 
         graph = AgentBuilder(self.services, self.logger).build()
-        self.compiled_graph = graph.compile(checkpointer=self.memory.checkpointer)
+        self.compiled_graph = graph.compile() # checkpointer=self.memory.checkpointer)
         self.executor = GraphExecutor(self.compiled_graph, self.logger)
 
     def draw_graph(self, filename: str = None) -> None:
@@ -235,9 +229,19 @@ class Agent:
                 yield event
         except Exception as e:
             self.logger.error(f"Error processing request: {str(e)}")
+            self.logger.error(traceback.format_exc())
             error_message = self.services.context_service.handle_error(e, self.config.allowed_languages)
             yield {"type": "error", "content": error_message}
 
+async def stream_graph(request_chat):
+    async for event in agent.answer_stream(chat_request):
+        if event["type"] == "token":
+            print(event["content"], end="", flush=True)
+        elif event["type"] == "final":
+            print("\n\n--- FINAL ---")
+            print(event["content"])
+        elif event["type"] == "error":
+            print(f"\nERROR: {event['content']}")
 
 if __name__ == "__main__":
     if os.getenv("MLFLOW_DB", None):
@@ -252,5 +256,5 @@ if __name__ == "__main__":
         for item in items:
             chat_request = format_chat_request(item["question"])
             # metadata["chunk_idx"]
-            agent_response = asyncio.run(agent.answer(chat_request))
+            agent_response = asyncio.run(stream_graph(chat_request))
             # print(agent_response.content)

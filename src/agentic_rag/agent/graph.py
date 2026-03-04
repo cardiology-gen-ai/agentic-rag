@@ -113,7 +113,7 @@ class GraphExecutor:
         async for event in self.compiled_graph.astream_events(
                 input_state,
                 config=config,
-                version="v1"
+                version="v2"
         ):
             if event["event"] == "on_chain_end":
                 if step_logger_fn:
@@ -121,18 +121,18 @@ class GraphExecutor:
                         await step_logger_fn(current_event_list)
                     except Exception as e:
                         self.logger.error(f"Step logger error: {e}")
-                current_event_list = []
             else:
                 current_event_list.append(event)
-            if event["event"] == "on_llm_stream":
+            if event["event"] == "on_chat_model_stream":
                 chunk = event["data"]["chunk"]
                 if chunk.content:
                     yield {
                         "type": "token",
                         "content": chunk.content
                     }
-            if event["event"] == "on_chain_end" and "response" in event["data"].get("output", {}):
-                response = event["data"]["output"]
+            if event["event"] == "on_chain_end" and event.get("name") == "LangGraph":
+                response = event["data"].get("output", {})
+            current_event_list = []
         yield {
             "type": "final",
             "content": response
@@ -226,12 +226,17 @@ class Agent:
             "summary": "",
             "generation_count": 0,
         }
-        async for event in self.executor.stream(
-                input_state=input_state,
-                config=config,
-                step_logger_fn=step_logger_fn,
-        ):
-            yield event
+        try:
+            async for event in self.executor.stream(
+                    input_state=input_state,
+                    config=config,
+                    step_logger_fn=step_logger_fn,
+            ):
+                yield event
+        except Exception as e:
+            self.logger.error(f"Error processing request: {str(e)}")
+            error_message = self.services.context_service.handle_error(e, self.config.allowed_languages)
+            yield {"type": "error", "content": error_message}
 
 
 if __name__ == "__main__":

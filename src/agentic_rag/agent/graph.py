@@ -107,6 +107,37 @@ class GraphExecutor:
                 current_event_list = []
         return response
 
+    async def stream(self, input_state, config, step_logger_fn=None):
+        response = {}
+        current_event_list = []
+        async for event in self.compiled_graph.astream_events(
+                input_state,
+                config=config,
+                version="v1"
+        ):
+            if event["event"] == "on_chain_end":
+                if step_logger_fn:
+                    try:
+                        await step_logger_fn(current_event_list)
+                    except Exception as e:
+                        self.logger.error(f"Step logger error: {e}")
+                current_event_list = []
+            else:
+                current_event_list.append(event)
+            if event["event"] == "on_llm_stream":
+                chunk = event["data"]["chunk"]
+                if chunk.content:
+                    yield {
+                        "type": "token",
+                        "content": chunk.content
+                    }
+            if event["event"] == "on_chain_end" and "response" in event["data"].get("output", {}):
+                response = event["data"]["output"]
+        yield {
+            "type": "final",
+            "content": response
+        }
+
 
 class Agent:
     def __init__(self, agent_id: str, config_path: str = None):
@@ -178,6 +209,29 @@ class Agent:
             },
             is_faulted=is_faulted
         )
+
+    async def answer_stream(self, request: ChatRequest, step_logger_fn=None):
+        config = {
+            "configurable": {
+                "user_id": request.user_id,
+                "thread_id": request.conversation.id,
+            }
+        }
+        messages = self.services.context_service.convert_conversation_to_messages(
+            request.conversation
+        )
+        input_state: GraphState = {
+            "question": request.conversation.question.content,
+            "messages": messages,
+            "summary": "",
+            "generation_count": 0,
+        }
+        async for event in self.executor.stream(
+                input_state=input_state,
+                config=config,
+                step_logger_fn=step_logger_fn,
+        ):
+            yield event
 
 
 if __name__ == "__main__":

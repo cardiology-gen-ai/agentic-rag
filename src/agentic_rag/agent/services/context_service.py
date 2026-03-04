@@ -29,7 +29,10 @@ class ContextService:
         self.allowed_languages = allowed_languages
 
     def contextualize_question(self, question: str, summary: str, history: List[AnyMessage]) -> str:
+        if len(history) <= 1:
+            return question
         serialized_history = self.llm_service.serialize_history(messages=history)
+        print(len(history), len(serialized_history))
         runnable = self.llm_service.build_node("question_rewriter", structured_output=False)
         result = runnable.invoke({"messages": serialized_history, "summary": summary, "question": question})
         return result

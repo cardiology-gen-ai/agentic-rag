@@ -56,51 +56,48 @@ class LLMManager:
         self._router = None
         self._generator = None
         self._grader = None
+        self.init_llm()
 
     @property
     def llm(self) -> BaseChatModel:
-        self._lazy_init_llm()
+        # self._lazy_init_llm()
         return self._llm
 
     @property
     def generator(self) -> Runnable:
-        self._lazy_init_llm()
+        # self._lazy_init_llm()
         if self._generator is None:
             raise RuntimeError("Generator not configured")
         return self._generator
 
     @property
     def router(self) -> Runnable:
-        self._lazy_init_llm()
+        # self._lazy_init_llm()
         if self._router is None:
             raise RuntimeError("Router not configured")
         return self._router
 
     @property
     def grader(self) -> Runnable:
-        self._lazy_init_llm()
+        # self._lazy_init_llm()
         if self._grader is None:
             raise RuntimeError("Grader not configured")
         return self._grader
 
-    def _lazy_init_llm(self):
+    def init_llm(self):
         if self._llm is not None:
             return
-        # if self.config.model_name.startswith("gpt") and (not "gpt-oss" in self.config.model_name):
-        #     self._llm = self.init_openai()
-        # else:
-        #     self._llm = self.init_ollama() if self.config.ollama else self.init_huggingface()
         self._llm = self.provider_init_factory[self.config.provider.value]()
         self.logger.info(f"LLM {self.config.model_name} initialized successfully")
         if self.config.router_temperature is not None:
             self.router_config = RunnableConfig(configurable={"temperature": self.config.router_temperature})
-            self._router = self.llm.bind(options={"temperature": self.config.router_temperature})
+            # self._router = self.llm.bind(options={"temperature": self.config.router_temperature})
         if self.config.generator_temperature is not None:
             self.generator_config = RunnableConfig(configurable={"temperature": self.config.generator_temperature})
-            self._generator = self.llm.bind(options={"temperature": self.config.generator_temperature})
+            # self._generator = self.llm.bind(options={"temperature": self.config.generator_temperature})
         if self.config.grader_temperature is not None:
             self.grader_config = RunnableConfig(configurable={"temperature": self.config.grader_temperature})
-            self._grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
+            # self._grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
 
     def init_openai(self) -> BaseChatModel:
         return init_chat_model(

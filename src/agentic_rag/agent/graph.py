@@ -99,20 +99,8 @@ class GraphExecutor:
         self.compiled_graph = compiled_graph
         self.logger = logger
 
-    async def run(self, input_state, config, step_logger_fn=None):
-        response = {}
-        current_event_list = []
-        for event in self.compiled_graph.stream(input=input_state, config=config, stream_mode="debug"):
-            current_event_list.append(event)
-            if event["type"] == "checkpoint":
-                if step_logger_fn:
-                    try:
-                        await step_logger_fn(current_event_list)
-                    except Exception as e:
-                        self.logger.error(f"Step logger error: {e}")
-                if not event["payload"]["metadata"].get("next"):
-                    response = event["payload"].get("values", {})
-                current_event_list = []
+    async def run(self, input_state):
+        response = await self.compiled_graph.ainvoke(input=input_state)
         return response
 
     async def stream(self, input_state, config, step_logger_fn=None):
@@ -194,11 +182,7 @@ class Agent:
             "generation_count": 0,
         }
         try:
-            graph_response = await self.executor.run(
-                input_state=input_state,
-                config=config,
-                step_logger_fn=step_logger_fn,
-            )
+            graph_response = await self.executor.run(input_state=input_state)
             response, contextual_question = graph_response["response"], graph_response["contextual_question"]
             sources = graph_response.get("documents", SearchResult(chunks=[])).to_sources_payload()
             is_faulted = False
@@ -246,16 +230,6 @@ class Agent:
             error_message = self.services.context_service.handle_error(e, self.config.allowed_languages)
             yield {"type": "error", "content": error_message}
 
-async def stream_graph(request_chat):
-    async for event in agent.answer_stream(chat_request):
-        if event["type"] == "token":
-            print(event["content"], end="", flush=True)
-        elif event["type"] == "final":
-            print("\n\n--- FINAL ---")
-            print(event["content"])
-        elif event["type"] == "error":
-            print(f"\nERROR: {event['content']}")
-
 if __name__ == "__main__":
     if os.getenv("MLFLOW_DB", None):
         ensure_database(db_name=os.getenv("MLFLOW_DB"))
@@ -269,5 +243,5 @@ if __name__ == "__main__":
         for item in items:
             chat_request = format_chat_request(item["question"])
             # metadata["chunk_idx"]
-            agent_response = asyncio.run(stream_graph(chat_request))
+            agent_response = asyncio.run(agent.answer(chat_request))
             # print(agent_response.content)

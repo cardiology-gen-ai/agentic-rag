@@ -1,0 +1,488 @@
+{
+  "metadata": {
+    "schema_version": "2.0",
+    "total_questions": 20,
+    "single_document_questions": 20,
+    "cross_document_questions": 0,
+    "questions_per_primary_guideline": 10,
+    "language": "it",
+    "creation_date": "2025-01-17",
+    "conversion_date": "2026-06-07",
+    "purpose": "Subset rapido in italiano per la valutazione del retrieval del sistema RAG basato su linee guida cardiologiche",
+    "source_format": "legacy_nested",
+    "section_annotation_policy": "Use the most specific section or set of sections needed to answer each question; avoid adding parent sections when the answer is confined to a child section.",
+    "complexity_levels": [
+      "basic",
+      "intermediate",
+      "advanced",
+      "cross-document"
+    ],
+    "translation_date": "2026-06-07",
+    "translated_from": "retrieval_test_set_full_canonical_corrected_all_guidelines.json",
+    "legacy_translation_source": "translated_questions.json",
+    "translation_summary": {
+      "legacy_translations_reused": 40,
+      "legacy_translations_updated_for_revised_questions": 20,
+      "missing_cross_document_translations_added": 10
+    },
+    "translation_policy": "Only the question text is translated into Italian. Document identifiers, guideline titles, section titles, complexity labels, and expected-format labels are preserved to maintain compatibility with the English source corpus and the canonical schema.",
+    "subset_of": "retrieval_test_set_full_canonical_corrected_all_guidelines_it.json",
+    "selection": {
+      "question_ids": [
+        "CM_01",
+        "CM_02",
+        "CM_03",
+        "CM_04",
+        "CM_05",
+        "CM_06",
+        "CM_07",
+        "CM_08",
+        "CM_09",
+        "CM_10",
+        "CCS_01",
+        "CCS_02",
+        "CCS_03",
+        "CCS_04",
+        "CCS_05",
+        "CCS_06",
+        "CCS_07",
+        "CCS_08",
+        "CCS_09",
+        "CCS_10"
+      ],
+      "guidelines": [
+        "Cardiomyopathies_2023",
+        "Chronic_Coronary_Syndromes_2024"
+      ]
+    }
+  },
+  "questions": [
+    {
+      "id": "CM_01",
+      "question": "Quali sono i criteri diagnostici per la cardiomiopatia ipertrofica negli adulti, nei bambini e nei parenti di primo grado, includendo le specifiche misurazioni dello spessore di parete?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.1.1. Diagnostic criteria"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_02",
+      "question": "Descrivi l’approccio ESC alla stratificazione del rischio di morte cardiaca improvvisa nella cardiomiopatia ipertrofica, includendo le variabili utilizzate nei modelli di rischio per adulti e pazienti pediatrici, i modificatori di rischio aggiuntivi, le categorie di rischio e le soglie decisionali per l’impianto di ICD.",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.5. Sudden cardiac death prevention in hypertrophic cardiomyopathy",
+            "7.1.5.6. Prevention of sudden cardiac death"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "revision_note": "Refined the question to match the risk-model information reproduced in the guideline and added the subsection containing risk categories and ICD decision thresholds."
+      }
+    },
+    {
+      "id": "CM_03",
+      "question": "Quali sono le principali caratteristiche distintive tra cardiomiopatia dilatativa, cardiomiopatia ventricolare sinistra non dilatata e cardiomiopatia aritmogena del ventricolo destro?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "3.2.2. Dilated cardiomyopathy",
+            "3.2.3. Non-dilated left ventricular cardiomyopathy",
+            "3.2.4. Arrhythmogenic right ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_04",
+      "question": "Quali elementi dell’anamnesi familiare e quali reperti extracardiaci ed elettrocardiografici dovrebbero far sospettare un’eziologia genetica specifica nei pazienti con cardiomiopatia, e quale approccio ai test e alla consulenza genetica è raccomandato?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.4. History and physical examination",
+            "6.5. Resting and ambulatory electrocardiography",
+            "6.8.2. Genetic testing",
+            "6.8.3. Genetic counselling"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "revision_note": "Rephrased the question so that red flags indicate suspicion of a genetic aetiology rather than acting as automatic testing indications, and replaced the parent genetic section with the specific testing and counselling subsections."
+      }
+    },
+    {
+      "id": "CM_05",
+      "question": "Quali sono le raccomandazioni specifiche di gestione per i pazienti con amiloidosi cardiaca, includendo i tipi AL e ATTR?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.7.4. Management",
+            "7.7.4.1. Specific therapies"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_06",
+      "question": "Descrivi l’approccio raccomandato alla gestione della fibrillazione atriale nei diversi sottotipi di cardiomiopatia, incluse le strategie di anticoagulazione.",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.3.1. Anticoagulation",
+            "6.10.3.2. Rate control",
+            "6.10.3.3. Rhythm control"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_07",
+      "question": "Quali sono le indicazioni per la risonanza magnetica cardiaca nella valutazione delle cardiomiopatie e quali caratteristiche specifiche devono essere valutate?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.7.3. Cardiac magnetic resonance"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_08",
+      "question": "Delinea le raccomandazioni per l’esercizio fisico e la partecipazione sportiva per i pazienti con differenti fenotipi di cardiomiopatia.",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "8.1.3. Exercise recommendations in hypertrophic cardiomyopathy",
+            "8.1.4. Exercise recommendations in arrhythmogenic right ventricular cardiomyopathy",
+            "8.1.5. Exercise recommendations in dilated cardiomyopathy and non-dilated left ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_09",
+      "question": "Quali sono le considerazioni e le strategie di gestione specifiche legate alla gravidanza per le donne con cardiomiopatie?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "8.2.2.1. Pre-pregnancy",
+            "8.2.2.2. Pregnancy",
+            "8.2.2.3. Timing and mode of delivery",
+            "8.2.2.4. Post-partum",
+            "8.2.2.5. Pharmacological treatment: general aspects",
+            "8.2.2.6. Specific cardiomyopathies",
+            "8.2.2.7. Peripartum cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_10",
+      "question": "Descrivi le indicazioni e le tempistiche per considerare terapie avanzate per lo scompenso cardiaco (LVAD, trapianto) nei pazienti con cardiomiopatia.",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.2.2. Cardiac transplantation",
+            "6.10.2.3. Left ventricular assist devices"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_01",
+      "question": "Qual è l’approccio diagnostico per fasi nella valutazione dei pazienti con sospetta sindrome coronarica cronica, dalla valutazione iniziale alla decisione terapeutica?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "3. Stepwise approach to the initial management of individuals with suspected chronic coronary syndrome"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document",
+        "revision_note": "Replaced the four detailed step subsections with the parent section that directly presents the complete four-step diagnostic and initial management pathway."
+      }
+    },
+    {
+      "id": "CCS_02",
+      "question": "Confronta le indicazioni per CABG rispetto alla PCI nei pazienti con malattia multivasale, includendo le considerazioni basate sul punteggio SYNTAX.",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "4.4.4. Assessment of clinical risk and anatomical complexity",
+            "4.4.5.3. Patients with multivessel coronary artery disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_03",
+      "question": "Quali sono le raccomandazioni specifiche di gestione per i pazienti con angina/ischemia con arterie coronarie non ostruttive (ANOCA/INOCA)?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "5.2.6. Management of angina/ischaemia with non-obstructive coronary arteries"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_04",
+      "question": "Delinea i principali componenti della terapia raccomandata dalle linee guida per la sindrome coronarica cronica, comprendendo stile di vita ed esercizio fisico, terapia antianginosa, terapia antitrombotica e trattamento ipolipemizzante.",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "4.1. Patient education, lifestyle optimization for risk-factor control, and exercise therapy",
+            "4.2. Antianginal/anti-ischaemic medication",
+            "4.3.1. Antithrombotic drugs",
+            "4.3.2. Lipid-lowering drugs"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document",
+        "revision_note": "Refined the wording so the requested therapy components match the four annotated sections without implicitly requiring the additional event-prevention drug classes in Sections 4.3.3–4.3.5."
+      }
+    },
+    {
+      "id": "CCS_05",
+      "question": "Quali sono le considerazioni specifiche per la gestione della sindrome coronarica cronica nei pazienti con scompenso cardiaco, stratificate per frazione di eiezione?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "5.1. Coronary artery disease and heart failure"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_06",
+      "question": "Delinea il ruolo e l’uso appropriato dell’angiografia coronarica TC rispetto ai test funzionali nei diversi scenari di probabilità clinica.",
+      "complexity": "intermediate",
+      "expected_format": "decision matrix",
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "3.3.4. Diagnostic algorithm and selection of appropriate tests"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_07",
+      "question": "Quali sono le raccomandazioni sulla durata della duplice terapia antiaggregante dopo PCI nei pazienti con sindrome coronarica cronica?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "4.3.1.1.3. Dual antiplatelet therapy post-percutaneous coronary intervention"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_08",
+      "question": "Descrivi l’approccio gestionale per i pazienti con angina refrattaria nonostante terapia medica ottimale e rivascolarizzazione.",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "6.5. Recurrent or refractory angina/ischaemia"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_09",
+      "question": "Quali sono le considerazioni specifiche per la gestione della sindrome coronarica cronica nei pazienti anziani e in quelli ad alto rischio emorragico?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "5.3.1. Older adults",
+            "5.3.3. High bleeding-risk patients"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CCS_10",
+      "question": "Confronta la classificazione dell’angina della Canadian Cardiovascular Society con gli attuali approcci di valutazione dei sintomi e le loro applicazioni cliniche.",
+      "complexity": "basic",
+      "expected_format": "classification table",
+      "sources": [
+        {
+          "document_id": "Chronic_Coronary_Syndromes_2024",
+          "filename": "Chronic_Coronary_Syndromes_2024.md",
+          "guideline_name": "2024 ESC Guidelines on Chronic Coronary Syndromes",
+          "sections": [
+            "3.1.1. History, differential diagnosis, and physical examination"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "chronic_coronary_syndromes_2024",
+        "question_type": "single_document"
+      }
+    }
+  ]
+}

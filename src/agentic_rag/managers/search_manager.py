@@ -167,7 +167,6 @@ class SearchManager: # (metaclass=Singleton):
         self.reranker = LLMManager(config=self.search_config.reranker) if (self.search_config.fusion.value == FusionStrategy.reranking.value and self.search_config.reranker is not None) else None
         self.cross_encoder = build_cross_encoder(self.search_config.cross_encoder) if (self.search_config.fusion.value == FusionStrategy.cross_encoder.value and self.search_config.cross_encoder is not None) else None
 
-
     def _init_vectorstores(self) -> List[SearchableVectorstore]:
         vectorstores = []
         for index_config in self.index_config:

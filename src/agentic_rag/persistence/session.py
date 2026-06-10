@@ -117,7 +117,7 @@ class SessionDB(BaseDB):
             username=user.username,
             user_role=user.user_role,
             model_name=agent.llm_manager.config.model_name,
-            embedding_name=agent.config.embeddings.model_name,
+            embedding_name=agent.config.indexing.embeddings.model_name,
             created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
             message_count=0,

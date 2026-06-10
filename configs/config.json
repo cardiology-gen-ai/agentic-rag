@@ -40,7 +40,7 @@
         },
         "nodes": {
             "config": "configs/graphs/rag_agent.yaml",
-            "prompts": "src/agentic_rag/agent/prompts"
+            "prompts": "agentic_rag.agent.prompts"
         }
     }
 }

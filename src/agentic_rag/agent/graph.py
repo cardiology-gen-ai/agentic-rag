@@ -163,13 +163,7 @@ class Agent:
         with open(filename, "w") as file:
             file.write(mermaid_syntax)
 
-    async def answer(self, request: ChatRequest, step_logger_fn=None) -> ChatResponse:
-        config = {
-            "configurable": {
-                "user_id": request.user_id,
-                "thread_id": request.conversation.id,
-            }
-        }
+    async def answer(self, request: ChatRequest) -> ChatResponse:
         messages = self.services.context_service.convert_conversation_to_messages(request.conversation)
         summary = ""
         # summary, history = self.services.context_service.summarize_history(
@@ -229,6 +223,7 @@ class Agent:
             self.logger.error(traceback.format_exc())
             error_message = self.services.context_service.handle_error(e, self.config.allowed_languages)
             yield {"type": "error", "content": error_message}
+
 
 if __name__ == "__main__":
     if os.getenv("MLFLOW_DB", None):

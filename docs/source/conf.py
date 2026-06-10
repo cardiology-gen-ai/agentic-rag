@@ -34,7 +34,7 @@ HERE = Path(__file__).resolve()
 
 def find_repo_root(start: Path) -> Path:
     for p in [start] + list(start.parents):
-        if (p / ".env").exists() or (p / "pyproject.toml").exists():
+        if (p / ".env.local").exists() or (p / "pyproject.toml").exists():
             return p
     for p in [start] + list(start.parents):
         if (p / "src").exists():
@@ -44,9 +44,9 @@ def find_repo_root(start: Path) -> Path:
 REPO_ROOT = find_repo_root(HERE)
 sys.path.insert(0, str(REPO_ROOT))
 
-# Carica il .env reale
+# Carica il .env.local reale
 if load_dotenv:
-    load_dotenv(REPO_ROOT / ".env")
+    load_dotenv(REPO_ROOT / ".env.local")
 
 # Flag per codice “doc-friendly”
 os.environ.setdefault("SPHINX_BUILD", "1")

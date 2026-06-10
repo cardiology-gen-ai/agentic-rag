@@ -17,3 +17,6 @@ __pycache__/
 /docs/build/
 
 /logs/
+.env
+
+graph_rag/

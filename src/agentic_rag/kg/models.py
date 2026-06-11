@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from agentic_rag.kg.schema import REQUIRED_RESULT_ALIASES, SCHEMA_VERSION
+
+
+KGRankingMode = Literal["concept_match", "weighted_match"]
 
 
 class KGQueryStatus(str, Enum):
@@ -16,6 +19,43 @@ class KGQueryStatus(str, Enum):
     GENERATION_ERROR = "generation_error"
     VALIDATION_ERROR = "validation_error"
     EXECUTION_ERROR = "execution_error"
+
+
+class KGRetrievalScores(BaseModel):
+    """Alternative deterministic scores computed for one Section."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    concept_match: float = 0.0
+    weighted_match: float = 0.0
+
+
+class KGMatchDiagnostic(BaseModel):
+    """Diagnostic information explaining why a concept matched."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    query_term: str
+    concept_name: str | None = None
+    matched_value: str | None = None
+    match_type: str
+    weight: float
+
+    @field_validator("query_term", "match_type")
+    @classmethod
+    def validate_required_text(cls, value: str) -> str:
+        normalized = str(value).strip()
+        if not normalized:
+            raise ValueError("Value must be a non-empty string")
+        return normalized
+
+    @field_validator("concept_name", "matched_value")
+    @classmethod
+    def normalize_optional_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        return normalized or None
 
 
 class KGSectionResult(BaseModel):
@@ -32,16 +72,28 @@ class KGSectionResult(BaseModel):
     title: str | None = None
     text: str
     matched_concepts: list[str] = Field(default_factory=list)
+    matched_terms: list[str] = Field(default_factory=list)
     score: float | None = None
+    score_type: KGRankingMode | None = None
+    scores: KGRetrievalScores | None = None
+    match_diagnostics: list[KGMatchDiagnostic] = Field(default_factory=list)
     rank: int | None = Field(default=None, ge=1)
 
-    @field_validator("section_uid", "document_id", "text")
+    @field_validator("section_uid", "document_id")
     @classmethod
-    def validate_required_text(cls, value: str) -> str:
+    def validate_required_identifier(cls, value: str) -> str:
         normalized = str(value).strip()
         if not normalized:
             raise ValueError("Value must be a non-empty string")
         return normalized
+
+    @field_validator("text")
+    @classmethod
+    def validate_text_preserving_content(cls, value: str) -> str:
+        original = str(value)
+        if not original.strip():
+            raise ValueError("Section text must be non-empty")
+        return original
 
     @field_validator("section_id", "title")
     @classmethod
@@ -52,9 +104,9 @@ class KGSectionResult(BaseModel):
         normalized = str(value).strip()
         return normalized or None
 
-    @field_validator("matched_concepts", mode="before")
+    @field_validator("matched_concepts", "matched_terms", mode="before")
     @classmethod
-    def normalize_matched_concepts(cls, value: Any) -> list[str]:
+    def normalize_unique_strings(cls, value: Any) -> list[str]:
         if value is None:
             return []
 
@@ -70,16 +122,16 @@ class KGSectionResult(BaseModel):
             if item is None:
                 continue
 
-            concept = str(item).strip()
-            if not concept:
+            text = str(item).strip()
+            if not text:
                 continue
 
-            key = concept.casefold()
+            key = text.casefold()
             if key in seen:
                 continue
 
             seen.add(key)
-            normalized.append(concept)
+            normalized.append(text)
 
         return normalized
 
@@ -105,6 +157,16 @@ class KGSectionResult(BaseModel):
                 + ", ".join(missing_aliases)
             )
 
+        scores = data.get("scores")
+        if scores is None:
+            concept_score = data.get("concept_match_score")
+            weighted_score = data.get("weighted_match_score")
+            if concept_score is not None or weighted_score is not None:
+                scores = {
+                    "concept_match": float(concept_score or 0.0),
+                    "weighted_match": float(weighted_score or 0.0),
+                }
+
         return cls(
             section_uid=data["section_uid"],
             document_id=data["document_id"],
@@ -112,7 +174,11 @@ class KGSectionResult(BaseModel):
             title=data["title"],
             text=data["text"],
             matched_concepts=data["matched_concepts"],
+            matched_terms=data.get("matched_terms", []),
             score=data["score"],
+            score_type=data.get("score_type"),
+            scores=scores,
+            match_diagnostics=data.get("match_diagnostics", []),
             rank=rank,
         )
 
@@ -129,7 +195,7 @@ class KGSectionResult(BaseModel):
 
     @property
     def page_content(self) -> str:
-        """Return the future LangChain Document text."""
+        """Return title plus exact Section text for a future LangChain Document."""
 
         if self.heading:
             return f"{self.heading}\n\n{self.text}"
@@ -208,4 +274,3 @@ class KGQueryTrace(BaseModel):
     @property
     def returned_count(self) -> int:
         return len(self.results)
-

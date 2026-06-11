@@ -17,7 +17,7 @@ REQUIRED_RESULT_ALIASES: Final[tuple[str, ...]] = (
     "score",
 )
 
-# When we change schema, we should update this
+# When the graph schema changes, update this definition and SCHEMA_VERSION.
 BASE_GRAPH_SCHEMA: Final[str] = """
 Graph schema for medical guideline retrieval.
 
@@ -112,12 +112,19 @@ Retrieval contract:
 - The final evidence units must always be Section nodes.
 - Concept nodes may be used to identify relevant Sections.
 - Document nodes may be used for provenance and document filtering.
+- Always bind the owning Document through:
+  (d:Document)-[:HAS_SECTION]->(s:Section).
 - Only return Sections where coalesce(s.embed, false) = true.
 - Only return Sections with non-empty text.
 - Prefer explicit matches on Concept.name.
 - UMLS properties are optional and must only be used with safe fallbacks.
 - Never assume every Concept has UMLS metadata.
 - Never return Concept nodes alone as final evidence.
+- If a query does not use Concept nodes, return:
+  [] AS matched_concepts
+  and
+  1.0 AS score.
+- Never omit any required result alias.
 
 Every generated query must return exactly these aliases:
 
@@ -146,11 +153,14 @@ def build_text2cypher_schema(
         )
         scope = (
             "Active retrieval scope:\n"
-            f"Only retrieve Sections belonging to Documents whose doc_id is in "
+            "Only retrieve Sections belonging to Documents whose doc_id is in "
             f"{json.dumps(normalized_ids, ensure_ascii=False)}."
         )
     else:
-        scope = "Active retrieval scope:\nAll loaded Documents may be queried."
+        scope = (
+            "Active retrieval scope:\n"
+            "All loaded Documents may be queried."
+        )
 
     return "\n\n".join(
         (

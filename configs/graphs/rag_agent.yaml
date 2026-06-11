@@ -70,3 +70,7 @@ nodes:
   - name: error_handler
     prompt_filename: error_handler
     prompt_version: default
+
+  - name: kg_retrieval_router
+    prompt_filename: kg_retrieval_router
+    prompt_version: default

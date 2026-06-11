@@ -17,4 +17,5 @@ node_output_schemas = {
     "multi_query_generator": output.MultipleQueries,
     "question_ambiguity_detector": output.QueryAmbiguity,
     "question_clarifier": output.MultipleQueries,
+    "kg_retrieval_router": output.KGRetrievalPlan
 }

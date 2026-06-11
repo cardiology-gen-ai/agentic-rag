@@ -10,6 +10,7 @@ from agentic_rag.kg.models import KGSectionResult, KGRankingMode
 
 
 _MAX_TOP_K = 100
+_MAX_HIERARCHY_DEPTH = 8
 
 _EXCLUDED_TITLE_PREFIXES = [
     "key messages",
@@ -379,6 +380,36 @@ LIMIT $top_k
 """
 
 
+_FIND_HIERARCHICAL_CONTEXT_MATCHES = """
+UNWIND $anchor_uids AS anchor_uid
+MATCH (anchor:Section {uid: anchor_uid})
+
+UNWIND $context_uids AS context_uid
+MATCH (context:Section {uid: context_uid})
+
+MATCH path = (context)-[:HAS_CHILD*0..8]->(anchor)
+WHERE length(path) <= $max_depth
+
+RETURN
+    anchor.uid AS anchor_uid,
+    anchor.doc_id AS anchor_document_id,
+    anchor.section_id AS anchor_section_id,
+    anchor.printed_section_id AS anchor_printed_section_id,
+    anchor.title AS anchor_title,
+    context.uid AS context_uid,
+    context.doc_id AS context_document_id,
+    context.section_id AS context_section_id,
+    context.printed_section_id AS context_printed_section_id,
+    context.title AS context_title,
+    length(path) AS hierarchy_distance
+
+ORDER BY
+    anchor_uid ASC,
+    hierarchy_distance ASC,
+    context_uid ASC
+"""
+
+
 class KGSectionTools:
     """Controlled graph-retrieval tools returning Section results."""
 
@@ -494,6 +525,43 @@ class KGSectionTools:
         return _rows_to_results(rows)
 
 
+    def find_hierarchical_context_matches(
+        self,
+        anchor_uids: Sequence[str] | str,
+        context_uids: Sequence[str] | str,
+        *,
+        max_depth: int = 6,
+    ) -> list[dict[str, Any]]:
+        """Find context Sections that are ancestors of anchor Sections.
+
+        A zero-length path is allowed, so the same Section can provide both
+        anchor and context evidence. The method is intentionally structural:
+        it uses only existing HAS_CHILD relationships and does not infer new
+        clinical relations.
+        """
+
+        normalized_anchor_uids = _normalize_values(
+            anchor_uids,
+            field_name="anchor_uids",
+            required=True,
+        )
+        normalized_context_uids = _normalize_values(
+            context_uids,
+            field_name="context_uids",
+            required=True,
+        )
+        validated_max_depth = _validate_hierarchy_depth(max_depth)
+
+        return self.client.run_read(
+            _FIND_HIERARCHICAL_CONTEXT_MATCHES,
+            {
+                "anchor_uids": normalized_anchor_uids,
+                "context_uids": normalized_context_uids,
+                "max_depth": validated_max_depth,
+            },
+        )
+
+
 def _normalize_values(
     values: Sequence[str] | str | None,
     *,
@@ -528,6 +596,24 @@ def _normalize_values(
     if required and not normalized:
         raise ValueError(
             f"{field_name} must contain at least one non-empty value"
+        )
+
+    return normalized
+
+
+
+def _validate_hierarchy_depth(max_depth: int) -> int:
+    try:
+        normalized = int(max_depth)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("max_depth must be an integer") from exc
+
+    if normalized < 0:
+        raise ValueError("max_depth must be at least 0")
+
+    if normalized > _MAX_HIERARCHY_DEPTH:
+        raise ValueError(
+            f"max_depth must not exceed {_MAX_HIERARCHY_DEPTH}"
         )
 
     return normalized

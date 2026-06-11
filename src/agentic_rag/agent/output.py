@@ -1,6 +1,12 @@
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 
 class DetectedLanguage(BaseModel):
@@ -179,6 +185,20 @@ class KGToolCall(BaseModel):
             "structure."
         )
     )
+    role: Literal[
+        "anchor",
+        "context",
+        "facet",
+        "alternative",
+    ] = Field(
+        description=(
+            "The semantic role of this call in the retrieval plan. "
+            "'anchor' generates the final candidate Sections, 'context' "
+            "provides clinical or hierarchical support, 'facet' retrieves "
+            "one or more independent requested facets, and 'alternative' "
+            "is an alternative ranking of the same evidence units."
+        )
+    )
     terms: List[str] = Field(
         min_length=1,
         max_length=5,
@@ -192,8 +212,9 @@ class KGToolCall(BaseModel):
         default=False,
         description=(
             "When true, all terms must match the same Section. Use "
-            "false when relevant evidence may be distributed across "
-            "multiple Sections."
+            "false when terms are alternatives, facets, populations, "
+            "measurements, or details that may not be represented as "
+            "Concept nodes on the same Section."
         ),
     )
 
@@ -259,22 +280,89 @@ class KGRetrievalPlan(BaseModel):
             "specific gold documents."
         )
     )
+    combination_mode: Literal[
+        "direct",
+        "same_section",
+        "multiple_facets",
+        "alternative_retrieval",
+    ] = Field(
+        description=(
+            "How the deterministic call results must be combined. Use "
+            "'direct' for one sufficient call, 'same_section' when an "
+            "anchor Section must be supported by a clinical context in "
+            "the same hierarchical branch, 'multiple_facets' when the "
+            "question requires distinct evidence facets, and "
+            "'alternative_retrieval' when calls are alternative rankings "
+            "of the same evidence units and may be fused with RRF."
+        )
+    )
     calls: List[KGToolCall] = Field(
         min_length=1,
         max_length=2,
         description=(
-            "One or two deterministic KG retrieval calls. Use both "
-            "concept and title search when the question combines a "
-            "clinical entity with a distinct intent."
+            "One or two deterministic KG retrieval calls with explicit "
+            "semantic roles."
         ),
     )
+
+    @model_validator(mode="after")
+    def validate_combination_contract(self) -> "KGRetrievalPlan":
+        roles = [call.role for call in self.calls]
+
+        if self.combination_mode == "direct":
+            if len(self.calls) != 1 or roles != ["anchor"]:
+                raise ValueError(
+                    "direct requires exactly one call with role='anchor'"
+                )
+
+        elif self.combination_mode == "same_section":
+            if len(self.calls) != 2 or sorted(roles) != [
+                "anchor",
+                "context",
+            ]:
+                raise ValueError(
+                    "same_section requires exactly one anchor call and "
+                    "one context call"
+                )
+            if self.expected_scope != "single_section":
+                raise ValueError(
+                    "same_section requires expected_scope='single_section'"
+                )
+
+        elif self.combination_mode == "multiple_facets":
+            if "facet" not in roles:
+                raise ValueError(
+                    "multiple_facets requires at least one call with "
+                    "role='facet'"
+                )
+            if any(role not in {"facet", "context"} for role in roles):
+                raise ValueError(
+                    "multiple_facets accepts only facet and optional "
+                    "context calls"
+                )
+            if self.expected_scope == "single_section":
+                raise ValueError(
+                    "multiple_facets cannot use expected_scope="
+                    "'single_section'"
+                )
+
+        elif self.combination_mode == "alternative_retrieval":
+            if len(self.calls) != 2 or any(
+                role != "alternative" for role in roles
+            ):
+                raise ValueError(
+                    "alternative_retrieval requires exactly two calls "
+                    "with role='alternative'"
+                )
+
+        return self
 
     @staticmethod
     def format_instruction() -> str:
         return (
             "Return ONLY a valid JSON object with the keys 'intent', "
-            "'expected_scope', and 'calls'. 'calls' must contain one "
-            "or two objects, each with 'tool', 'terms', and "
+            "'expected_scope', 'combination_mode', and 'calls'. Each "
+            "call must contain 'tool', 'role', 'terms', and "
             "'require_all'. Do not generate Cypher, document IDs, "
             "section IDs, explanations, or an answer to the question."
         )

@@ -79,7 +79,7 @@ def parse_args() -> argparse.Namespace:
         "--top-k",
         type=int,
         default=10,
-        help="Maximum number of final RRF-fused results.",
+        help="Maximum number of final combined results.",
     )
     parser.add_argument(
         "--ranking-mode",
@@ -92,6 +92,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=60,
         help="Reciprocal Rank Fusion constant.",
+    )
+    parser.add_argument(
+        "--hierarchy-max-depth",
+        type=int,
+        default=6,
+        help="Maximum HAS_CHILD distance used for context support.",
     )
     parser.add_argument(
         "--include-summary-sections",
@@ -224,6 +230,7 @@ def save_artifact(
             "final_k": run.final_k,
             "ranking_mode": run.ranking_mode,
             "rrf_k": run.rrf_k,
+            "hierarchy_max_depth": run.hierarchy_max_depth,
             "exclude_summary_sections": run.exclude_summary_sections,
             "document_filtering": None,
             "gold_annotations_used_for_retrieval": False,
@@ -271,7 +278,9 @@ def print_run(run: KGRetrievalRun) -> None:
             f"latency={execution.latency_ms:.1f} ms"
         )
         print(
-            "    terms=",
+            "    role=",
+            call.role,
+            "terms=",
             call.terms,
             "require_all=",
             call.require_all,
@@ -287,22 +296,51 @@ def print_run(run: KGRetrievalRun) -> None:
             )
 
     print()
-    print("Final RRF ranking:")
+    print("Final combined ranking:")
     if not run.results:
         print("<no results>")
 
     for result in run.results:
         source_trace = ", ".join(
-            f"call={item.call_index}:rank={item.source_rank}"
+            f"call={item.call_index}:{item.role}:rank={item.source_rank}"
             for item in result.contributions
         )
+        score_text = (
+            f"score={result.combination_score:.8f}"
+            if result.combination_score is not None
+            else "score=<n/a>"
+        )
+        context_text = (
+            f"context_supported={result.context_supported}"
+            if result.combination_method == "hierarchical_context"
+            else ""
+        )
+        facets_text = (
+            f"facets={result.covered_facets}"
+            if result.covered_facets
+            else ""
+        )
+        diagnostics = " | ".join(
+            item for item in (context_text, facets_text) if item
+        )
+        if diagnostics:
+            diagnostics = " | " + diagnostics
+
         print(
             f"{result.rank}. {result.document_id} | "
             f"{result.printed_section_id or result.section_id} | "
-            f"{result.title} | rrf={result.fusion_score:.8f} | "
-            f"best_source_rank={result.best_source_rank} | "
-            f"{source_trace}"
+            f"{result.title} | method={result.combination_method} | "
+            f"{score_text} | best_source_rank={result.best_source_rank} | "
+            f"{source_trace}{diagnostics}"
         )
+
+        for match in result.context_matches[:3]:
+            print(
+                "      context:",
+                match.context_uid,
+                f"rank={match.context_rank}",
+                f"distance={match.hierarchy_distance}",
+            )
 
 
 def main() -> None:
@@ -346,6 +384,7 @@ def main() -> None:
             final_k=args.top_k,
             ranking_mode=args.ranking_mode,
             rrf_k=args.rrf_k,
+            hierarchy_max_depth=args.hierarchy_max_depth,
             exclude_summary_sections=(
                 not args.include_summary_sections
             ),

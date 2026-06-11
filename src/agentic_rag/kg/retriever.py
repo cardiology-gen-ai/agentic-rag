@@ -1,8 +1,9 @@
 """Orchestration layer for parameterized knowledge-graph retrieval.
 
-This module connects the structured LLM router to the deterministic Neo4j
-Section tools. It intentionally does not calculate evaluation metrics and does
-not accept gold document or section identifiers.
+The module connects the structured LLM router to deterministic Neo4j Section
+retrieval tools. It supports direct retrieval, hierarchy-aware composition,
+facet-preserving composition, and RRF for genuinely alternative rankings.
+It does not calculate evaluation metrics and never accepts gold identifiers.
 """
 
 from __future__ import annotations
@@ -31,10 +32,15 @@ KGToolExecutionStatus = Literal[
     "execution_error",
 ]
 
+KGCombinationMethod = Literal[
+    "direct",
+    "hierarchical_context",
+    "facet_preserving",
+    "rrf",
+]
+
 
 class KGRouterProtocol(Protocol):
-    """Minimal router interface required by ``KGParameterizedRetriever``."""
-
     def route(
         self,
         question: str,
@@ -45,8 +51,6 @@ class KGRouterProtocol(Protocol):
 
 
 class KGSectionToolsProtocol(Protocol):
-    """Minimal deterministic-tool interface required by the retriever."""
-
     def search_sections_by_concepts(
         self,
         concepts: Sequence[str] | str,
@@ -71,9 +75,18 @@ class KGSectionToolsProtocol(Protocol):
     ) -> list[KGSectionResult]:
         ...
 
+    def find_hierarchical_context_matches(
+        self,
+        anchor_uids: Sequence[str] | str,
+        context_uids: Sequence[str] | str,
+        *,
+        max_depth: int = 6,
+    ) -> list[dict[str, Any]]:
+        ...
 
-class KGRRFContribution(BaseModel):
-    """One tool-ranking contribution to a fused Section result."""
+
+class KGResultContribution(BaseModel):
+    """One source-ranking contribution to a combined Section result."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -82,17 +95,45 @@ class KGRRFContribution(BaseModel):
         "search_sections_by_concepts",
         "search_sections_by_title",
     ]
+    role: Literal[
+        "anchor",
+        "context",
+        "facet",
+        "alternative",
+    ]
     source_rank: int = Field(ge=1)
-    reciprocal_rank_score: float = Field(gt=0)
+    reciprocal_rank_score: float | None = Field(default=None, gt=0)
 
 
-class KGFusedSectionResult(KGSectionResult):
-    """Section result enriched with deterministic RRF diagnostics."""
+class KGHierarchyContextMatch(BaseModel):
+    """Structural support connecting a context Section to an anchor."""
 
-    fusion_method: Literal["rrf"] = "rrf"
-    fusion_score: float = Field(gt=0)
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    context_uid: str
+    context_document_id: str | None = None
+    context_section_id: str | None = None
+    context_printed_section_id: str | None = None
+    context_title: str | None = None
+    context_call_index: int = Field(ge=0)
+    context_rank: int = Field(ge=1)
+    hierarchy_distance: int = Field(ge=0)
+
+
+class KGCombinedSectionResult(KGSectionResult):
+    """Section result enriched with deterministic combination diagnostics."""
+
+    combination_method: KGCombinationMethod
+    combination_score: float | None = None
     best_source_rank: int = Field(ge=1)
-    contributions: list[KGRRFContribution] = Field(min_length=1)
+    contributions: list[KGResultContribution] = Field(min_length=1)
+    context_supported: bool = False
+    context_matches: list[KGHierarchyContextMatch] = Field(default_factory=list)
+    covered_facets: list[str] = Field(default_factory=list)
+
+
+# Backward-compatible import name used by the first RRF prototype.
+KGFusedSectionResult = KGCombinedSectionResult
 
 
 class KGToolExecution(BaseModel):
@@ -165,12 +206,13 @@ class KGRetrievalRun(BaseModel):
     status: KGRetrievalStatus
     plan: KGRetrievalPlan | None = None
     tool_executions: list[KGToolExecution] = Field(default_factory=list)
-    results: list[KGFusedSectionResult] = Field(default_factory=list)
+    results: list[KGCombinedSectionResult] = Field(default_factory=list)
 
     candidate_k: int = Field(ge=1)
     final_k: int = Field(ge=1)
     ranking_mode: KGRankingMode
     rrf_k: int = Field(ge=1)
+    hierarchy_max_depth: int = Field(ge=0)
     exclude_summary_sections: bool = True
 
     latency_ms: float = Field(ge=0)
@@ -225,9 +267,9 @@ class KGRetrievalRun(BaseModel):
                 )
 
         elif self.status == "partial_success":
-            if not failed_calls:
+            if not self.results:
                 raise ValueError(
-                    "partial_success requires at least one failed call"
+                    "partial_success requires at least one result"
                 )
             if not self.error:
                 raise ValueError(
@@ -245,10 +287,6 @@ class KGRetrievalRun(BaseModel):
         elif self.status == "execution_error":
             if self.results:
                 raise ValueError("execution_error cannot contain results")
-            if not failed_calls:
-                raise ValueError(
-                    "execution_error requires at least one failed call"
-                )
             if not self.error:
                 raise ValueError(
                     "execution_error requires an error summary"
@@ -262,7 +300,7 @@ class KGRetrievalRun(BaseModel):
 
 
 class KGParameterizedRetriever:
-    """Route one question, execute controlled tools, and fuse their rankings."""
+    """Route one question, execute controlled tools, and combine results."""
 
     def __init__(
         self,
@@ -273,6 +311,7 @@ class KGParameterizedRetriever:
         final_k: int = 10,
         ranking_mode: KGRankingMode = "weighted_match",
         rrf_k: int = 60,
+        hierarchy_max_depth: int = 6,
         exclude_summary_sections: bool = True,
     ) -> None:
         self.router = router
@@ -291,6 +330,11 @@ class KGParameterizedRetriever:
             rrf_k,
             field_name="rrf_k",
         )
+        self.hierarchy_max_depth = _validate_non_negative_int(
+            hierarchy_max_depth,
+            field_name="hierarchy_max_depth",
+            maximum=8,
+        )
         self.ranking_mode = _validate_ranking_mode(ranking_mode)
         self.exclude_summary_sections = bool(exclude_summary_sections)
 
@@ -300,13 +344,6 @@ class KGParameterizedRetriever:
         *,
         router_config: Any | None = None,
     ) -> KGRetrievalRun:
-        """Execute the complete retrieval path for one question.
-
-        Gold document and section identifiers are deliberately unavailable to
-        this method. Every tool call searches the full graph using
-        ``document_ids=None``.
-        """
-
         normalized_question = _validate_question(question)
         started = time.perf_counter()
 
@@ -326,6 +363,7 @@ class KGParameterizedRetriever:
                 final_k=self.final_k,
                 ranking_mode=self.ranking_mode,
                 rrf_k=self.rrf_k,
+                hierarchy_max_depth=self.hierarchy_max_depth,
                 exclude_summary_sections=self.exclude_summary_sections,
                 latency_ms=_elapsed_ms(started),
                 error=_format_exception(exc),
@@ -336,11 +374,19 @@ class KGParameterizedRetriever:
             for index, call in enumerate(plan.calls)
         ]
 
-        fused_results = reciprocal_rank_fusion(
-            executions,
-            rrf_k=self.rrf_k,
-            top_k=self.final_k,
-        )
+        combination_error: str | None = None
+        try:
+            combined_results = self._combine(plan, executions)
+        except Exception as exc:
+            combination_error = (
+                "Combination failed; used RRF fallback: "
+                + _format_exception(exc)
+            )
+            combined_results = reciprocal_rank_fusion(
+                executions,
+                rrf_k=self.rrf_k,
+                top_k=self.final_k,
+            )
 
         failed_executions = [
             execution
@@ -348,35 +394,38 @@ class KGParameterizedRetriever:
             if execution.status == "execution_error"
         ]
 
+        errors: list[str] = []
         if failed_executions:
-            error_summary = "; ".join(
+            errors.extend(
                 f"call {execution.call_index} "
                 f"({execution.call.tool}): {execution.error}"
                 for execution in failed_executions
             )
+        if combination_error:
+            errors.append(combination_error)
 
-            status: KGRetrievalStatus = (
-                "partial_success"
-                if len(failed_executions) < len(executions)
-                else "execution_error"
-            )
-        elif fused_results:
+        error_summary = "; ".join(errors) or None
+
+        if combined_results and error_summary:
+            status: KGRetrievalStatus = "partial_success"
+        elif combined_results:
             status = "success"
-            error_summary = None
+        elif failed_executions:
+            status = "execution_error"
         else:
             status = "no_results"
-            error_summary = None
 
         return KGRetrievalRun(
             question=normalized_question,
             status=status,
             plan=plan,
             tool_executions=executions,
-            results=fused_results,
+            results=combined_results,
             candidate_k=self.candidate_k,
             final_k=self.final_k,
             ranking_mode=self.ranking_mode,
             rrf_k=self.rrf_k,
+            hierarchy_max_depth=self.hierarchy_max_depth,
             exclude_summary_sections=self.exclude_summary_sections,
             latency_ms=_elapsed_ms(started),
             error=error_summary,
@@ -388,12 +437,43 @@ class KGParameterizedRetriever:
         *,
         router_config: Any | None = None,
     ) -> dict[str, Any]:
-        """Return a JSON-serializable retrieval trace."""
-
         return self.retrieve(
             question,
             router_config=router_config,
         ).model_dump(mode="json")
+
+    def _combine(
+        self,
+        plan: KGRetrievalPlan,
+        executions: Sequence[KGToolExecution],
+    ) -> list[KGCombinedSectionResult]:
+        if plan.combination_mode == "direct":
+            return direct_results(executions, top_k=self.final_k)
+
+        if plan.combination_mode == "same_section":
+            return hierarchical_context_rerank(
+                executions,
+                tools=self.tools,
+                top_k=self.final_k,
+                max_depth=self.hierarchy_max_depth,
+            )
+
+        if plan.combination_mode == "multiple_facets":
+            return facet_preserving_merge(
+                executions,
+                top_k=self.final_k,
+            )
+
+        if plan.combination_mode == "alternative_retrieval":
+            return reciprocal_rank_fusion(
+                executions,
+                rrf_k=self.rrf_k,
+                top_k=self.final_k,
+            )
+
+        raise ValueError(
+            f"Unsupported combination mode: {plan.combination_mode!r}"
+        )
 
     def _execute_call(
         self,
@@ -449,19 +529,262 @@ class KGParameterizedRetriever:
         )
 
 
+def direct_results(
+    executions: Sequence[KGToolExecution],
+    *,
+    top_k: int | None = None,
+) -> list[KGCombinedSectionResult]:
+    execution = next(
+        (
+            item
+            for item in executions
+            if item.status == "success" and item.call.role == "anchor"
+        ),
+        None,
+    )
+    if execution is None:
+        return []
+
+    results: list[KGCombinedSectionResult] = []
+    seen: set[str] = set()
+
+    for fallback_rank, result in enumerate(execution.results, start=1):
+        if result.section_uid in seen:
+            continue
+        seen.add(result.section_uid)
+        source_rank = result.rank or fallback_rank
+        results.append(
+            _combined_result(
+                result,
+                rank=len(results) + 1,
+                method="direct",
+                best_source_rank=source_rank,
+                contributions=[
+                    _source_contribution(execution, source_rank)
+                ],
+            )
+        )
+
+        if top_k is not None and len(results) >= top_k:
+            break
+
+    return results
+
+
+def hierarchical_context_rerank(
+    executions: Sequence[KGToolExecution],
+    *,
+    tools: KGSectionToolsProtocol,
+    top_k: int | None = None,
+    max_depth: int = 6,
+) -> list[KGCombinedSectionResult]:
+    anchor_execution = _execution_by_role(executions, "anchor")
+    context_execution = _execution_by_role(executions, "context")
+
+    if anchor_execution is None or anchor_execution.status != "success":
+        return []
+
+    anchors = _deduplicate_results(anchor_execution.results)
+    context_results = (
+        _deduplicate_results(context_execution.results)
+        if context_execution is not None
+        and context_execution.status == "success"
+        else []
+    )
+
+    context_by_uid = {
+        item.section_uid: (item.rank or index)
+        for index, item in enumerate(context_results, start=1)
+    }
+
+    support_by_anchor: dict[str, list[KGHierarchyContextMatch]] = {}
+
+    if context_results:
+        rows = tools.find_hierarchical_context_matches(
+            [item.section_uid for item in anchors],
+            [item.section_uid for item in context_results],
+            max_depth=max_depth,
+        )
+
+        for row in rows:
+            anchor_uid = str(row.get("anchor_uid") or "").strip()
+            context_uid = str(row.get("context_uid") or "").strip()
+            if not anchor_uid or context_uid not in context_by_uid:
+                continue
+
+            match = KGHierarchyContextMatch(
+                context_uid=context_uid,
+                context_document_id=row.get("context_document_id"),
+                context_section_id=row.get("context_section_id"),
+                context_printed_section_id=row.get(
+                    "context_printed_section_id"
+                ),
+                context_title=row.get("context_title"),
+                context_call_index=context_execution.call_index,
+                context_rank=context_by_uid[context_uid],
+                hierarchy_distance=int(row.get("hierarchy_distance", 0)),
+            )
+            support_by_anchor.setdefault(anchor_uid, []).append(match)
+
+    sortable: list[
+        tuple[tuple[int, int, int, int, str], KGCombinedSectionResult]
+    ] = []
+
+    for fallback_rank, anchor in enumerate(anchors, start=1):
+        anchor_rank = anchor.rank or fallback_rank
+        matches = sorted(
+            support_by_anchor.get(anchor.section_uid, []),
+            key=lambda item: (
+                item.context_rank,
+                item.hierarchy_distance,
+                item.context_uid,
+            ),
+        )
+        supported = bool(matches)
+        best_context_rank = matches[0].context_rank if matches else 10**9
+        best_distance = matches[0].hierarchy_distance if matches else 10**9
+
+        contributions = [
+            _source_contribution(anchor_execution, anchor_rank)
+        ]
+        if context_execution is not None:
+            contributions.extend(
+                _source_contribution(
+                    context_execution,
+                    match.context_rank,
+                )
+                for match in matches
+            )
+
+        combined = _combined_result(
+            anchor,
+            rank=1,
+            method="hierarchical_context",
+            best_source_rank=min(
+                [anchor_rank]
+                + [match.context_rank for match in matches]
+            ),
+            contributions=contributions,
+            context_supported=supported,
+            context_matches=matches,
+        )
+
+        sort_key = (
+            0 if supported else 1,
+            best_context_rank,
+            best_distance,
+            anchor_rank,
+            anchor.section_uid,
+        )
+        sortable.append((sort_key, combined))
+
+    sortable.sort(key=lambda item: item[0])
+    combined_results = [item[1] for item in sortable]
+
+    if top_k is not None:
+        combined_results = combined_results[:top_k]
+
+    return [
+        item.model_copy(update={"rank": rank})
+        for rank, item in enumerate(combined_results, start=1)
+    ]
+
+
+def facet_preserving_merge(
+    executions: Sequence[KGToolExecution],
+    *,
+    top_k: int | None = None,
+) -> list[KGCombinedSectionResult]:
+    facet_executions = [
+        item
+        for item in executions
+        if item.status == "success" and item.call.role == "facet"
+    ]
+    if not facet_executions:
+        return []
+
+    facet_terms: list[str] = []
+    seen_terms: set[str] = set()
+    for execution in facet_executions:
+        for term in execution.call.terms:
+            key = term.casefold()
+            if key not in seen_terms:
+                seen_terms.add(key)
+                facet_terms.append(term)
+
+    candidates: list[tuple[KGToolExecution, KGSectionResult, int]] = []
+    seen_candidate_keys: set[tuple[int, str]] = set()
+
+    for execution in facet_executions:
+        for fallback_rank, result in enumerate(execution.results, start=1):
+            key = (execution.call_index, result.section_uid)
+            if key in seen_candidate_keys:
+                continue
+            seen_candidate_keys.add(key)
+            candidates.append(
+                (execution, result, result.rank or fallback_rank)
+            )
+
+    selected_uids: list[str] = []
+    coverage: dict[str, list[str]] = {}
+    representative: dict[
+        str, tuple[KGToolExecution, KGSectionResult, int]
+    ] = {}
+
+    for term in facet_terms:
+        normalized_term = term.casefold()
+        for execution, result, source_rank in candidates:
+            matched_terms = {
+                item.casefold() for item in result.matched_terms
+            }
+            if normalized_term not in matched_terms:
+                continue
+
+            coverage.setdefault(result.section_uid, []).append(term)
+            representative.setdefault(
+                result.section_uid,
+                (execution, result, source_rank),
+            )
+            if result.section_uid not in selected_uids:
+                selected_uids.append(result.section_uid)
+            break
+
+    for execution, result, source_rank in candidates:
+        representative.setdefault(
+            result.section_uid,
+            (execution, result, source_rank),
+        )
+        if result.section_uid not in selected_uids:
+            selected_uids.append(result.section_uid)
+
+    if top_k is not None:
+        selected_uids = selected_uids[:top_k]
+
+    results: list[KGCombinedSectionResult] = []
+    for rank, uid in enumerate(selected_uids, start=1):
+        execution, result, source_rank = representative[uid]
+        results.append(
+            _combined_result(
+                result,
+                rank=rank,
+                method="facet_preserving",
+                best_source_rank=source_rank,
+                contributions=[
+                    _source_contribution(execution, source_rank)
+                ],
+                covered_facets=coverage.get(uid, []),
+            )
+        )
+
+    return results
+
+
 def reciprocal_rank_fusion(
     executions: Sequence[KGToolExecution],
     *,
     rrf_k: int = 60,
     top_k: int | None = None,
-) -> list[KGFusedSectionResult]:
-    """Fuse successful tool rankings using Reciprocal Rank Fusion.
-
-    Results are deduplicated by the graph-level ``section_uid``. The original
-    per-tool results remain available inside ``KGToolExecution``; the fused
-    result adds a separate ``fusion_score`` and contribution trace.
-    """
-
+) -> list[KGCombinedSectionResult]:
     validated_rrf_k = _validate_positive_int(
         rrf_k,
         field_name="rrf_k",
@@ -477,7 +800,7 @@ def reciprocal_rank_fusion(
     )
 
     fusion_scores: dict[str, float] = {}
-    contributions: dict[str, list[KGRRFContribution]] = {}
+    contributions: dict[str, list[KGResultContribution]] = {}
     representative_results: dict[str, KGSectionResult] = {}
     representative_keys: dict[str, tuple[int, int]] = {}
 
@@ -486,42 +809,30 @@ def reciprocal_rank_fusion(
             continue
 
         seen_in_call: set[str] = set()
-
-        for fallback_rank, result in enumerate(
-            execution.results,
-            start=1,
-        ):
+        for fallback_rank, result in enumerate(execution.results, start=1):
             section_uid = result.section_uid
             if section_uid in seen_in_call:
                 continue
             seen_in_call.add(section_uid)
 
             source_rank = result.rank or fallback_rank
-            contribution_score = 1.0 / (
-                validated_rrf_k + source_rank
-            )
-
-            contribution = KGRRFContribution(
-                call_index=execution.call_index,
-                tool=execution.call.tool,
-                source_rank=source_rank,
-                reciprocal_rank_score=contribution_score,
+            reciprocal_score = 1.0 / (validated_rrf_k + source_rank)
+            contribution = _source_contribution(
+                execution,
+                source_rank,
+                reciprocal_rank_score=reciprocal_score,
             )
 
             fusion_scores[section_uid] = (
                 fusion_scores.get(section_uid, 0.0)
-                + contribution_score
+                + reciprocal_score
             )
             contributions.setdefault(section_uid, []).append(
                 contribution
             )
 
-            representative_key = (
-                source_rank,
-                execution.call_index,
-            )
+            representative_key = (source_rank, execution.call_index)
             current_key = representative_keys.get(section_uid)
-
             if current_key is None or representative_key < current_key:
                 representative_keys[section_uid] = representative_key
                 representative_results[section_uid] = result
@@ -539,37 +850,92 @@ def reciprocal_rank_fusion(
     if validated_top_k is not None:
         ordered_uids = ordered_uids[:validated_top_k]
 
-    fused_results: list[KGFusedSectionResult] = []
-
-    for fused_rank, section_uid in enumerate(ordered_uids, start=1):
-        representative = representative_results[section_uid]
+    results: list[KGCombinedSectionResult] = []
+    for rank, section_uid in enumerate(ordered_uids, start=1):
         section_contributions = sorted(
             contributions[section_uid],
-            key=lambda contribution: (
-                contribution.call_index,
-                contribution.source_rank,
-            ),
+            key=lambda item: (item.call_index, item.source_rank),
         )
-
-        payload = representative.model_dump(mode="python")
-        payload.update(
-            {
-                "rank": fused_rank,
-                "fusion_method": "rrf",
-                "fusion_score": fusion_scores[section_uid],
-                "best_source_rank": min(
-                    contribution.source_rank
-                    for contribution in section_contributions
+        results.append(
+            _combined_result(
+                representative_results[section_uid],
+                rank=rank,
+                method="rrf",
+                combination_score=fusion_scores[section_uid],
+                best_source_rank=min(
+                    item.source_rank for item in section_contributions
                 ),
-                "contributions": section_contributions,
-            }
+                contributions=section_contributions,
+            )
         )
 
-        fused_results.append(
-            KGFusedSectionResult.model_validate(payload)
-        )
+    return results
 
-    return fused_results
+
+def _execution_by_role(
+    executions: Sequence[KGToolExecution],
+    role: str,
+) -> KGToolExecution | None:
+    return next(
+        (item for item in executions if item.call.role == role),
+        None,
+    )
+
+
+def _source_contribution(
+    execution: KGToolExecution,
+    source_rank: int,
+    *,
+    reciprocal_rank_score: float | None = None,
+) -> KGResultContribution:
+    return KGResultContribution(
+        call_index=execution.call_index,
+        tool=execution.call.tool,
+        role=execution.call.role,
+        source_rank=source_rank,
+        reciprocal_rank_score=reciprocal_rank_score,
+    )
+
+
+def _combined_result(
+    result: KGSectionResult,
+    *,
+    rank: int,
+    method: KGCombinationMethod,
+    best_source_rank: int,
+    contributions: Sequence[KGResultContribution],
+    combination_score: float | None = None,
+    context_supported: bool = False,
+    context_matches: Sequence[KGHierarchyContextMatch] = (),
+    covered_facets: Sequence[str] = (),
+) -> KGCombinedSectionResult:
+    payload = result.model_dump(mode="python")
+    payload.update(
+        {
+            "rank": rank,
+            "combination_method": method,
+            "combination_score": combination_score,
+            "best_source_rank": best_source_rank,
+            "contributions": list(contributions),
+            "context_supported": context_supported,
+            "context_matches": list(context_matches),
+            "covered_facets": list(covered_facets),
+        }
+    )
+    return KGCombinedSectionResult.model_validate(payload)
+
+
+def _deduplicate_results(
+    results: Sequence[KGSectionResult],
+) -> list[KGSectionResult]:
+    output: list[KGSectionResult] = []
+    seen: set[str] = set()
+    for item in results:
+        if item.section_uid in seen:
+            continue
+        seen.add(item.section_uid)
+        output.append(item)
+    return output
 
 
 def _validate_question(question: str) -> str:
@@ -592,6 +958,28 @@ def _validate_positive_int(
 
     if normalized < 1:
         raise ValueError(f"{field_name} must be at least 1")
+
+    if maximum is not None and normalized > maximum:
+        raise ValueError(
+            f"{field_name} must not exceed {maximum}"
+        )
+
+    return normalized
+
+
+def _validate_non_negative_int(
+    value: int,
+    *,
+    field_name: str,
+    maximum: int | None = None,
+) -> int:
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field_name} must be an integer") from exc
+
+    if normalized < 0:
+        raise ValueError(f"{field_name} must be at least 0")
 
     if maximum is not None and normalized > maximum:
         raise ValueError(

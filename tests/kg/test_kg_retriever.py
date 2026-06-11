@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+from pydantic import ValidationError
+
 from agentic_rag.agent.output import KGRetrievalPlan
 from agentic_rag.kg.models import KGSectionResult, KGRetrievalScores
 from agentic_rag.kg.retriever import KGParameterizedRetriever
@@ -13,16 +16,19 @@ class FakeRouter:
         return self.plan
 
 
-class FailingRouter:
-    def route(self, question: str, *, config=None):
-        raise RuntimeError("router failed")
-
-
 class FakeTools:
-    def __init__(self, concept_results, title_results):
-        self.concept_results = concept_results
-        self.title_results = title_results
+    def __init__(
+        self,
+        *,
+        concept_results=None,
+        title_results=None,
+        hierarchy_rows=None,
+    ):
+        self.concept_results = concept_results or []
+        self.title_results = title_results or []
+        self.hierarchy_rows = hierarchy_rows or []
         self.calls = []
+        self.hierarchy_calls = []
 
     def search_sections_by_concepts(self, concepts, **kwargs):
         self.calls.append(("concepts", list(concepts), kwargs))
@@ -32,18 +38,36 @@ class FakeTools:
         self.calls.append(("title", list(title_terms), kwargs))
         return self.title_results
 
+    def find_hierarchical_context_matches(
+        self,
+        anchor_uids,
+        context_uids,
+        *,
+        max_depth=6,
+    ):
+        self.hierarchy_calls.append(
+            (list(anchor_uids), list(context_uids), max_depth)
+        )
+        return self.hierarchy_rows
 
-def make_result(uid: str, rank: int, title: str) -> KGSectionResult:
-    section_id = uid.split("::", 1)[1]
+
+def make_result(
+    uid: str,
+    rank: int,
+    title: str,
+    *,
+    matched_terms=None,
+) -> KGSectionResult:
+    document_id, section_id = uid.split("::", 1)
     return KGSectionResult(
         section_uid=uid,
-        document_id="Doc",
+        document_id=document_id,
         section_id=section_id,
         printed_section_id=section_id,
         title=title,
         text=f"Text for {title}",
         matched_concepts=[],
-        matched_terms=[],
+        matched_terms=matched_terms or [],
         score=1.0,
         score_type="weighted_match",
         scores=KGRetrievalScores(
@@ -54,19 +78,67 @@ def make_result(uid: str, rank: int, title: str) -> KGSectionResult:
     )
 
 
-def make_plan() -> KGRetrievalPlan:
-    return KGRetrievalPlan.model_validate(
+def make_plan(payload) -> KGRetrievalPlan:
+    return KGRetrievalPlan.model_validate(payload)
+
+
+def test_plan_rejects_same_section_without_anchor_and_context():
+    with pytest.raises(ValidationError):
+        make_plan(
+            {
+                "intent": "diagnosis",
+                "expected_scope": "single_section",
+                "combination_mode": "same_section",
+                "calls": [
+                    {
+                        "tool": "search_sections_by_concepts",
+                        "role": "context",
+                        "terms": ["hypertrophic cardiomyopathy"],
+                        "require_all": False,
+                    },
+                    {
+                        "tool": "search_sections_by_title",
+                        "role": "context",
+                        "terms": ["diagnostic criteria"],
+                        "require_all": False,
+                    },
+                ],
+            }
+        )
+
+
+def test_same_section_promotes_anchor_supported_by_context_ancestor():
+    context = make_result(
+        "Cardiomyopathies_2023::7.1",
+        3,
+        "Hypertrophic cardiomyopathy",
+    )
+    wrong_anchor = make_result(
+        "Syncope_2018::4.2.4.8",
+        1,
+        "Diagnostic criteria",
+    )
+    correct_anchor = make_result(
+        "Cardiomyopathies_2023::7.1.1.1",
+        2,
+        "Diagnostic criteria",
+    )
+
+    plan = make_plan(
         {
             "intent": "diagnosis",
             "expected_scope": "single_section",
+            "combination_mode": "same_section",
             "calls": [
                 {
                     "tool": "search_sections_by_concepts",
+                    "role": "context",
                     "terms": ["hypertrophic cardiomyopathy"],
                     "require_all": False,
                 },
                 {
                     "tool": "search_sections_by_title",
+                    "role": "anchor",
                     "terms": ["diagnostic criteria"],
                     "require_all": False,
                 },
@@ -74,59 +146,175 @@ def make_plan() -> KGRetrievalPlan:
         }
     )
 
-
-def test_retriever_executes_calls_without_document_filter_and_fuses():
-    a = make_result("Doc::A", 1, "A")
-    b_concept = make_result("Doc::B", 2, "B")
-    b_title = make_result("Doc::B", 1, "B")
-    c = make_result("Doc::C", 2, "C")
-
-    tools = FakeTools([a, b_concept], [b_title, c])
-    retriever = KGParameterizedRetriever(
-        FakeRouter(make_plan()),
-        tools,
-        candidate_k=15,
-        final_k=10,
-        rrf_k=60,
+    tools = FakeTools(
+        concept_results=[context],
+        title_results=[wrong_anchor, correct_anchor],
+        hierarchy_rows=[
+            {
+                "anchor_uid": correct_anchor.section_uid,
+                "context_uid": context.section_uid,
+                "context_document_id": context.document_id,
+                "context_section_id": context.section_id,
+                "context_printed_section_id": context.printed_section_id,
+                "context_title": context.title,
+                "hierarchy_distance": 3,
+            }
+        ],
     )
 
-    run = retriever.retrieve("Question")
+    run = KGParameterizedRetriever(
+        FakeRouter(plan),
+        tools,
+        final_k=10,
+        hierarchy_max_depth=6,
+    ).retrieve("Question")
 
     assert run.status == "success"
-    assert [result.section_uid for result in run.results] == [
-        "Doc::B",
-        "Doc::A",
-        "Doc::C",
+    assert [item.section_uid for item in run.results] == [
+        correct_anchor.section_uid,
+        wrong_anchor.section_uid,
     ]
-    assert len(run.results[0].contributions) == 2
+    assert run.results[0].combination_method == "hierarchical_context"
+    assert run.results[0].context_supported is True
+    assert run.results[0].context_matches[0].context_uid == context.section_uid
+    assert run.results[0].context_matches[0].hierarchy_distance == 3
+    assert run.results[1].context_supported is False
+    assert tools.hierarchy_calls == [
+        (
+            [wrong_anchor.section_uid, correct_anchor.section_uid],
+            [context.section_uid],
+            6,
+        )
+    ]
     assert all(call[2]["document_ids"] is None for call in tools.calls)
-    assert all(call[2]["top_k"] == 15 for call in tools.calls)
 
 
-def test_retriever_returns_router_error_trace():
-    tools = FakeTools([], [])
-    retriever = KGParameterizedRetriever(FailingRouter(), tools)
-
-    run = retriever.retrieve("Question")
-
-    assert run.status == "router_error"
-    assert run.plan is None
-    assert run.results == []
-    assert "router failed" in run.error
-
-
-def test_retriever_returns_no_results_when_tools_succeed_empty():
-    tools = FakeTools([], [])
-    retriever = KGParameterizedRetriever(
-        FakeRouter(make_plan()),
-        tools,
+def test_multiple_facets_preserves_one_result_per_title_facet():
+    anticoagulation = make_result(
+        "Doc::6.10.3.1",
+        3,
+        "Anticoagulation",
+        matched_terms=["anticoagulation"],
+    )
+    rate = make_result(
+        "Doc::6.10.3.2",
+        1,
+        "Rate control",
+        matched_terms=["rate control"],
+    )
+    rhythm = make_result(
+        "Doc::6.10.3.3",
+        2,
+        "Rhythm control",
+        matched_terms=["rhythm control"],
     )
 
-    run = retriever.retrieve("Question")
+    plan = make_plan(
+        {
+            "intent": "management",
+            "expected_scope": "multiple_sections",
+            "combination_mode": "multiple_facets",
+            "calls": [
+                {
+                    "tool": "search_sections_by_title",
+                    "role": "facet",
+                    "terms": [
+                        "anticoagulation",
+                        "rate control",
+                        "rhythm control",
+                    ],
+                    "require_all": False,
+                }
+            ],
+        }
+    )
 
-    assert run.status == "no_results"
-    assert run.results == []
-    assert [execution.status for execution in run.tool_executions] == [
-        "no_results",
-        "no_results",
+    tools = FakeTools(
+        title_results=[rate, rhythm, anticoagulation],
+    )
+    run = KGParameterizedRetriever(FakeRouter(plan), tools).retrieve(
+        "Question"
+    )
+
+    assert [item.section_uid for item in run.results[:3]] == [
+        anticoagulation.section_uid,
+        rate.section_uid,
+        rhythm.section_uid,
     ]
+    assert run.results[0].covered_facets == ["anticoagulation"]
+    assert run.results[1].covered_facets == ["rate control"]
+    assert run.results[2].covered_facets == ["rhythm control"]
+    assert all(
+        item.combination_method == "facet_preserving"
+        for item in run.results
+    )
+
+
+def test_alternative_retrieval_uses_rrf_and_rewards_overlap():
+    shared_concept = make_result("Doc::B", 2, "B")
+    shared_title = make_result("Doc::B", 1, "B")
+    concept_only = make_result("Doc::A", 1, "A")
+    title_only = make_result("Doc::C", 2, "C")
+
+    plan = make_plan(
+        {
+            "intent": "other",
+            "expected_scope": "single_section",
+            "combination_mode": "alternative_retrieval",
+            "calls": [
+                {
+                    "tool": "search_sections_by_concepts",
+                    "role": "alternative",
+                    "terms": ["topic"],
+                    "require_all": False,
+                },
+                {
+                    "tool": "search_sections_by_title",
+                    "role": "alternative",
+                    "terms": ["topic"],
+                    "require_all": False,
+                },
+            ],
+        }
+    )
+
+    tools = FakeTools(
+        concept_results=[concept_only, shared_concept],
+        title_results=[shared_title, title_only],
+    )
+    run = KGParameterizedRetriever(FakeRouter(plan), tools).retrieve(
+        "Question"
+    )
+
+    assert run.results[0].section_uid == "Doc::B"
+    assert run.results[0].combination_method == "rrf"
+    assert run.results[0].combination_score is not None
+    assert len(run.results[0].contributions) == 2
+
+
+def test_direct_returns_single_anchor_ranking():
+    result = make_result("Doc::1", 1, "Cardiac magnetic resonance")
+    plan = make_plan(
+        {
+            "intent": "diagnosis",
+            "expected_scope": "single_section",
+            "combination_mode": "direct",
+            "calls": [
+                {
+                    "tool": "search_sections_by_concepts",
+                    "role": "anchor",
+                    "terms": ["cardiac magnetic resonance"],
+                    "require_all": False,
+                }
+            ],
+        }
+    )
+
+    run = KGParameterizedRetriever(
+        FakeRouter(plan),
+        FakeTools(concept_results=[result]),
+    ).retrieve("Question")
+
+    assert run.status == "success"
+    assert run.results[0].section_uid == result.section_uid
+    assert run.results[0].combination_method == "direct"

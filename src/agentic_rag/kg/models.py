@@ -69,8 +69,14 @@ class KGSectionResult(BaseModel):
     section_uid: str
     document_id: str
     section_id: str | None = None
+    printed_section_id: str | None = None
     title: str | None = None
+    level: int | None = None
     text: str
+    page_start: int | None = None
+    page_end: int | None = None
+    part_index: int | None = None
+    part_count: int | None = None
     matched_concepts: list[str] = Field(default_factory=list)
     matched_terms: list[str] = Field(default_factory=list)
     score: float | None = None
@@ -95,7 +101,7 @@ class KGSectionResult(BaseModel):
             raise ValueError("Section text must be non-empty")
         return original
 
-    @field_validator("section_id", "title")
+    @field_validator("section_id", "printed_section_id", "title")
     @classmethod
     def normalize_optional_text(cls, value: str | None) -> str | None:
         if value is None:
@@ -170,9 +176,15 @@ class KGSectionResult(BaseModel):
         return cls(
             section_uid=data["section_uid"],
             document_id=data["document_id"],
-            section_id=data["section_id"],
-            title=data["title"],
+            section_id=data.get("section_id"),
+            printed_section_id=data.get("printed_section_id"),
+            title=data.get("title"),
+            level=data.get("level"),
             text=data["text"],
+            page_start=data.get("page_start"),
+            page_end=data.get("page_end"),
+            part_index=data.get("part_index"),
+            part_count=data.get("part_count"),
             matched_concepts=data["matched_concepts"],
             matched_terms=data.get("matched_terms", []),
             score=data["score"],
@@ -186,9 +198,10 @@ class KGSectionResult(BaseModel):
     def heading(self) -> str:
         """Return a readable section heading."""
 
+        displayed_section_id = self.printed_section_id or self.section_id
         parts = [
             part
-            for part in (self.section_id, self.title)
+            for part in (displayed_section_id, self.title)
             if part
         ]
         return " ".join(parts).strip()

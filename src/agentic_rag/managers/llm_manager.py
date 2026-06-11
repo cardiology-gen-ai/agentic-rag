@@ -100,12 +100,17 @@ class LLMManager:
             # self._grader = self.llm.bind(options={"temperature": self.config.grader_temperature})
 
     def init_openai(self) -> BaseChatModel:
+        api_key = os.getenv("OPENAI_API_KEY")
+
+        if not api_key:
+            raise ValueError(
+                "OPENAI_API_KEY is required when the LLM provider is 'openai'"
+            )
+
         return init_chat_model(
             model=self.config.model_name,
-            model_provider="azure_openai",
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+            model_provider="openai",
+            api_key=api_key,
             temperature=self.config.temperature,
         )
 

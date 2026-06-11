@@ -19,13 +19,13 @@
             "top_k": 5
         },
         "llm": {
-            "deployment": "gpt-oss:20b",
-            "provider": "ollama",
-            "nbits": 16,
-            "generator_temperature": 0.01,
-            "router_temperature": 0.5,
-            "grader_temperature": 0.2
-        },
+        "deployment": "gpt-4.1-mini",
+        "provider": "openai",
+        "nbits": 16,
+        "generator_temperature": 0.01,
+        "router_temperature": 0.0,
+        "grader_temperature": 0.0
+    },
         "context": {
             "system_prompt": "Rewrite a general version of the question. Keep in mind that all the questions are related to protocols and guidelines in the context of cardiology."
         },

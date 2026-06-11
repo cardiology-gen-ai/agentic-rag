@@ -150,108 +150,110 @@ default:
 
     Examples:
 
+    {% raw %}
     Question:
     What are the diagnostic criteria for hypertrophic cardiomyopathy?
 
     Plan:
-    {
+    {{
       "intent": "diagnosis",
       "expected_scope": "single_section",
       "calls": [
-        {
+        {{
           "tool": "search_sections_by_concepts",
           "terms": ["hypertrophic cardiomyopathy"],
           "require_all": false
-        },
-        {
+        }},
+        {{
           "tool": "search_sections_by_title",
           "terms": ["diagnostic criteria"],
           "require_all": false
-        }
+        }}
       ]
-    }
+    }}
 
     Question:
     What are the indications for cardiac magnetic resonance in cardiomyopathies?
 
     Plan:
-    {
+    {{
       "intent": "diagnosis",
       "expected_scope": "single_section",
       "calls": [
-        {
+        {{
           "tool": "search_sections_by_concepts",
           "terms": ["cardiac magnetic resonance", "cardiomyopathy"],
           "require_all": false
-        }
+        }}
       ]
-    }
+    }}
 
     Question:
     Describe anticoagulation, rate control, and rhythm control for atrial
     fibrillation in cardiomyopathy.
 
     Plan:
-    {
+    {{
       "intent": "management",
       "expected_scope": "multiple_sections",
       "calls": [
-        {
+        {{
           "tool": "search_sections_by_concepts",
           "terms": ["atrial fibrillation", "anticoagulation"],
           "require_all": false
-        },
-        {
+        }},
+        {{
           "tool": "search_sections_by_title",
           "terms": ["anticoagulation", "rate control", "rhythm control"],
           "require_all": false
-        }
+        }}
       ]
-    }
+    }}
 
     Question:
     What lifestyle and pharmacological measures are recommended for
     orthostatic hypotension?
 
     Plan:
-    {
+    {{
       "intent": "treatment",
       "expected_scope": "multiple_sections",
       "calls": [
-        {
+        {{
           "tool": "search_sections_by_concepts",
           "terms": ["orthostatic hypotension"],
           "require_all": false
-        },
-        {
+        }},
+        {{
           "tool": "search_sections_by_title",
           "terms": ["lifestyle measures", "pharmacological therapy"],
           "require_all": false
-        }
+        }}
       ]
-    }
+    }}
 
     Question:
     How do the cardiomyopathy and syncope guidelines incorporate unexplained
     syncope into sudden cardiac death risk assessment?
 
     Plan:
-    {
+    {{
       "intent": "comparison",
       "expected_scope": "cross_document",
       "calls": [
-        {
+        {{
           "tool": "search_sections_by_concepts",
           "terms": ["unexplained syncope", "sudden cardiac death"],
           "require_all": false
-        },
-        {
+        }},
+        {{
           "tool": "search_sections_by_title",
           "terms": ["sudden cardiac death prevention", "risk stratification"],
           "require_all": false
-        }
+        }}
       ]
-    }
+    }}
+    {% endraw %}
 
   human: |
     Question:
@@ -260,4 +262,3 @@ default:
 versions:
   "1":
     overrides: {}
-

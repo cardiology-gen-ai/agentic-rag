@@ -92,6 +92,15 @@ default:
       terms in English.
 
     Rules for require_all:
+    - Use require_all=false by default.
+
+    - Use require_all=true only when there are at most two or three concrete
+    clinical concepts and every concept is expected to be explicitly represented
+    in the same section.
+
+    - Do not use require_all=true for population qualifiers, demographic groups,
+    measurements, relatives, age groups, or descriptive constraints such as
+    adults, children, first-degree relatives, severity, or wall thickness.
 
     - Set require_all to true only when all terms describe one conjunctive
       clinical constraint that should occur in the same Section.

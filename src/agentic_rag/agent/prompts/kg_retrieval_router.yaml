@@ -84,6 +84,24 @@ default:
     anticoagulation, rate control, and rhythm control, or diagnosis and
     treatment requested together.
 
+    For a question asking for the overall or comprehensive management of a
+    well-defined clinical condition, infer the standard independent management
+    components that are strongly implied by the question and likely to be
+    represented by separate Sections. Do not reduce such a question to the
+    generic facet "management" when more specific clinical components can be
+    identified.
+
+    Use concise, clinically meaningful facet terms. A facet term should name
+    the requested evidence component itself, not a generic umbrella word. For
+    example, prefer anticoagulation, rate control, and rhythm control over the
+    single generic term management for a comprehensive atrial-fibrillation
+    management question.
+
+    Do not invent narrow treatment details, drugs, procedures, thresholds, or
+    recommendations that are not stated or strongly implied by the clinical
+    task. Infer only standard top-level components needed to cover the requested
+    management approach.
+
     Rules for require_all:
 
     - require_all applies within one call and means every term must match the
@@ -141,11 +159,11 @@ default:
     call 2 terms = diagnostic criteria
     call 2 require_all = false
 
-    Example B: genuinely multiple facets
+    Example B: comprehensive management requiring inferred facets
 
     Question:
-    Describe anticoagulation, rate control, and rhythm control for atrial
-    fibrillation in cardiomyopathy.
+    Describe the recommended approach to atrial fibrillation management in
+    different cardiomyopathy subtypes, including anticoagulation strategies.
 
     Plan fields:
     intent = management
@@ -153,12 +171,18 @@ default:
     combination_mode = multiple_facets
     call 1 tool = search_sections_by_concepts
     call 1 role = context
-    call 1 terms = atrial fibrillation
+    call 1 terms = atrial fibrillation; cardiomyopathy
     call 1 require_all = false
     call 2 tool = search_sections_by_title
     call 2 role = facet
     call 2 terms = anticoagulation; rate control; rhythm control
     call 2 require_all = false
+
+    Explanation encoded by the example:
+    the question asks for the overall management approach. Anticoagulation is
+    explicit, while rate control and rhythm control are standard independent
+    top-level management components strongly implied by the task. The generic
+    word management must not be emitted as a facet.
 
     Example C: one sufficient call
 

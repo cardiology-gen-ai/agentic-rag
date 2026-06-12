@@ -1,0 +1,1614 @@
+[
+    {
+        "question": "What are the baseline cardiovascular risk assessment categories for patients starting potentially cardiotoxic cancer therapy, and what specific factors determine each risk level?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "4.1. General approach to cardiovascular toxicity risk in patients with cancer"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the complete monitoring protocol including timing, tests, and biomarkers for patients receiving anthracycline chemotherapy according to their baseline risk stratification.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.1. Anthracycline chemotherapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What is the definition of cancer therapy-related cardiac dysfunction (CTRCD) and how does it differ between symptomatic and asymptomatic presentations?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "3. Cancer therapy-related cardiovascular toxicity definitions"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the cardiovascular surveillance protocols for HER2-targeted therapies versus VEGF inhibitors, including frequency of monitoring and specific parameters to assess.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.2. HER2-targeted therapies",
+                    "5.5.4. Vascular endothelial growth factor inhibitors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the QTc prolongation thresholds that require intervention during cancer treatment, and what is the step-by-step management algorithm when QTc exceeds 500 ms?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "List all the specific cardiovascular toxicities associated with immune checkpoint inhibitors and their recommended monitoring strategies.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.9. Immune checkpoint inhibitors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the indications for primary cardiovascular prevention strategies in cancer patients, and which medications are recommended for each indication?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.2.1. Primary prevention of cancer therapy-related cardiovascular toxicity during anthracycline chemotherapy",
+                    "5.2.2. Primary prevention of radiation-induced cardiovascular toxicity"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the mean heart dose thresholds and associated cardiovascular risks for patients receiving thoracic radiotherapy.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.16. Radiotherapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the recommendations for managing pregnant cancer patients who require potentially cardiotoxic treatments?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "9.2. Pregnant patients with cancer",
+                    "9.2.1. Left ventricular dysfunction and heart failure"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Outline the long-term cardiovascular surveillance requirements for cancer survivors in the first year and beyond, stratified by their treatment-related risk factors.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "7.1. Cardiovascular evaluation during the first year after cardiotoxic anticancer therapy",
+                    "7.2. Which cancer survivors require cardiovascular surveillance in the first year after cancer treatment?",
+                    "8.1.1. Adult survivors of childhood and adolescent cancer",
+                    "8.1.2. Adult cancer survivors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the diagnostic criteria for hypertrophic cardiomyopathy in adults, children, and first-degree relatives, including specific wall thickness measurements?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "7.1.1.1. Diagnostic criteria"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the ESC approach to sudden cardiac death risk stratification in hypertrophic cardiomyopathy, including the variables used in the adult and paediatric risk models, additional risk modifiers, risk categories, and ICD decision thresholds.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "7.1.5. Sudden cardiac death prevention in hypertrophic cardiomyopathy",
+                    "7.1.5.6. Prevention of sudden cardiac death"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the key differentiating features between dilated cardiomyopathy, non-dilated left ventricular cardiomyopathy, and arrhythmogenic right ventricular cardiomyopathy?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "3.2.2. Dilated cardiomyopathy",
+                    "3.2.3. Non-dilated left ventricular cardiomyopathy",
+                    "3.2.4. Arrhythmogenic right ventricular cardiomyopathy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Which family-history, extracardiac, and electrocardiographic findings should raise suspicion of a specific genetic aetiology in patients with cardiomyopathy, and what genetic testing and counselling approach is recommended?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.4. History and physical examination",
+                    "6.5. Resting and ambulatory electrocardiography",
+                    "6.8.2. Genetic testing",
+                    "6.8.3. Genetic counselling"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the specific management recommendations for patients with cardiac amyloidosis, including both AL and ATTR types?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "7.7.4. Management",
+                    "7.7.4.1. Specific therapies"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the recommended approach to atrial fibrillation management in different cardiomyopathy subtypes, including anticoagulation strategies.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.3.1. Anticoagulation",
+                    "6.10.3.2. Rate control",
+                    "6.10.3.3. Rhythm control"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the indications for cardiac MRI in the evaluation of cardiomyopathies and what specific features should be assessed?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.7.3. Cardiac magnetic resonance"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Outline the exercise and sports participation recommendations for patients with different cardiomyopathy phenotypes.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.1.3. Exercise recommendations in hypertrophic cardiomyopathy",
+                    "8.1.4. Exercise recommendations in arrhythmogenic right ventricular cardiomyopathy",
+                    "8.1.5. Exercise recommendations in dilated cardiomyopathy and non-dilated left ventricular cardiomyopathy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the specific pregnancy-related considerations and management strategies for women with cardiomyopathies?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.2.2.1. Pre-pregnancy",
+                    "8.2.2.2. Pregnancy",
+                    "8.2.2.3. Timing and mode of delivery",
+                    "8.2.2.4. Post-partum",
+                    "8.2.2.5. Pharmacological treatment: general aspects",
+                    "8.2.2.6. Specific cardiomyopathies",
+                    "8.2.2.7. Peripartum cardiomyopathy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the indications and timing for consideration of advanced heart failure therapies (LVAD, transplantation) in cardiomyopathy patients.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.2.2. Cardiac transplantation",
+                    "6.10.2.3. Left ventricular assist devices"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What is the stepwise diagnostic approach for evaluating patients with suspected chronic coronary syndrome, from initial assessment to treatment decision?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "3. Stepwise approach to the initial management of individuals with suspected chronic coronary syndrome"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the indications for CABG versus PCI in patients with multivessel disease, including SYNTAX score considerations.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.4.4. Assessment of clinical risk and anatomical complexity",
+                    "4.4.5.3. Patients with multivessel coronary artery disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the specific management recommendations for patients with angina/ischaemia with non-obstructive coronary arteries (ANOCA/INOCA)?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.2.6. Management of angina/ischaemia with non-obstructive coronary arteries"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Outline the main guideline-directed therapy components for chronic coronary syndrome, covering lifestyle and exercise, antianginal medication, antithrombotic therapy, and lipid-lowering treatment.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.1. Patient education, lifestyle optimization for risk-factor control, and exercise therapy",
+                    "4.2. Antianginal/anti-ischaemic medication",
+                    "4.3.1. Antithrombotic drugs",
+                    "4.3.2. Lipid-lowering drugs"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the specific considerations for managing chronic coronary syndrome in patients with heart failure, stratified by ejection fraction?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.1. Coronary artery disease and heart failure"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Outline the role and appropriate use of coronary CT angiography versus functional testing in different clinical likelihood scenarios.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "3.3.4. Diagnostic algorithm and selection of appropriate tests"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the recommendations for dual antiplatelet therapy duration after PCI in chronic coronary syndrome patients?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.3.1.1.3. Dual antiplatelet therapy post-percutaneous coronary intervention"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the management approach for patients with refractory angina despite optimal medical therapy and revascularization.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "6.5. Recurrent or refractory angina/ischaemia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the specific considerations for managing chronic coronary syndrome in elderly patients and those at high bleeding risk?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.3.1. Older adults",
+                    "5.3.3. High bleeding-risk patients"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the Canadian Cardiovascular Society angina classification with current symptom assessment approaches and their clinical applications.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "3.1.1. History, differential diagnosis, and physical examination"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the 2024 ESC blood pressure treatment targets for the general adult population and the main exceptions or special populations, including pregnancy, age ≥85 years or significant frailty, diabetes, chronic kidney disease, cardiac disease, and previous stroke or transient ischaemic attack?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "8.5.3. Personalizing treatment strategies",
+                    "9.2.6. Treatment initiation and blood pressure targets",
+                    "9.6.3. Managing blood pressure in diabetes",
+                    "9.7.4. Blood pressure targets in chronic kidney disease",
+                    "9.8.1. Blood pressure thresholds and targets in patients with cardiac disease",
+                    "9.9.2. Treatment in patients with history of prior stroke or transient ischaemic attack"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the complete protocol for confirming hypertension diagnosis, including measurement techniques and timing.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.2.2. Office blood pressure measurement",
+                    "5.2.3. Home blood pressure measurement",
+                    "5.2.4. Ambulatory blood pressure measurement",
+                    "7.2. Confirming the diagnosis of hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the indications for screening and diagnostic workup for secondary hypertension causes?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.6.1. General considerations",
+                    "7.6.2. Primary aldosteronism",
+                    "7.6.3. Renovascular hypertension",
+                    "7.6.4. Obstructive sleep apnoea syndrome",
+                    "7.6.5. Phaeochromocytoma/paraganglioma"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Outline the stepwise pharmacological approach to blood pressure management, including drug combinations and sequencing.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.3.2. Drug classes with evidence on clinical outcomes in the target population",
+                    "8.3.4. Drug combinations and up-titrating strategies",
+                    "8.3.5. A practical algorithm for intensive, effective, and tolerable blood pressure lowering with drug therapy, including considerations around single-pill combinations"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the definitions and management strategies for resistant hypertension?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.5. Resistant hypertension: definition and diagnosis",
+                    "9.13.2. Non-pharmacological interventions",
+                    "9.13.3. Pharmacological interventions",
+                    "9.13.4. Devices for blood pressure lowering"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe how frailty should be assessed and how blood pressure treatment initiation, targets, drug choice, monitoring, and deprescribing should be individualized in adults aged ≥85 years or with moderate-to-severe frailty.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.3. Personalizing treatment strategies",
+                    "8.7.3. Potentially harmful consequences of blood pressure lowering for frail older people",
+                    "9.3.1. Definition of frailty",
+                    "9.3.2. Randomized controlled trials of blood pressure lowering in frail older patients",
+                    "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+                    "9.3.4. Maintaining blood pressure lowering in very old or frail patients"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What lifestyle interventions are recommended to reduce blood pressure and overall cardiovascular risk, and what quantitative effects are reported where available?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.2.1.1. Sodium",
+                    "8.2.1.2. Potassium",
+                    "8.2.2. Physical activity and exercise",
+                    "8.2.3. Weight reduction and diet",
+                    "8.2.4. Alcohol, coffee, and soft drinks",
+                    "8.2.5. Smoking"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the initiation, implementation, and persistence phases of medication adherence, including how non-adherence is assessed and which interventions are suggested for each phase.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.4.2. Drug adherence and persistence with treatment"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the specific blood pressure management considerations for patients with chronic kidney disease?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "9.7.2. Blood pressure lowering in chronic kidney disease",
+                    "9.7.3. Managing blood pressure in chronic kidney disease",
+                    "9.7.4. Blood pressure targets in chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the criteria and tests for defining hypertension-mediated organ damage and their clinical implications.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.4.3. Routine and optional tests",
+                    "7.4.3.1. The kidneys",
+                    "7.4.3.2. The heart",
+                    "7.4.3.3. The arteries"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the screening recommendations for abdominal aortic aneurysm, including target populations and timing?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "6.2.1. Screening for abdominal aortic aneurysm"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the management pathway for symptomatic lower-extremity peripheral arterial disease without wounds, from clinical and haemodynamic diagnosis through exercise and pharmacological therapy to revascularization according to lesion location.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.1. Clinical presentation and diagnosis",
+                    "8.1.1.1.1. Diagnostic tests",
+                    "8.1.1.1.2. Imaging methods",
+                    "8.1.1.2.1. Exercise therapy",
+                    "8.1.1.2.2. Pharmacological treatment",
+                    "8.1.1.2.3. Aorto-iliac lesion revascularization",
+                    "8.1.1.2.4. Femoro-popliteal lesion revascularization",
+                    "8.1.1.2.5. Below-the-knee artery revascularization"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the main size, growth, symptom, and patient-risk thresholds for intervention in non-heritable thoracic and abdominal aortic aneurysms?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "9.2.5.1. Surgical treatment of aortic root and ascending aorta",
+                    "9.2.5.2. Surgical treatment of aortic arch aneurysms",
+                    "9.2.5.3. Surgical treatment of the thoracic descending aorta",
+                    "9.2.5.4. Surgical treatment of thoracoabdominal aorta aneurysms",
+                    "9.2.5.5. Surgical treatment of abdominal aorta aneurysms"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the roles, diagnostic thresholds, and limitations of the ankle-brachial index, toe-brachial index, exercise testing, transcutaneous oxygen pressure, duplex ultrasound, CT angiography, and MR angiography in peripheral arterial disease.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "5.3. Vascular examination of peripheral arteries",
+                    "5.3.1. Duplex ultrasound",
+                    "5.3.2. Digital subtraction angiography, computed tomography angiography, and magnetic resonance angiography"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the optimal medical therapy components for patients with peripheral arterial and aortic diseases?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "7.1.1. Diet",
+                    "7.1.2. Physical activity",
+                    "7.1.3. Smoking",
+                    "7.1.4. Patient education",
+                    "7.2.1. Antithrombotic therapy",
+                    "7.2.2. Antihypertensive therapy",
+                    "7.2.3. Lipid-lowering therapy",
+                    "7.2.4. Diabetes and pre-diabetes conditions"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the exercise training recommendations and expected benefits for patients with claudication.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.1. Exercise therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What imaging surveillance, medical treatment, aortic surgery, pregnancy, and physical exercise recommendations apply to patients with Marfan syndrome?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "10.1.3.2. Imaging surveillance",
+                    "10.1.3.3. Medical treatment",
+                    "10.1.3.4. Aortic surgery",
+                    "10.1.3.5. Pregnancy and physical exercise"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare antithrombotic strategies for asymptomatic and symptomatic lower-extremity peripheral arterial disease, after lower-limb revascularization, in acute limb ischaemia, and in asymptomatic or symptomatic carotid stenosis.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.2. Pharmacological treatment",
+                    "8.1.3.2. Medical treatment",
+                    "8.2.2.1.4. Antithrombotic therapy",
+                    "8.2.3.1.4. Antithrombotic therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What systolic blood pressure targets and first-line antihypertensive treatment principles are recommended for patients with peripheral arterial and aortic diseases?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "7.2.2. Antihypertensive therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the surveillance protocols after endovascular and surgical interventions for aortic aneurysms.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "9.2.6. Endoleaks",
+                    "9.2.7.1. Follow-up after thoracic aortic aneurysm treatment",
+                    "9.2.7.2. Follow-up after abdominal aortic aneurysm treatment"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the indications for primary-prevention ICD implantation in dilated cardiomyopathy or hypokinetic non-dilated cardiomyopathy, arrhythmogenic right ventricular cardiomyopathy, and hypertrophic cardiomyopathy.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.3.1.2. Primary prevention of sudden cardiac death",
+                    "7.1.3.2.1. Risk stratification",
+                    "7.1.3.2.2. Treatment",
+                    "7.1.3.3.1. Risk stratification and primary prevention of sudden cardiac death"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the acute management algorithm for sustained monomorphic ventricular tachycardia in haemodynamically tolerated versus haemodynamically unstable patients.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.1.2. Acute management of sustained monomorphic ventricular tachycardia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the recommendations for managing ventricular arrhythmias during acute coronary syndromes and for risk stratification and ICD timing early after myocardial infarction?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.1.1.1. Acute coronary syndromes",
+                    "7.1.1.2. Early after myocardial infarction"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "In patients with structural heart disease, particularly chronic coronary artery disease and recurrent ventricular tachycardia in ICD carriers, compare the roles of antiarrhythmic drug therapy and catheter ablation.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.2.1. Pharmacotherapy",
+                    "6.2.4.1.1. Patients with structural heart disease",
+                    "7.1.1.3.5. Management of recurrent ventricular tachycardia in implantable cardioverter defibrillator carriers"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the diagnostic criteria and management of the primary electrical diseases long QT syndrome, Brugada syndrome, and catecholaminergic polymorphic ventricular tachycardia?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.2.2. Long QT syndrome (including acquired long QT syndrome)",
+                    "7.2.4. Brugada syndrome",
+                    "7.2.6. Catecholaminergic polymorphic ventricular tachycardia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the approach to risk stratification and prevention of sudden cardiac death in athletes.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "8.3. Sudden cardiac death in athletes"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the recommended indications, evidence limitations, and situations in which routine use is not recommended for wearable cardioverter defibrillators?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.2.2.3. Wearable cardioverter defibrillator"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Outline the management of electrical storm, including pharmacological and interventional approaches.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.1.3. Management of electrical storm and incessant ventricular tachycardia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the specific considerations for managing ventricular arrhythmias in patients with congenital heart disease?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.6. Congenital heart disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Describe the role of genetic testing in sudden cardiac death victims and family screening approaches.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "5.1.4. Genetic testing",
+                    "5.2.4. Scenario 4: Sudden death victim",
+                    "5.2.5. Scenario 5: Relatives of sudden arrhythmic death syndrome decedents"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the management of atrial fibrillation in cancer patients undergoing treatment versus those with cardiomyopathies versus those with chronic coronary syndromes.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.1. Atrial fibrillation"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.3.1. Anticoagulation",
+                    "6.10.3.2. Rate control",
+                    "6.10.3.3. Rhythm control"
+                ]
+            },
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.3.6. Atrial fibrillation",
+                    "4.3.1.2.1. Monotherapy with oral anticoagulant",
+                    "4.3.1.2.2. Combination of anticoagulant and antiplatelet therapy after percutaneous coronary intervention in chronic coronary syndrome patients with AF or other indication for oral anticoagulant"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the blood pressure targets for patients with: (1) peripheral arterial disease, (2) chronic coronary syndromes with heart failure, and (3) those receiving VEGF inhibitors for cancer?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "9.8.4. Heart failure"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "7.2.2. Antihypertensive therapy"
+                ]
+            },
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.3.5. Hypertension"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.4. Vascular endothelial growth factor inhibitors",
+                    "6.5. Arterial hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the indications and special considerations for ICD implantation in: (1) chronic coronary artery disease with reduced ejection fraction, (2) non-ischaemic dilated cardiomyopathy or non-dilated left ventricular cardiomyopathy, and (3) patients with cancer who otherwise meet standard ICD indications.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.1.3.1. Primary prevention of sudden cardiac death in patients with reduced ejection fraction",
+                    "7.1.3.1.2. Primary prevention of sudden cardiac death"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.5. Device therapy: implantable cardioverter defibrillator",
+                    "7.2.5.2. Primary prevention of sudden cardiac death",
+                    "7.3.5.2. Primary prevention of sudden cardiac death"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How should heart failure with reduced ejection fraction be managed differently in patients with: (1) chronic coronary syndromes, (2) hypertrophic cardiomyopathy, and (3) anthracycline-induced cardiomyopathy?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.1. Coronary artery disease and heart failure"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.2. Heart failure management",
+                    "7.1.4.2.1. Heart failure and chest pain"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.1.1. Anthracycline chemotherapy-related cardiac dysfunction"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the exercise and physical activity recommendations for patients with: (1) stable chronic coronary syndromes, (2) peripheral arterial disease with claudication, (3) hypertrophic cardiomyopathy, and (4) recent cancer treatment?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.1.2.5. Physical activity and sedentary behaviour",
+                    "4.1.3. Exercise therapy"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.1. Exercise therapy"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.1.3. Exercise recommendations in hypertrophic cardiomyopathy"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "7.4. Cardiopulmonary exercise testing and fitness during the end-of-therapy assessment",
+                    "7.5. The role of cardiac rehabilitation"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the recommended screening and surveillance approaches for: (1) first-degree relatives of patients with hypertrophic cardiomyopathy, (2) cancer survivors, (3) people at risk of abdominal aortic aneurysm, and (4) athletes at risk of sudden cardiac death.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.11. Family screening and follow-up evaluation of relatives"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "8.1.1. Adult survivors of childhood and adolescent cancer",
+                    "8.1.2. Adult cancer survivors"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "6.2.1. Screening for abdominal aortic aneurysm"
+                ]
+            },
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "8.3. Sudden cardiac death in athletes"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the QT prolongation management strategies in patients with: (1) cancer therapy-related QT prolongation, (2) congenital or acquired long QT syndrome, and (3) those receiving antiarrhythmic drugs for ventricular arrhythmias?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias"
+                ]
+            },
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.2.1. Pharmacotherapy",
+                    "7.2.2. Long QT syndrome (including acquired long QT syndrome)"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How do antiplatelet therapy recommendations differ for patients with: (1) chronic coronary syndromes after PCI, (2) peripheral arterial disease, and (3) cancer with concomitant coronary artery disease?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.3.1.1.3. Dual antiplatelet therapy post-percutaneous coronary intervention"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.2. Pharmacological treatment"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.2.1. Acute coronary syndromes",
+                    "6.2.2. Chronic coronary syndromes",
+                    "6.7.2. Antiplatelet therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Compare the role of cardiac MRI in the diagnosis and follow-up of cardiomyopathies and cancer therapy-related cardiac dysfunction, and in the non-invasive diagnosis of ANOCA/INOCA.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.7.3. Cardiac magnetic resonance"
+                ]
+            },
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.2.5.1. Non-invasive diagnosis"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.4.2. Cardiac imaging"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What are the pregnancy risk and management considerations for women with: (1) hypertrophic cardiomyopathy, (2) chronic hypertension, (3) aortic disease or heritable thoracic aortopathy, and (4) previous potentially cardiotoxic cancer treatment?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.2.2.6. Specific cardiomyopathies"
+                ]
+            },
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "9.2.1. Definition and epidemiology",
+                    "9.2.2. Classifying hypertension in pregnancy",
+                    "9.2.6. Treatment initiation and blood pressure targets",
+                    "9.2.7. Managing mild hypertension in pregnancy (office blood pressure 140–159/90–109 mmHg)",
+                    "9.2.8. Managing severe hypertension in pregnancy (>160/110 mmHg)",
+                    "9.2.9. Managing blood pressure post-partum"
+                ]
+            },
+            {
+                "document": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+                "sections": [
+                    "5.3.1. Follow-up and medical therapy",
+                    "5.3.2. Interventions",
+                    "5.3.3. Delivery"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "8.9. Pregnancy in cancer survivors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient's clinic blood pressure is repeatedly around 146/92 mmHg, but the average from a 7-day home diary is 128/78 mmHg; how should I interpret this discrepancy and what follow-up is appropriate?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.2.2. Office blood pressure measurement",
+                    "5.2.3. Home blood pressure measurement",
+                    "5.3.2. Blood pressure measurement for diagnosing hypertension",
+                    "6.1. Definition and classification of elevated blood pressure and hypertension",
+                    "7.2. Confirming the diagnosis of hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "An 87-year-old patient with treated hypertension becomes light-headed on standing and has a clinic blood pressure of 126/72 mmHg; should I continue targeting 120–129 mmHg or individualize the goal?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.5.3. Orthostatic hypotension",
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "8.5.3. Personalizing treatment strategies",
+                    "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+                    "9.3.4. Maintaining blood pressure lowering in very old or frail patients"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Can a patient with hypertension and stage 3 kidney disease safely use a salt substitute that contains potassium?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.2.1.2. Potassium",
+                    "9.7.3. Managing blood pressure in chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A 32-year-old patient with obesity has newly confirmed hypertension and reports loud snoring; which secondary cause is particularly suggested by this presentation, and how should it be investigated?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.6. Secondary hypertension: when to screen/further investigations",
+                    "7.6.4. Obstructive sleep apnoea syndrome",
+                    "9.1.2. Secondary hypertension in young adulthood"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient remains at 152/94 mmHg despite three blood pressure medicines including a diuretic; what should I verify before calling this resistant hypertension, and what treatment step is usually considered next?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.4.2. Drug adherence and persistence with treatment",
+                    "7.5. Resistant hypertension: definition and diagnosis",
+                    "7.6. Secondary hypertension: when to screen/further investigations",
+                    "9.13.3. Pharmacological interventions"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A 68-year-old patient with type 2 diabetes reports intermittent palpitations but has a normal routine ECG; how should I look for atrial fibrillation and decide on stroke prevention if it is found?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "8.1.2. Screening and managing atrial fibrillation in patients with diabetes",
+                    "8.1.3. Preventing stroke in patients with atrial fibrillation and diabetes"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes reports new exertional breathlessness and ankle swelling; which tests should I arrange to confirm or exclude heart failure, and which glucose-lowering drug class improves heart-failure outcomes if it is diagnosed?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.3. Screening and diagnosis",
+                    "7.4.1.1. Sodium–glucose co-transporter-2 inhibitors",
+                    "7.4.2. Treatment of heart failure with mildly reduced ejection fraction",
+                    "7.4.3. Treatment of heart failure with preserved ejection fraction"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes has an eGFR of 48 mL/min/1.73 m² and persistent albuminuria despite usual care; which treatments should I prioritize to reduce both cardiovascular and kidney failure risk?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "9.1. Chronic kidney disease definitions, staging, and screening",
+                    "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+                    "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes and a previous myocardial infarction already has HbA1c at target; should I still add a glucose-lowering drug for cardiovascular protection, and which classes have proven benefit?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.3.1.1. Sodium–glucose co-transporter-2 inhibitors",
+                    "5.3.1.2. Glucagon-like peptide-1 receptor agonists",
+                    "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A 56-year-old smoker with borderline blood pressure and cholesterol has no known cardiovascular disease but a strong family history of premature myocardial infarction; how should I estimate risk and when might coronary calcium imaging refine the decision?",
+        "sources": [
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "3.2.3.2. Risk estimation in apparently healthy people",
+                    "3.2.3.4. Risk estimation and risk factor treatment in apparently healthy people 50–69 years of age",
+                    "3.3.3.1. Coronary artery calcium",
+                    "3.3.5. Family history"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "When is it reasonable not to pursue the usual systolic blood pressure target of 120–129 mmHg?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "8.5.3. Personalizing treatment strategies",
+                    "8.7.3. Potentially harmful consequences of blood pressure lowering for frail older people",
+                    "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+                    "9.3.4. Maintaining blood pressure lowering in very old or frail patients",
+                    "9.5. Orthostatic hypotension with supine hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What would make me choose 24-hour ambulatory blood pressure monitoring instead of asking a patient to record readings at home?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.2.3. Home blood pressure measurement",
+                    "5.2.4. Ambulatory blood pressure measurement",
+                    "5.2.5. Comparison of home and ambulatory blood pressure monitoring",
+                    "5.4.1. Home monitoring",
+                    "5.4.2. Ambulatory monitoring"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Which clinical conditions make elevated blood pressure high risk even before a formal cardiovascular risk score is calculated?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "6.2.1. Role of cardiovascular disease risk assessment",
+                    "6.5. Summary of the cardiovascular disease risk stratification approach for allocating blood pressure treatment"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How should cardiovascular risk be estimated in a person with type 2 diabetes who has no established cardiovascular disease or severe target-organ damage?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "4.1. Assessing cardiovascular risk in type 2 diabetes",
+                    "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+                    "4.1.2. SCORE2-Diabetes: estimating 10-year cardiovascular disease risk"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "If HbA1c is already at target, which glucose-lowering treatments may still be indicated for cardiovascular protection?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.3.1.1. Sodium–glucose co-transporter-2 inhibitors",
+                    "5.3.1.2. Glucagon-like peptide-1 receptor agonists",
+                    "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications",
+                    "7.4. Treatment of heart failure in patients with diabetes",
+                    "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What safety checks are needed before recommending an increase in dietary potassium to a patient with hypertension?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.2.1.2. Potassium",
+                    "9.7.3. Managing blood pressure in chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "What should be ruled out before apparently uncontrolled blood pressure is classified as resistant hypertension?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.4.2. Drug adherence and persistence with treatment",
+                    "7.5. Resistant hypertension: definition and diagnosis",
+                    "7.6. Secondary hypertension: when to screen/further investigations",
+                    "9.13.1. Definition of resistant hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Which treatments protect both cardiovascular and kidney outcomes in a patient with type 2 diabetes, chronic kidney disease, and albuminuria?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "9.1. Chronic kidney disease definitions, staging, and screening",
+                    "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+                    "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A 55-year-old patient with type 2 diabetes has repeated office blood pressure readings of 134/84 mmHg and no known cardiovascular disease; how should I confirm the finding, assess risk, and decide whether to start treatment?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.3.2. Blood pressure measurement for diagnosing hypertension",
+                    "6.2.1. Role of cardiovascular disease risk assessment",
+                    "8.4. Selecting patients for pharmacological blood pressure-lowering treatment",
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "9.6.3. Managing blood pressure in diabetes"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+                    "4.1.2. SCORE2-Diabetes: estimating 10-year cardiovascular disease risk",
+                    "5.4.1. Screening and diagnosis",
+                    "5.4.2. Treatment targets",
+                    "5.4.3. Management of hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes, an eGFR of 48 mL/min/1.73 m², albuminuria, and blood pressure of 138/84 mmHg needs an integrated plan; which measures best reduce both cardiovascular and kidney risk?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.2.1.1. Sodium",
+                    "9.7.3. Managing blood pressure in chronic kidney disease",
+                    "9.7.4. Blood pressure targets in chronic kidney disease"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+                    "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes and a previous myocardial infarction has blood pressure of 136/82 mmHg and LDL cholesterol of 78 mg/dL despite statin therapy; which preventive therapies should be intensified to address blood pressure, LDL cholesterol, and residual cardiovascular risk?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "9.8.2. Coronary artery disease with particular reference to the blood pressure J-curve"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.3.1.1. Sodium–glucose co-transporter-2 inhibitors",
+                    "5.3.1.2. Glucagon-like peptide-1 receptor agonists",
+                    "5.5.1. Treatment targets",
+                    "5.5.2. Lipid-lowering agents",
+                    "6.1.3. Management"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes and chronic heart failure has blood pressure of 132/78 mmHg and HbA1c already at target; which treatment changes improve prognosis beyond glucose control, and what blood pressure goal should I use?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "9.8.4. Heart failure"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "7.4.1.1. Sodium–glucose co-transporter-2 inhibitors",
+                    "7.4.2. Treatment of heart failure with mildly reduced ejection fraction",
+                    "7.4.3. Treatment of heart failure with preserved ejection fraction",
+                    "7.5.1. Sodium–glucose co-transporter-2 inhibitors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A 72-year-old patient with type 2 diabetes and hypertension is found to have asymptomatic atrial fibrillation on a wearable device; what confirmation, stroke prevention, and risk-factor management are needed?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.5.2. Atrial fibrillation",
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "9.8.5. Heart rhythm disease (including AF)"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "8.1.2. Screening and managing atrial fibrillation in patients with diabetes",
+                    "8.1.3. Preventing stroke in patients with atrial fibrillation and diabetes"
+                ]
+            },
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "6.6. Atrial fibrillation"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "An 86-year-old frail patient with type 2 diabetes has blood pressure of 138/76 mmHg, recurrent dizziness, and several medications; how should I individualize blood pressure and glycaemic targets?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.5.3. Orthostatic hypotension",
+                    "8.5.3. Personalizing treatment strategies",
+                    "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+                    "9.3.4. Maintaining blood pressure lowering in very old or frail patients"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "5.2. Glycaemic targets",
+                    "5.2.1. Role of glycated haemoglobin",
+                    "12. Person-centred care"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A 48-year-old patient with type 2 diabetes has no known atherosclerotic disease, heart failure, or kidney disease; how should I estimate future cardiovascular risk and decide whether a cardioprotective glucose-lowering drug is warranted?",
+        "sources": [
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+                    "4.1.2. SCORE2-Diabetes: estimating 10-year cardiovascular disease risk",
+                    "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications",
+                    "5.7. Multifactorial approach to risk-factor management in diabetes"
+                ]
+            },
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "3.2.3.8. Risk estimation and risk factor treatment in persons with type 2 diabetes mellitus",
+                    "4.8.1.3. Newer diabetes mellitus drug classes: cardiovascular disease benefits"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes and hypertension reports calf pain after walking two blocks that resolves with rest; what initial vascular assessment and preventive treatment should I arrange?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.1. Clinical presentation and diagnosis",
+                    "8.1.1.1.1. Diagnostic tests",
+                    "7.2.2. Antihypertensive therapy",
+                    "7.2.3. Lipid-lowering therapy",
+                    "8.1.1.2.1. Exercise therapy",
+                    "8.1.1.2.2. Pharmacological treatment"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "10.1.1. Diabetes and lower-extremity artery disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "A patient with type 2 diabetes, hypertension, and albuminuric kidney disease wants to replace ordinary salt with a potassium-containing substitute; what advice and monitoring should I provide?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.2.1.2. Potassium",
+                    "9.7.3. Managing blood pressure in chronic kidney disease"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+                    "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Does a blood pressure of 132/82 mmHg lead to the same treatment decision in every adult, or does the presence of type 2 diabetes change the threshold?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "6.1. Definition and classification of elevated blood pressure and hypertension",
+                    "6.2.1. Role of cardiovascular disease risk assessment",
+                    "8.4. Selecting patients for pharmacological blood pressure-lowering treatment",
+                    "9.6.3. Managing blood pressure in diabetes"
+                ]
+            },
+            {
+                "document": "CVD_and_Diabetes_2023.md",
+                "sections": [
+                    "4.1. Assessing cardiovascular risk in type 2 diabetes",
+                    "5.4.2. Treatment targets",
+                    "5.4.3. Management of hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "How does the blood pressure treatment target in the 2024 hypertension guideline differ from the approach described in the 2021 cardiovascular prevention guideline?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "8.5.3. Personalizing treatment strategies"
+                ]
+            },
+            {
+                "document": "CVD_Prevention_2021.md",
+                "sections": [
+                    "4.7.5.3. Blood pressure treatment targets"
+                ]
+            }
+        ],
+        "answer": ""
+    }
+]

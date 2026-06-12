@@ -1,0 +1,1102 @@
+[
+    {
+        "question": "Quali sono le categorie di valutazione del rischio cardiovascolare di base per i pazienti che iniziano una terapia oncologica potenzialmente cardiotossica e quali fattori specifici determinano ciascun livello di rischio?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "4.1. General approach to cardiovascular toxicity risk in patients with cancer"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi il protocollo completo di monitoraggio, inclusi tempistiche, esami e biomarcatori, per i pazienti che ricevono chemioterapia con antracicline in base alla loro stratificazione del rischio di base.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.1. Anthracycline chemotherapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Qual è la definizione di disfunzione cardiaca correlata alle terapie antitumorali (CTRCD) e in cosa differisce tra presentazioni sintomatiche e asintomatiche?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "3. Cancer therapy-related cardiovascular toxicity definitions"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta i protocolli di sorveglianza cardiovascolare per le terapie mirate a HER2 rispetto agli inibitori del VEGF, includendo la frequenza del monitoraggio e i parametri specifici da valutare.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.2. HER2-targeted therapies",
+                    "5.5.4. Vascular endothelial growth factor inhibitors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le soglie di prolungamento del QTc che richiedono un intervento durante il trattamento oncologico e qual è l’algoritmo di gestione passo per passo quando il QTc supera 500 ms?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Elenca tutte le tossicità cardiovascolari specifiche associate agli inibitori dei checkpoint immunitari e le strategie di monitoraggio raccomandate.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.9. Immune checkpoint inhibitors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le indicazioni per le strategie di prevenzione cardiovascolare primaria nei pazienti oncologici e quali farmaci sono raccomandati per ciascuna indicazione?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.2.1. Primary prevention of cancer therapy-related cardiovascular toxicity during anthracycline chemotherapy",
+                    "5.2.2. Primary prevention of radiation-induced cardiovascular toxicity"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi le soglie di dose media al cuore e i rischi cardiovascolari associati per i pazienti che ricevono radioterapia toracica.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.16. Radiotherapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le raccomandazioni per la gestione delle pazienti oncologiche in gravidanza che necessitano di trattamenti potenzialmente cardiotossici?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "9.2. Pregnant patients with cancer",
+                    "9.2.1. Left ventricular dysfunction and heart failure"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Delinea i requisiti di sorveglianza cardiovascolare a lungo termine per i sopravvissuti al cancro nel primo anno e oltre, stratificati in base ai fattori di rischio correlati al trattamento.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "7.1. Cardiovascular evaluation during the first year after cardiotoxic anticancer therapy",
+                    "7.2. Which cancer survivors require cardiovascular surveillance in the first year after cancer treatment?",
+                    "8.1.1. Adult survivors of childhood and adolescent cancer",
+                    "8.1.2. Adult cancer survivors"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono i criteri diagnostici per la cardiomiopatia ipertrofica negli adulti, nei bambini e nei parenti di primo grado, includendo le specifiche misurazioni dello spessore di parete?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "7.1.1.1. Diagnostic criteria"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi l’approccio ESC alla stratificazione del rischio di morte cardiaca improvvisa nella cardiomiopatia ipertrofica, includendo le variabili utilizzate nei modelli di rischio per adulti e pazienti pediatrici, i modificatori di rischio aggiuntivi, le categorie di rischio e le soglie decisionali per l’impianto di ICD.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "7.1.5. Sudden cardiac death prevention in hypertrophic cardiomyopathy",
+                    "7.1.5.6. Prevention of sudden cardiac death"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le principali caratteristiche distintive tra cardiomiopatia dilatativa, cardiomiopatia ventricolare sinistra non dilatata e cardiomiopatia aritmogena del ventricolo destro?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "3.2.2. Dilated cardiomyopathy",
+                    "3.2.3. Non-dilated left ventricular cardiomyopathy",
+                    "3.2.4. Arrhythmogenic right ventricular cardiomyopathy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali elementi dell’anamnesi familiare e quali reperti extracardiaci ed elettrocardiografici dovrebbero far sospettare un’eziologia genetica specifica nei pazienti con cardiomiopatia, e quale approccio ai test e alla consulenza genetica è raccomandato?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.4. History and physical examination",
+                    "6.5. Resting and ambulatory electrocardiography",
+                    "6.8.2. Genetic testing",
+                    "6.8.3. Genetic counselling"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le raccomandazioni specifiche di gestione per i pazienti con amiloidosi cardiaca, includendo i tipi AL e ATTR?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "7.7.4. Management",
+                    "7.7.4.1. Specific therapies"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi l’approccio raccomandato alla gestione della fibrillazione atriale nei diversi sottotipi di cardiomiopatia, incluse le strategie di anticoagulazione.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.3.1. Anticoagulation",
+                    "6.10.3.2. Rate control",
+                    "6.10.3.3. Rhythm control"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le indicazioni per la risonanza magnetica cardiaca nella valutazione delle cardiomiopatie e quali caratteristiche specifiche devono essere valutate?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.7.3. Cardiac magnetic resonance"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Delinea le raccomandazioni per l’esercizio fisico e la partecipazione sportiva per i pazienti con differenti fenotipi di cardiomiopatia.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.1.3. Exercise recommendations in hypertrophic cardiomyopathy",
+                    "8.1.4. Exercise recommendations in arrhythmogenic right ventricular cardiomyopathy",
+                    "8.1.5. Exercise recommendations in dilated cardiomyopathy and non-dilated left ventricular cardiomyopathy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le considerazioni e le strategie di gestione specifiche legate alla gravidanza per le donne con cardiomiopatie?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.2.2.1. Pre-pregnancy",
+                    "8.2.2.2. Pregnancy",
+                    "8.2.2.3. Timing and mode of delivery",
+                    "8.2.2.4. Post-partum",
+                    "8.2.2.5. Pharmacological treatment: general aspects",
+                    "8.2.2.6. Specific cardiomyopathies",
+                    "8.2.2.7. Peripartum cardiomyopathy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi le indicazioni e le tempistiche per considerare terapie avanzate per lo scompenso cardiaco (LVAD, trapianto) nei pazienti con cardiomiopatia.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.2.2. Cardiac transplantation",
+                    "6.10.2.3. Left ventricular assist devices"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Qual è l’approccio diagnostico per fasi nella valutazione dei pazienti con sospetta sindrome coronarica cronica, dalla valutazione iniziale alla decisione terapeutica?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "3. Stepwise approach to the initial management of individuals with suspected chronic coronary syndrome"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta le indicazioni per CABG rispetto alla PCI nei pazienti con malattia multivasale, includendo le considerazioni basate sul punteggio SYNTAX.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.4.4. Assessment of clinical risk and anatomical complexity",
+                    "4.4.5.3. Patients with multivessel coronary artery disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le raccomandazioni specifiche di gestione per i pazienti con angina/ischemia con arterie coronarie non ostruttive (ANOCA/INOCA)?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.2.6. Management of angina/ischaemia with non-obstructive coronary arteries"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Delinea i principali componenti della terapia raccomandata dalle linee guida per la sindrome coronarica cronica, comprendendo stile di vita ed esercizio fisico, terapia antianginosa, terapia antitrombotica e trattamento ipolipemizzante.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.1. Patient education, lifestyle optimization for risk-factor control, and exercise therapy",
+                    "4.2. Antianginal/anti-ischaemic medication",
+                    "4.3.1. Antithrombotic drugs",
+                    "4.3.2. Lipid-lowering drugs"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le considerazioni specifiche per la gestione della sindrome coronarica cronica nei pazienti con scompenso cardiaco, stratificate per frazione di eiezione?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.1. Coronary artery disease and heart failure"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Delinea il ruolo e l’uso appropriato dell’angiografia coronarica TC rispetto ai test funzionali nei diversi scenari di probabilità clinica.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "3.3.4. Diagnostic algorithm and selection of appropriate tests"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le raccomandazioni sulla durata della duplice terapia antiaggregante dopo PCI nei pazienti con sindrome coronarica cronica?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.3.1.1.3. Dual antiplatelet therapy post-percutaneous coronary intervention"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi l’approccio gestionale per i pazienti con angina refrattaria nonostante terapia medica ottimale e rivascolarizzazione.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "6.5. Recurrent or refractory angina/ischaemia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le considerazioni specifiche per la gestione della sindrome coronarica cronica nei pazienti anziani e in quelli ad alto rischio emorragico?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.3.1. Older adults",
+                    "5.3.3. High bleeding-risk patients"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta la classificazione dell’angina della Canadian Cardiovascular Society con gli attuali approcci di valutazione dei sintomi e le loro applicazioni cliniche.",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "3.1.1. History, differential diagnosis, and physical examination"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono i target terapeutici di pressione arteriosa indicati dalle linee guida ESC 2024 per la popolazione adulta generale e quali sono le principali eccezioni o popolazioni speciali, incluse gravidanza, età ≥85 anni o fragilità significativa, diabete, malattia renale cronica, cardiopatia e pregresso ictus o attacco ischemico transitorio?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.2. The ideal target of blood pressure-lowering treatment",
+                    "8.5.3. Personalizing treatment strategies",
+                    "9.2.6. Treatment initiation and blood pressure targets",
+                    "9.6.3. Managing blood pressure in diabetes",
+                    "9.7.4. Blood pressure targets in chronic kidney disease",
+                    "9.8.1. Blood pressure thresholds and targets in patients with cardiac disease",
+                    "9.9.2. Treatment in patients with history of prior stroke or transient ischaemic attack"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi il protocollo completo per confermare la diagnosi di ipertensione, incluse le tecniche di misurazione e le tempistiche.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "5.2.2. Office blood pressure measurement",
+                    "5.2.3. Home blood pressure measurement",
+                    "5.2.4. Ambulatory blood pressure measurement",
+                    "7.2. Confirming the diagnosis of hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le indicazioni allo screening e all’iter diagnostico per le cause di ipertensione secondaria?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.6.1. General considerations",
+                    "7.6.2. Primary aldosteronism",
+                    "7.6.3. Renovascular hypertension",
+                    "7.6.4. Obstructive sleep apnoea syndrome",
+                    "7.6.5. Phaeochromocytoma/paraganglioma"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Delinea l’approccio farmacologico per fasi al controllo della pressione arteriosa, incluse le combinazioni di farmaci e la sequenza terapeutica.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.3.2. Drug classes with evidence on clinical outcomes in the target population",
+                    "8.3.4. Drug combinations and up-titrating strategies",
+                    "8.3.5. A practical algorithm for intensive, effective, and tolerable blood pressure lowering with drug therapy, including considerations around single-pill combinations"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le definizioni e le strategie di gestione dell’ipertensione resistente?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.5. Resistant hypertension: definition and diagnosis",
+                    "9.13.2. Non-pharmacological interventions",
+                    "9.13.3. Pharmacological interventions",
+                    "9.13.4. Devices for blood pressure lowering"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi come valutare la fragilità e come personalizzare l’avvio del trattamento antipertensivo, i target pressori, la scelta dei farmaci, il monitoraggio e la deprescrizione negli adulti di età ≥85 anni o con fragilità moderata-grave.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.5.3. Personalizing treatment strategies",
+                    "8.7.3. Potentially harmful consequences of blood pressure lowering for frail older people",
+                    "9.3.1. Definition of frailty",
+                    "9.3.2. Randomized controlled trials of blood pressure lowering in frail older patients",
+                    "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+                    "9.3.4. Maintaining blood pressure lowering in very old or frail patients"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali interventi sullo stile di vita sono raccomandati per ridurre la pressione arteriosa e il rischio cardiovascolare complessivo, e quali effetti quantitativi sono riportati quando disponibili?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "8.2.1.1. Sodium",
+                    "8.2.1.2. Potassium",
+                    "8.2.2. Physical activity and exercise",
+                    "8.2.3. Weight reduction and diet",
+                    "8.2.4. Alcohol, coffee, and soft drinks",
+                    "8.2.5. Smoking"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta le fasi di inizio, attuazione e persistenza dell’aderenza alla terapia farmacologica, includendo come viene valutata la mancata aderenza e quali interventi sono suggeriti per ciascuna fase.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.4.2. Drug adherence and persistence with treatment"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le considerazioni specifiche per la gestione pressoria nei pazienti con malattia renale cronica?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "9.7.2. Blood pressure lowering in chronic kidney disease",
+                    "9.7.3. Managing blood pressure in chronic kidney disease",
+                    "9.7.4. Blood pressure targets in chronic kidney disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi i criteri e gli esami utilizzati per definire il danno d’organo mediato dall’ipertensione e le relative implicazioni cliniche.",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "7.4.3. Routine and optional tests",
+                    "7.4.3.1. The kidneys",
+                    "7.4.3.2. The heart",
+                    "7.4.3.3. The arteries"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le raccomandazioni di screening per l’aneurisma dell’aorta addominale, includendo popolazioni target e tempistiche?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "6.2.1. Screening for abdominal aortic aneurysm"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi il percorso di gestione dell’arteriopatia periferica sintomatica degli arti inferiori in assenza di lesioni cutanee, dalla diagnosi clinica ed emodinamica, attraverso l’esercizio fisico e la terapia farmacologica, fino alla rivascolarizzazione in base alla sede della lesione.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.1. Clinical presentation and diagnosis",
+                    "8.1.1.1.1. Diagnostic tests",
+                    "8.1.1.1.2. Imaging methods",
+                    "8.1.1.2.1. Exercise therapy",
+                    "8.1.1.2.2. Pharmacological treatment",
+                    "8.1.1.2.3. Aorto-iliac lesion revascularization",
+                    "8.1.1.2.4. Femoro-popliteal lesion revascularization",
+                    "8.1.1.2.5. Below-the-knee artery revascularization"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le principali soglie dimensionali, di crescita, sintomatologiche e legate al rischio del paziente per intervenire negli aneurismi non ereditari dell’aorta toracica e addominale?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "9.2.5.1. Surgical treatment of aortic root and ascending aorta",
+                    "9.2.5.2. Surgical treatment of aortic arch aneurysms",
+                    "9.2.5.3. Surgical treatment of the thoracic descending aorta",
+                    "9.2.5.4. Surgical treatment of thoracoabdominal aorta aneurysms",
+                    "9.2.5.5. Surgical treatment of abdominal aorta aneurysms"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta il ruolo, le soglie diagnostiche e i limiti dell’indice caviglia-braccio, dell’indice dito-braccio, del test da sforzo, della pressione transcutanea di ossigeno, dell’ecografia duplex, dell’angiografia TC e dell’angiografia RM nell’arteriopatia periferica.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "5.3. Vascular examination of peripheral arteries",
+                    "5.3.1. Duplex ultrasound",
+                    "5.3.2. Digital subtraction angiography, computed tomography angiography, and magnetic resonance angiography"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono i componenti ottimali della terapia medica per i pazienti con malattie arteriose periferiche e dell’aorta?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "7.1.1. Diet",
+                    "7.1.2. Physical activity",
+                    "7.1.3. Smoking",
+                    "7.1.4. Patient education",
+                    "7.2.1. Antithrombotic therapy",
+                    "7.2.2. Antihypertensive therapy",
+                    "7.2.3. Lipid-lowering therapy",
+                    "7.2.4. Diabetes and pre-diabetes conditions"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi le raccomandazioni per l’esercizio fisico e i benefici attesi nei pazienti con claudicatio.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.1. Exercise therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali raccomandazioni relative alla sorveglianza mediante imaging, al trattamento medico, alla chirurgia aortica, alla gravidanza e all’esercizio fisico si applicano ai pazienti con sindrome di Marfan?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "10.1.3.2. Imaging surveillance",
+                    "10.1.3.3. Medical treatment",
+                    "10.1.3.4. Aortic surgery",
+                    "10.1.3.5. Pregnancy and physical exercise"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta le strategie antitrombotiche nell’arteriopatia periferica asintomatica e sintomatica degli arti inferiori, dopo rivascolarizzazione degli arti inferiori, nell’ischemia acuta dell’arto e nella stenosi carotidea asintomatica o sintomatica.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.2. Pharmacological treatment",
+                    "8.1.3.2. Medical treatment",
+                    "8.2.2.1.4. Antithrombotic therapy",
+                    "8.2.3.1.4. Antithrombotic therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali target di pressione arteriosa sistolica e quali principi di trattamento antipertensivo di prima linea sono raccomandati per i pazienti con malattie arteriose periferiche e dell’aorta?",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "7.2.2. Antihypertensive therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi i protocolli di sorveglianza dopo interventi endovascolari e chirurgici per aneurismi dell’aorta.",
+        "sources": [
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "9.2.6. Endoleaks",
+                    "9.2.7.1. Follow-up after thoracic aortic aneurysm treatment",
+                    "9.2.7.2. Follow-up after abdominal aortic aneurysm treatment"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta le indicazioni all’impianto di ICD in prevenzione primaria nella cardiomiopatia dilatativa o nella cardiomiopatia ipocinetica non dilatata, nella cardiomiopatia aritmogena del ventricolo destro e nella cardiomiopatia ipertrofica.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.3.1.2. Primary prevention of sudden cardiac death",
+                    "7.1.3.2.1. Risk stratification",
+                    "7.1.3.2.2. Treatment",
+                    "7.1.3.3.1. Risk stratification and primary prevention of sudden cardiac death"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi l’algoritmo di gestione acuta della tachicardia ventricolare monomorfa sostenuta quando è emodinamicamente tollerata rispetto a quando determina instabilità emodinamica.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.1.2. Acute management of sustained monomorphic ventricular tachycardia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le raccomandazioni per la gestione delle aritmie ventricolari durante le sindromi coronariche acute e per la stratificazione del rischio e la tempistica dell’ICD nelle fasi precoci dopo infarto miocardico?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.1.1.1. Acute coronary syndromes",
+                    "7.1.1.2. Early after myocardial infarction"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Nei pazienti con cardiopatia strutturale, in particolare con coronaropatia cronica e tachicardia ventricolare ricorrente nei portatori di ICD, confronta il ruolo della terapia farmacologica antiaritmica e dell’ablazione transcatetere.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.2.1. Pharmacotherapy",
+                    "6.2.4.1.1. Patients with structural heart disease",
+                    "7.1.1.3.5. Management of recurrent ventricular tachycardia in implantable cardioverter defibrillator carriers"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono i criteri diagnostici e la gestione delle malattie elettriche primitive (LQTS, Brugada, CPVT)?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.2.2. Long QT syndrome (including acquired long QT syndrome)",
+                    "7.2.4. Brugada syndrome",
+                    "7.2.6. Catecholaminergic polymorphic ventricular tachycardia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi l’approccio alla stratificazione del rischio e alla prevenzione della morte cardiaca improvvisa negli atleti.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "8.3. Sudden cardiac death in athletes"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le indicazioni raccomandate, i limiti delle evidenze e le situazioni in cui non è raccomandato l’uso routinario dei defibrillatori cardioverter indossabili (WCD)?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.2.2.3. Wearable cardioverter defibrillator"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Delinea la gestione della tempesta elettrica, includendo approcci farmacologici e interventistici.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.1.3. Management of electrical storm and incessant ventricular tachycardia"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le considerazioni specifiche per la gestione delle aritmie ventricolari nei pazienti con cardiopatie congenite?",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.6. Congenital heart disease"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Descrivi il ruolo dei test genetici nelle vittime di morte cardiaca improvvisa e gli approcci allo screening familiare.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "5.1.4. Genetic testing",
+                    "5.2.4. Scenario 4: Sudden death victim",
+                    "5.2.5. Scenario 5: Relatives of sudden arrhythmic death syndrome decedents"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta la gestione della fibrillazione atriale nei pazienti oncologici in trattamento, nei pazienti con cardiomiopatie e nei pazienti con sindromi coronariche croniche.",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.1. Atrial fibrillation"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.3.1. Anticoagulation",
+                    "6.10.3.2. Rate control",
+                    "6.10.3.3. Rhythm control"
+                ]
+            },
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.3.6. Atrial fibrillation",
+                    "4.3.1.2.1. Monotherapy with oral anticoagulant",
+                    "4.3.1.2.2. Combination of anticoagulant and antiplatelet therapy after percutaneous coronary intervention in chronic coronary syndrome patients with AF or other indication for oral anticoagulant"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono i target pressori per i pazienti con: (1) arteriopatia periferica, (2) sindromi coronariche croniche associate a scompenso cardiaco e (3) trattamento oncologico con inibitori del VEGF?",
+        "sources": [
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "9.8.4. Heart failure"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "7.2.2. Antihypertensive therapy"
+                ]
+            },
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.3.5. Hypertension"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.5.4. Vascular endothelial growth factor inhibitors",
+                    "6.5. Arterial hypertension"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta le indicazioni e le considerazioni specifiche per l’impianto di ICD in: (1) coronaropatia cronica con frazione di eiezione ridotta, (2) cardiomiopatia dilatativa non ischemica o cardiomiopatia ventricolare sinistra non dilatata e (3) pazienti oncologici che soddisfano comunque le indicazioni standard all’ICD.",
+        "sources": [
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "7.1.1.3.1. Primary prevention of sudden cardiac death in patients with reduced ejection fraction",
+                    "7.1.3.1.2. Primary prevention of sudden cardiac death"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.5. Device therapy: implantable cardioverter defibrillator",
+                    "7.2.5.2. Primary prevention of sudden cardiac death",
+                    "7.3.5.2. Primary prevention of sudden cardiac death"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Come deve essere differenziata la gestione dello scompenso cardiaco con frazione di eiezione ridotta nei pazienti con: (1) sindromi coronariche croniche, (2) cardiomiopatia ipertrofica e (3) cardiomiopatia indotta da antracicline?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.1. Coronary artery disease and heart failure"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.10.2. Heart failure management",
+                    "7.1.4.2.1. Heart failure and chest pain"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.1.1. Anthracycline chemotherapy-related cardiac dysfunction"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le raccomandazioni relative all’esercizio fisico e all’attività fisica per i pazienti con: (1) sindromi coronariche croniche stabili, (2) arteriopatia periferica con claudicatio, (3) cardiomiopatia ipertrofica e (4) recente trattamento oncologico?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.1.2.5. Physical activity and sedentary behaviour",
+                    "4.1.3. Exercise therapy"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.1. Exercise therapy"
+                ]
+            },
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.1.3. Exercise recommendations in hypertrophic cardiomyopathy"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "7.4. Cardiopulmonary exercise testing and fitness during the end-of-therapy assessment",
+                    "7.5. The role of cardiac rehabilitation"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta gli approcci raccomandati di screening e sorveglianza per: (1) i parenti di primo grado di pazienti con cardiomiopatia ipertrofica, (2) i sopravvissuti al cancro, (3) le persone a rischio di aneurisma dell’aorta addominale e (4) gli atleti a rischio di morte cardiaca improvvisa.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.11. Family screening and follow-up evaluation of relatives"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "8.1.1. Adult survivors of childhood and adolescent cancer",
+                    "8.1.2. Adult cancer survivors"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "6.2.1. Screening for abdominal aortic aneurysm"
+                ]
+            },
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "8.3. Sudden cardiac death in athletes"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le strategie di gestione del prolungamento del QT nei pazienti con: (1) prolungamento del QT correlato a terapia oncologica, (2) sindrome del QT lungo congenita o acquisita e (3) trattamento con farmaci antiaritmici per aritmie ventricolari?",
+        "sources": [
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.4.2. Long corrected QT interval and ventricular arrhythmias"
+                ]
+            },
+            {
+                "document": "Ventricular_Arrhythmias_and_the_Prevention_of_Sudden_Cardiac_Death_2022.md",
+                "sections": [
+                    "6.2.1. Pharmacotherapy",
+                    "7.2.2. Long QT syndrome (including acquired long QT syndrome)"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "In che modo differiscono le raccomandazioni sulla terapia antiaggregante nei pazienti con: (1) sindrome coronarica cronica dopo PCI, (2) arteriopatia periferica e (3) neoplasia con coronaropatia concomitante?",
+        "sources": [
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "4.3.1.1.3. Dual antiplatelet therapy post-percutaneous coronary intervention"
+                ]
+            },
+            {
+                "document": "Peripheral_Arterial_&_Aortic_Diseases_2024.md",
+                "sections": [
+                    "8.1.1.2.2. Pharmacological treatment"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "6.2.1. Acute coronary syndromes",
+                    "6.2.2. Chronic coronary syndromes",
+                    "6.7.2. Antiplatelet therapy"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Confronta il ruolo della risonanza magnetica cardiaca nella diagnosi e nel follow-up delle cardiomiopatie e della disfunzione cardiaca correlata alle terapie oncologiche, nonché nella diagnosi non invasiva di ANOCA/INOCA.",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "6.7.3. Cardiac magnetic resonance"
+                ]
+            },
+            {
+                "document": "Chronic_Coronary_Syndromes_2024.md",
+                "sections": [
+                    "5.2.5.1. Non-invasive diagnosis"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "5.4.2. Cardiac imaging"
+                ]
+            }
+        ],
+        "answer": ""
+    },
+    {
+        "question": "Quali sono le considerazioni relative al rischio e alla gestione della gravidanza nelle donne con: (1) cardiomiopatia ipertrofica, (2) ipertensione cronica, (3) patologia aortica o aortopatia toracica ereditaria e (4) precedente trattamento oncologico potenzialmente cardiotossico?",
+        "sources": [
+            {
+                "document": "Cardiomyopathies_2023.md",
+                "sections": [
+                    "8.2.2.6. Specific cardiomyopathies"
+                ]
+            },
+            {
+                "document": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+                "sections": [
+                    "9.2.1. Definition and epidemiology",
+                    "9.2.2. Classifying hypertension in pregnancy",
+                    "9.2.6. Treatment initiation and blood pressure targets",
+                    "9.2.7. Managing mild hypertension in pregnancy (office blood pressure 140–159/90–109 mmHg)",
+                    "9.2.8. Managing severe hypertension in pregnancy (>160/110 mmHg)",
+                    "9.2.9. Managing blood pressure post-partum"
+                ]
+            },
+            {
+                "document": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+                "sections": [
+                    "5.3.1. Follow-up and medical therapy",
+                    "5.3.2. Interventions",
+                    "5.3.3. Delivery"
+                ]
+            },
+            {
+                "document": "Cardio-oncology_2022.md",
+                "sections": [
+                    "8.9. Pregnancy in cancer survivors"
+                ]
+            }
+        ],
+        "answer": ""
+    }
+]

@@ -1,0 +1,15 @@
+{
+    "indexing": {
+            "name": "cvd_flat",
+            "description": "Documents containing medical protocols for cardiologic patients.",
+            "folder": "/Users/giai/Desktop/repos/cardiology-gen-ai/data-etl/index/flat",
+            "type": "faiss",
+            "distance": "cosine",
+            "alias": "",
+            "embeddings": {
+                "deployment": "text-embedding-3-small",
+                "ollama": false,
+                "kwargs": {}
+            }
+        }
+}

@@ -169,6 +169,63 @@ class QueryAmbiguity(BaseModel):
     )
 
 
+class KGMentionsPlan(BaseModel):
+    """Minimal concept plan for MENTIONS-only KG retrieval."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    terms: List[str] = Field(
+        min_length=1,
+        max_length=5,
+        description=(
+            "One to five concise clinical concepts to match through "
+            "Section-[:MENTIONS]->Concept. Do not return section titles, "
+            "document identifiers, section numbers, or generic intent words."
+        ),
+    )
+    require_all: bool = Field(
+        default=False,
+        description=(
+            "When true, every term must match the same Section. Keep false "
+            "for composite questions, alternatives, populations, and facets."
+        ),
+    )
+
+    @field_validator("terms")
+    @classmethod
+    def normalize_terms(cls, values: List[str]) -> List[str]:
+        normalized: List[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            term = str(value).strip()
+            if not term:
+                continue
+            key = term.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized.append(term)
+
+        if not normalized:
+            raise ValueError(
+                "At least one non-empty retrieval term is required"
+            )
+        if len(normalized) > 5:
+            raise ValueError(
+                "A MENTIONS plan may contain at most five unique terms"
+            )
+        return normalized
+
+    @staticmethod
+    def format_instruction() -> str:
+        return (
+            "Return ONLY a valid JSON object with the keys 'terms' and "
+            "'require_all'. Do not generate Cypher, document IDs, section "
+            "IDs, section titles, explanations, or an answer."
+        )
+
+
 class KGToolCall(BaseModel):
     """One deterministic knowledge-graph retrieval call."""
 

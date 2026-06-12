@@ -11,6 +11,7 @@ from agentic_rag.agent.services.llm_service import LLMService
 
 
 KG_ROUTER_NODE_NAME = "kg_retrieval_router"
+KG_MENTIONS_ROUTER_NODE_NAME = "kg_mentions_router"
 
 
 class KGStructuredRouter:
@@ -117,3 +118,65 @@ def route_kg_question(
         router_config=router_config,
     )
     return router.route(question)
+
+class KGMentionsRouter:
+    """Extract a minimal validated concept plan for MENTIONS retrieval."""
+
+    def __init__(
+        self,
+        llm_service: LLMService,
+        router_config: RunnableConfig | None = None,
+        *,
+        node_name: str = KG_MENTIONS_ROUTER_NODE_NAME,
+    ) -> None:
+        self.llm_service = llm_service
+        self.router_config = router_config
+        self.node_name = KGStructuredRouter._validate_node_name(node_name)
+
+        try:
+            self._node = self.llm_service.build_node(
+                self.node_name,
+                structured_output=True,
+                output_schema=output.KGMentionsPlan,
+            )
+        except StopIteration as exc:
+            raise RuntimeError(
+                f"LLM node {self.node_name!r} is not registered in the "
+                "configured nodes YAML"
+            ) from exc
+
+    def route(
+        self,
+        question: str,
+        *,
+        config: RunnableConfig | None = None,
+    ) -> output.KGMentionsPlan:
+        normalized_question = KGStructuredRouter._validate_question(question)
+        invocation_config = (
+            config if config is not None else self.router_config
+        )
+        result = self._node.invoke(
+            {"question": normalized_question},
+            config=invocation_config,
+            with_retry=True,
+        )
+        if isinstance(result, output.KGMentionsPlan):
+            return result
+        try:
+            return output.KGMentionsPlan.model_validate(result)
+        except Exception as exc:
+            raise RuntimeError(
+                "The KG MENTIONS router returned an invalid structured result"
+            ) from exc
+
+    def route_dict(
+        self,
+        question: str,
+        *,
+        config: RunnableConfig | None = None,
+    ) -> dict[str, Any]:
+        return self.route(
+            question,
+            config=config,
+        ).model_dump(mode="json")
+

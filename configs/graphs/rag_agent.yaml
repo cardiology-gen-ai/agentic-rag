@@ -74,3 +74,7 @@ nodes:
   - name: kg_retrieval_router
     prompt_filename: kg_retrieval_router
     prompt_version: default
+
+  - name: kg_mentions_router
+    prompt_filename: kg_mentions_router
+    prompt_version: default

@@ -13,7 +13,7 @@ set -euo pipefail
 SIF="$WORK/containers/postgres_16.sif"
 
 # load env file
-[[ -f .env.leonardo ]] &&  { set -a; source .env.leonardo; set +a; }
+[[ -f .env.local.leonardo ]] &&  { set -a; source .env.local.leonardo; set +a; }
 
 PGDATA="${PGDATA:-$WORK/pg/pgdata16}"
 PGSOCK="${PGSOCK:-$TMPDIR/pgsock}"

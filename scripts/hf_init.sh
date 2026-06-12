@@ -39,7 +39,7 @@ mkdir -p "$HUGGINGFACE_HUB_CACHE" "$HF_DATASETS_CACHE"
 command -v huggingface-cli >/dev/null || { echo "Error: no huggingface-cli (transformers)"; exit 1; }
 command -v jq >/dev/null || { echo "Error: missing 'jq'"; exit 1; }
 
-# 1) Load .env.leonardo (HF_TOKEN + CONFIG_PATH)
+# 1) Load .env.local.leonardo (HF_TOKEN + CONFIG_PATH)
 [[ -f "$ENV_FILE" ]] || { echo "Error: .env.leonardo non found: $ENV_FILE"; exit 2; }
 set -a
 
@@ -47,11 +47,11 @@ source "$ENV_FILE"
 set +a
 
 # 2) HF_TOKEN
-: "${HF_TOKEN:?Errore: HF_TOKEN not present in .env.leonardo}"
+: "${HF_TOKEN:?Errore: HF_TOKEN not present in .env.local.leonardo}"
 
 # 3) Find config.json
 if [[ -z "$CONFIG_FILE" ]]; then
-  : "${CONFIG_PATH:?Error: CONFIG_PATH not found on .env.leonardo e no -c given}"
+  : "${CONFIG_PATH:?Error: CONFIG_PATH not found on .env.local.leonardo e no -c given}"
   CONFIG_FILE="$CONFIG_PATH"
 fi
 [[ -f "$CONFIG_FILE" ]] || { echo "Error: config not found: $CONFIG_FILE"; exit 3; }

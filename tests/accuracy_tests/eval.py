@@ -27,10 +27,10 @@ class EvalTestConfig(BaseModel, ABC):
 
 
 class EvalTest(ABC):
-    def __init__(self, test_config_path: pathlib.Path, node_config: NodeOptimizationConfig):
+    def __init__(self, test_config_path: pathlib.Path | EvalTestConfig, node_config: NodeOptimizationConfig):
         self.logger = get_logger("Evaluation Test")
         self._test_config_path = test_config_path
-        self.test_config: EvalTestConfig = self.get_config()
+        self.test_config: EvalTestConfig = self.get_config() if isinstance(test_config_path, pathlib.Path) else test_config_path
         self.node_config = node_config
         self._set_test_id()
         self.metrics: List[Metric] = [

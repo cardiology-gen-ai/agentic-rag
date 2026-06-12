@@ -10,11 +10,10 @@ from langchain_core.documents import Document
 from pydantic import BaseModel, ConfigDict
 import torch
 
-from src.agentic_rag.agent.graph import Agent
 from agentic_rag.utils.chat import format_chat_request
-from src.agentic_rag.managers.search_manager import SearchManager
-from src.agentic_rag.config.manager import SearchConfig
-from src.agentic_rag.utils.search import SearchResult
+from agentic_rag.managers.search_manager import SearchManager
+from agentic_rag.config.manager import SearchConfig
+from agentic_rag.utils.search import SearchResult
 from tests.accuracy_tests.eval import EvalTestConfig, EvalTest
 from tests.accuracy_tests.nodes_config import NodeOptimizationConfig
 from tests.accuracy_tests.search_agent import SearchAgent
@@ -73,7 +72,7 @@ class RetrieverData(BaseModel):
 
 
 class EvalRetriever(EvalTest):
-    def __init__(self, test_config_path: pathlib.Path, node_config: NodeOptimizationConfig, eval_agent: bool = False):
+    def __init__(self, test_config_path: pathlib.Path | RetrieverTestConfig, node_config: NodeOptimizationConfig, eval_agent: bool = False):
         super().__init__(test_config_path=test_config_path, node_config=node_config)
         assert isinstance(self.test_config, RetrieverTestConfig)
         self.search_manager = SearchManager(

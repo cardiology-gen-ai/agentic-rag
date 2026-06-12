@@ -67,7 +67,7 @@ ENV_PATH="${CINECA_SCRATCH:-$WORK}/agentic-rag"
 source "$ENV_PATH/bin/activate"
 
 # load env file
-[[ -f .env.leonardo ]] &&  { set -a; source .env.leonardo; set +a; }
+[[ -f .env.local.leonardo ]] &&  { set -a; source .env.local.leonardo; set +a; }
 
 : "${APP_CONFIG_PATH:?[ERR] APP_CONFIG_PATH not defined in env file}"
 [[ -f "$APP_CONFIG_PATH" ]] || { echo "[ERR] config not found: $APP_CONFIG_PATH"; exit 3; }

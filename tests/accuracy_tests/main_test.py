@@ -4,7 +4,7 @@ from pathlib import Path
 
 import mlflow
 
-from src.agentic_rag.persistence.db import ensure_database
+from agentic_rag.persistence.db import ensure_database
 
 from tests.accuracy_tests.nodes_config import NodeOptimizationConfig
 from tests.accuracy_tests.test_retrievers import EvalRetriever

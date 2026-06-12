@@ -3,7 +3,6 @@ from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Literal
-from importlib.resources import files
 
 from pydantic import BaseModel, ConfigDict
 

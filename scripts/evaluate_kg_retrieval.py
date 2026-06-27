@@ -125,6 +125,24 @@ def parse_args() -> argparse.Namespace:
             "document-level support from context calls. Disabled by default."
         ),
     )
+    parser.add_argument(
+        "--advanced-same-section-anchor-fallback",
+        action="store_true",
+        help=(
+            "For planned_role_aware, when same_section produces no final "
+            "results, use anchor-term lexical evidence to select fallback "
+            "results from successful context calls. Disabled by default."
+        ),
+    )
+    parser.add_argument(
+        "--advanced-same-section-anchor-rescue",
+        action="store_true",
+        help=(
+            "For planned_role_aware, merge strong anchor-sensitive context "
+            "candidates into same_section results even when normal "
+            "same_section returns non-empty results. Disabled by default."
+        ),
+    )
     parser.add_argument("--include-summary-sections", action="store_true")
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument("--run-id", default=None)
@@ -443,6 +461,12 @@ def main() -> None:
             "advanced_multiple_facets_context_aware_merge": (
                 args.advanced_multiple_facets_context_aware_merge
             ),
+            "advanced_same_section_anchor_fallback": (
+                args.advanced_same_section_anchor_fallback
+            ),
+            "advanced_same_section_anchor_rescue": (
+                args.advanced_same_section_anchor_rescue
+            ),
             "exclude_summary_sections": not args.include_summary_sections,
             "document_filtering": None,
             "gold_annotations_used_for_retrieval": False,
@@ -480,6 +504,12 @@ def main() -> None:
             exclude_summary_sections=not args.include_summary_sections,
             multiple_facets_context_aware_merge=(
                 args.advanced_multiple_facets_context_aware_merge
+            ),
+            same_section_anchor_fallback=(
+                args.advanced_same_section_anchor_fallback
+            ),
+            same_section_anchor_rescue=(
+                args.advanced_same_section_anchor_rescue
             ),
         )
 

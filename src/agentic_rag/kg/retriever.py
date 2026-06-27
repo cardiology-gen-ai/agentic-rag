@@ -8,6 +8,7 @@ It does not calculate evaluation metrics and never accepts gold identifiers.
 
 from __future__ import annotations
 
+import re
 import time
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal, Protocol
@@ -37,6 +38,8 @@ KGCombinationMethod = Literal[
     "hierarchical_context",
     "facet_preserving",
     "context_aware_facet",
+    "same_section_anchor_fallback",
+    "same_section_anchor_rescue",
     "rrf",
 ]
 
@@ -135,6 +138,51 @@ class KGCombinedSectionResult(KGSectionResult):
 
 # Backward-compatible import name used by the first RRF prototype.
 KGFusedSectionResult = KGCombinedSectionResult
+
+
+_ANCHOR_FALLBACK_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "for",
+    "from",
+    "in",
+    "into",
+    "is",
+    "of",
+    "on",
+    "or",
+    "the",
+    "to",
+    "with",
+    "without",
+    "approach",
+    "guideline",
+    "guidelines",
+    "patient",
+    "patients",
+    "recommended",
+    "recommendation",
+    "recommendations",
+    "section",
+    "sections",
+}
+
+_EXCLUDED_FALLBACK_TITLE_PATTERNS = (
+    "what to do",
+    "what not to do",
+    "key messages",
+    "gaps in evidence",
+    "references",
+    "bibliography",
+)
+
+_RESCUE_MIN_SCORE = 25.0
 
 
 class KGToolExecution(BaseModel):
@@ -315,6 +363,8 @@ class KGParameterizedRetriever:
         hierarchy_max_depth: int = 6,
         exclude_summary_sections: bool = True,
         multiple_facets_context_aware_merge: bool = False,
+        same_section_anchor_fallback: bool = False,
+        same_section_anchor_rescue: bool = False,
     ) -> None:
         self.router = router
         self.tools = tools
@@ -342,6 +392,10 @@ class KGParameterizedRetriever:
         self.multiple_facets_context_aware_merge = bool(
             multiple_facets_context_aware_merge
         )
+        self.same_section_anchor_fallback = bool(
+            same_section_anchor_fallback
+        )
+        self.same_section_anchor_rescue = bool(same_section_anchor_rescue)
 
     def retrieve(
         self,
@@ -456,12 +510,30 @@ class KGParameterizedRetriever:
             return direct_results(executions, top_k=self.final_k)
 
         if plan.combination_mode == "same_section":
-            return hierarchical_context_rerank(
+            results = hierarchical_context_rerank(
                 executions,
                 tools=self.tools,
                 top_k=self.final_k,
                 max_depth=self.hierarchy_max_depth,
             )
+
+            if self.same_section_anchor_rescue:
+                return same_section_anchor_rescue_merge(
+                    executions,
+                    base_results=results,
+                    top_k=self.final_k,
+                )
+
+            if results:
+                return results
+
+            if self.same_section_anchor_fallback:
+                return same_section_anchor_fallback_merge(
+                    executions,
+                    top_k=self.final_k,
+                )
+
+            return []
 
         if plan.combination_mode == "multiple_facets":
             if self.multiple_facets_context_aware_merge:
@@ -700,6 +772,223 @@ def hierarchical_context_rerank(
         item.model_copy(update={"rank": rank})
         for rank, item in enumerate(combined_results, start=1)
     ]
+
+
+def same_section_anchor_fallback_merge(
+    executions: Sequence[KGToolExecution],
+    *,
+    top_k: int | None = None,
+) -> list[KGCombinedSectionResult]:
+    """Fallback for same_section when anchor/context hierarchy matching fails.
+
+    This fallback uses successful context results, but only keeps candidates
+    that lexically match the anchor terms in the title or text. It is intended
+    for cases where the anchor title search is too specific, while the context
+    call already retrieved plausible target sections.
+    """
+    candidates = _same_section_anchor_fallback_candidates(executions)
+    if top_k is not None:
+        candidates = candidates[:top_k]
+
+    return [
+        item.model_copy(update={"rank": rank})
+        for rank, item in enumerate(candidates, start=1)
+    ]
+
+
+def same_section_anchor_rescue_merge(
+    executions: Sequence[KGToolExecution],
+    *,
+    base_results: Sequence[KGCombinedSectionResult],
+    top_k: int | None = None,
+) -> list[KGCombinedSectionResult]:
+    """Merge same_section results with strong anchor-sensitive context hits."""
+    rescue_candidates = [
+        candidate
+        for candidate in _same_section_anchor_fallback_candidates(executions)
+        if candidate.combination_score is not None
+        and candidate.combination_score >= _RESCUE_MIN_SCORE
+    ]
+
+    if not rescue_candidates:
+        output = list(base_results)
+        if top_k is not None:
+            output = output[:top_k]
+        return [
+            item.model_copy(update={"rank": rank})
+            for rank, item in enumerate(output, start=1)
+        ]
+
+    if not base_results:
+        output = rescue_candidates
+        if top_k is not None:
+            output = output[:top_k]
+        return [
+            item.model_copy(
+                update={
+                    "rank": rank,
+                    "combination_method": "same_section_anchor_rescue",
+                }
+            )
+            for rank, item in enumerate(output, start=1)
+        ]
+
+    sortable: list[
+        tuple[float, int, int, str, KGCombinedSectionResult]
+    ] = []
+
+    for fallback_rank, result in enumerate(base_results, start=1):
+        source_rank = result.best_source_rank or result.rank or fallback_rank
+        result_rank = result.rank or fallback_rank
+        score = 50.0 - result_rank * 0.01
+        sortable.append(
+            (
+                -score,
+                1,
+                source_rank,
+                result.section_uid,
+                result.model_copy(
+                    update={
+                        "combination_method": "same_section_anchor_rescue",
+                        "combination_score": score,
+                    }
+                ),
+            )
+        )
+
+    for fallback_rank, result in enumerate(rescue_candidates, start=1):
+        score = result.combination_score or 0.0
+        source_rank = result.best_source_rank or result.rank or fallback_rank
+        sortable.append(
+            (
+                -score,
+                0,
+                source_rank,
+                result.section_uid,
+                result.model_copy(
+                    update={
+                        "combination_method": "same_section_anchor_rescue",
+                    }
+                ),
+            )
+        )
+
+    sortable.sort(key=lambda item: item[:4])
+
+    output: list[KGCombinedSectionResult] = []
+    seen: set[str] = set()
+    for _score, _priority, _source_rank, section_uid, result in sortable:
+        if section_uid in seen:
+            continue
+        seen.add(section_uid)
+        output.append(result)
+        if top_k is not None and len(output) >= top_k:
+            break
+
+    return [
+        item.model_copy(update={"rank": rank})
+        for rank, item in enumerate(output, start=1)
+    ]
+
+
+def _same_section_anchor_fallback_candidates(
+    executions: Sequence[KGToolExecution],
+) -> list[KGCombinedSectionResult]:
+    anchor_terms: list[str] = []
+    for execution in executions:
+        if execution.call.role == "anchor":
+            anchor_terms.extend(execution.call.terms)
+
+    anchor_tokens: set[str] = set()
+    for term in anchor_terms:
+        anchor_tokens.update(_anchor_fallback_tokens(term))
+
+    anchor_phrases = _anchor_fallback_phrases(anchor_terms)
+
+    if not anchor_tokens and not anchor_phrases:
+        return []
+
+    context_executions = [
+        execution
+        for execution in executions
+        if execution.status == "success"
+        and execution.call.role == "context"
+    ]
+
+    candidates: list[
+        tuple[float, int, str, KGCombinedSectionResult]
+    ] = []
+
+    for execution in context_executions:
+        for fallback_rank, result in enumerate(execution.results, start=1):
+            if _is_excluded_fallback_title(result.title):
+                continue
+
+            source_rank = result.rank or fallback_rank
+            title_norm = _normalize_anchor_fallback_text(result.title)
+            text_norm = _normalize_anchor_fallback_text(result.text)
+            title_tokens = _anchor_fallback_tokens(result.title)
+            text_tokens = _anchor_fallback_tokens(result.text)
+
+            title_overlap = anchor_tokens & title_tokens
+            text_overlap = anchor_tokens & text_tokens
+
+            has_title_phrase = any(
+                phrase and phrase in title_norm
+                for phrase in anchor_phrases
+            )
+            has_text_phrase = any(
+                phrase and phrase in text_norm
+                for phrase in anchor_phrases
+            )
+
+            accepted = (
+                has_title_phrase
+                or len(title_overlap) >= 2
+                or (len(title_overlap) >= 1 and has_text_phrase)
+                or len(text_overlap) >= 3
+            )
+
+            if not accepted:
+                continue
+
+            score = 0.0
+            if has_title_phrase:
+                score += 100.0
+            score += 25.0 * len(title_overlap)
+
+            if has_text_phrase:
+                score += 20.0
+            score += min(len(text_overlap), 8) * 2.0
+            score -= source_rank * 0.01
+
+            combined = _combined_result(
+                result,
+                rank=1,
+                method="same_section_anchor_fallback",
+                combination_score=score,
+                best_source_rank=source_rank,
+                contributions=[
+                    _source_contribution(execution, source_rank)
+                ],
+                context_supported=True,
+                covered_facets=[],
+            )
+            candidates.append(
+                (-score, source_rank, result.section_uid, combined)
+            )
+
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]))
+
+    output: list[KGCombinedSectionResult] = []
+    seen: set[str] = set()
+    for _negative_score, _source_rank, section_uid, combined in candidates:
+        if section_uid in seen:
+            continue
+        seen.add(section_uid)
+        output.append(combined)
+
+    return output
 
 
 def facet_preserving_merge(
@@ -1040,6 +1329,50 @@ def _combined_result(
         }
     )
     return KGCombinedSectionResult.model_validate(payload)
+
+
+def _normalize_anchor_fallback_text(value: str | None) -> str:
+    text = str(value or "").casefold()
+    text = text.replace("\u2019", "'").replace("\u2018", "'")
+    text = text.replace("\u201c", '"').replace("\u201d", '"')
+    return re.sub(r"[^a-z0-9]+", " ", text).strip()
+
+
+def _anchor_fallback_tokens(value: str | None) -> set[str]:
+    normalized = _normalize_anchor_fallback_text(value)
+    tokens: set[str] = set()
+    for token in normalized.split():
+        if len(token) < 3:
+            continue
+        if token in _ANCHOR_FALLBACK_STOPWORDS:
+            continue
+        tokens.add(token)
+    return tokens
+
+
+def _anchor_fallback_phrases(terms: Sequence[str]) -> list[str]:
+    phrases: list[str] = []
+    for term in terms:
+        normalized = _normalize_anchor_fallback_text(term)
+        if not normalized:
+            continue
+        phrase_tokens = [
+            token
+            for token in normalized.split()
+            if len(token) >= 3
+            and token not in _ANCHOR_FALLBACK_STOPWORDS
+        ]
+        if len(phrase_tokens) >= 2:
+            phrases.append(" ".join(phrase_tokens))
+    return phrases
+
+
+def _is_excluded_fallback_title(title: str | None) -> bool:
+    normalized = _normalize_anchor_fallback_text(title)
+    return any(
+        pattern in normalized
+        for pattern in _EXCLUDED_FALLBACK_TITLE_PATTERNS
+    )
 
 
 def _deduplicate_results(

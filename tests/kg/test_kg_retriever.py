@@ -57,6 +57,7 @@ def make_result(
     title: str,
     *,
     matched_terms=None,
+    text: str | None = None,
 ) -> KGSectionResult:
     document_id, section_id = uid.split("::", 1)
     return KGSectionResult(
@@ -65,7 +66,7 @@ def make_result(
         section_id=section_id,
         printed_section_id=section_id,
         title=title,
-        text=f"Text for {title}",
+        text=text or f"Text for {title}",
         matched_concepts=[],
         matched_terms=matched_terms or [],
         score=1.0,
@@ -187,6 +188,74 @@ def test_same_section_promotes_anchor_supported_by_context_ancestor():
         )
     ]
     assert all(call[2]["document_ids"] is None for call in tools.calls)
+
+
+def test_same_section_anchor_rescue_can_outrank_nonempty_base_results():
+    context = make_result(
+        "Cardiomyopathies_2023::7.1.5",
+        1,
+        "Risk stratification for sudden cardiac death prevention",
+        text=(
+            "Risk stratification uses risk model variables, risk categories, "
+            "and ICD decision thresholds."
+        ),
+    )
+    wrong_anchor = make_result(
+        "Cardiomyopathies_2023::7.6.1.3",
+        1,
+        "Clinical course, outcome, and risk stratification",
+    )
+
+    plan = make_plan(
+        {
+            "intent": "risk_stratification",
+            "expected_scope": "single_section",
+            "combination_mode": "same_section",
+            "calls": [
+                {
+                    "tool": "search_sections_by_concepts",
+                    "role": "context",
+                    "terms": [
+                        "sudden cardiac death",
+                        "hypertrophic cardiomyopathy",
+                    ],
+                    "require_all": False,
+                },
+                {
+                    "tool": "search_sections_by_title",
+                    "role": "anchor",
+                    "terms": [
+                        "risk stratification",
+                        "risk model",
+                        "risk categories",
+                        "ICD decision thresholds",
+                    ],
+                    "require_all": False,
+                },
+            ],
+        }
+    )
+
+    tools = FakeTools(
+        concept_results=[context],
+        title_results=[wrong_anchor],
+    )
+    run = KGParameterizedRetriever(
+        FakeRouter(plan),
+        tools,
+        same_section_anchor_rescue=True,
+    ).retrieve("Question")
+
+    assert run.status == "success"
+    assert [item.section_uid for item in run.results] == [
+        context.section_uid,
+        wrong_anchor.section_uid,
+    ]
+    assert all(
+        item.combination_method == "same_section_anchor_rescue"
+        for item in run.results
+    )
+    assert run.results[0].combination_score > run.results[1].combination_score
 
 
 def test_multiple_facets_preserves_one_result_per_title_facet():

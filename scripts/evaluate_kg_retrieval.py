@@ -126,6 +126,15 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--advanced-multiple-facets-context-candidate-injection",
+        action="store_true",
+        help=(
+            "For planned_role_aware, when context-aware multiple_facets is "
+            "enabled, allow strong context candidates to compete with facet "
+            "results. Disabled by default."
+        ),
+    )
+    parser.add_argument(
         "--advanced-same-section-anchor-fallback",
         action="store_true",
         help=(
@@ -461,6 +470,9 @@ def main() -> None:
             "advanced_multiple_facets_context_aware_merge": (
                 args.advanced_multiple_facets_context_aware_merge
             ),
+            "advanced_multiple_facets_context_candidate_injection": (
+                args.advanced_multiple_facets_context_candidate_injection
+            ),
             "advanced_same_section_anchor_fallback": (
                 args.advanced_same_section_anchor_fallback
             ),
@@ -504,6 +516,9 @@ def main() -> None:
             exclude_summary_sections=not args.include_summary_sections,
             multiple_facets_context_aware_merge=(
                 args.advanced_multiple_facets_context_aware_merge
+            ),
+            multiple_facets_context_candidate_injection=(
+                args.advanced_multiple_facets_context_candidate_injection
             ),
             same_section_anchor_fallback=(
                 args.advanced_same_section_anchor_fallback
@@ -650,6 +665,7 @@ def main() -> None:
         "status_counts": status_counts,
         "failure_count": failure_count,
         "elapsed_seconds": time.perf_counter() - started,
+        "configuration": manifest["configuration"],
         "aggregates": aggregates,
     }
     write_json(output_dir / "summary.json", summary)

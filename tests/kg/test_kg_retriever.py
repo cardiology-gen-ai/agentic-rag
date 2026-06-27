@@ -58,6 +58,7 @@ def make_result(
     *,
     matched_terms=None,
     text: str | None = None,
+    score: float = 1.0,
 ) -> KGSectionResult:
     document_id, section_id = uid.split("::", 1)
     return KGSectionResult(
@@ -69,11 +70,11 @@ def make_result(
         text=text or f"Text for {title}",
         matched_concepts=[],
         matched_terms=matched_terms or [],
-        score=1.0,
+        score=score,
         score_type="weighted_match",
         scores=KGRetrievalScores(
-            concept_match=1.0,
-            weighted_match=1.0,
+            concept_match=score,
+            weighted_match=score,
         ),
         rank=rank,
     )
@@ -317,6 +318,83 @@ def test_multiple_facets_preserves_one_result_per_title_facet():
         item.combination_method == "facet_preserving"
         for item in run.results
     )
+
+
+def test_multiple_facets_context_candidate_injection_promotes_context_hit():
+    context = make_result(
+        "Cardiomyopathies_2023::7.1.5",
+        1,
+        "Sudden cardiac death prevention in hypertrophic cardiomyopathy",
+        matched_terms=["sudden cardiac death", "hypertrophic cardiomyopathy"],
+        score=16.0,
+    )
+    facet_one = make_result(
+        "Cardiomyopathies_2023::7.6.1.3",
+        1,
+        "Clinical course, outcome, and risk stratification",
+        matched_terms=["risk stratification"],
+    )
+    facet_two = make_result(
+        "Cardiomyopathies_2023::7.6.2.3",
+        2,
+        "Clinical course, management, and sudden death risk stratification",
+        matched_terms=["risk stratification"],
+    )
+
+    plan = make_plan(
+        {
+            "intent": "risk_stratification",
+            "expected_scope": "multiple_sections",
+            "combination_mode": "multiple_facets",
+            "calls": [
+                {
+                    "tool": "search_sections_by_concepts",
+                    "role": "context",
+                    "terms": [
+                        "sudden cardiac death",
+                        "hypertrophic cardiomyopathy",
+                    ],
+                    "require_all": False,
+                },
+                {
+                    "tool": "search_sections_by_title",
+                    "role": "facet",
+                    "terms": [
+                        "risk stratification",
+                        "risk models",
+                        "risk modifiers",
+                        "risk categories",
+                        "ICD decision thresholds",
+                    ],
+                    "require_all": False,
+                },
+            ],
+        }
+    )
+
+    tools = FakeTools(
+        concept_results=[context],
+        title_results=[facet_one, facet_two],
+    )
+    run = KGParameterizedRetriever(
+        FakeRouter(plan),
+        tools,
+        multiple_facets_context_aware_merge=True,
+        multiple_facets_context_candidate_injection=True,
+    ).retrieve("Question")
+
+    assert run.status == "success"
+    assert [item.section_uid for item in run.results] == [
+        context.section_uid,
+        facet_one.section_uid,
+        facet_two.section_uid,
+    ]
+    assert all(
+        item.combination_method
+        == "context_aware_facet_context_injection"
+        for item in run.results
+    )
+    assert run.results[0].combination_score > run.results[1].combination_score
 
 
 def test_alternative_retrieval_uses_rrf_and_rewards_overlap():

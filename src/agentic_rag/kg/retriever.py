@@ -38,6 +38,7 @@ KGCombinationMethod = Literal[
     "hierarchical_context",
     "facet_preserving",
     "context_aware_facet",
+    "context_aware_facet_context_injection",
     "same_section_anchor_fallback",
     "same_section_anchor_rescue",
     "rrf",
@@ -363,6 +364,7 @@ class KGParameterizedRetriever:
         hierarchy_max_depth: int = 6,
         exclude_summary_sections: bool = True,
         multiple_facets_context_aware_merge: bool = False,
+        multiple_facets_context_candidate_injection: bool = False,
         same_section_anchor_fallback: bool = False,
         same_section_anchor_rescue: bool = False,
     ) -> None:
@@ -391,6 +393,9 @@ class KGParameterizedRetriever:
         self.exclude_summary_sections = bool(exclude_summary_sections)
         self.multiple_facets_context_aware_merge = bool(
             multiple_facets_context_aware_merge
+        )
+        self.multiple_facets_context_candidate_injection = bool(
+            multiple_facets_context_candidate_injection
         )
         self.same_section_anchor_fallback = bool(
             same_section_anchor_fallback
@@ -541,6 +546,9 @@ class KGParameterizedRetriever:
                     executions,
                     rrf_k=self.rrf_k,
                     top_k=self.final_k,
+                    include_context_candidates=(
+                        self.multiple_facets_context_candidate_injection
+                    ),
                 )
 
             return facet_preserving_merge(
@@ -1085,6 +1093,7 @@ def context_aware_facet_merge(
     *,
     rrf_k: int = 60,
     top_k: int | None = None,
+    include_context_candidates: bool = False,
 ) -> list[KGCombinedSectionResult]:
     """Rerank facet results using document-level support from context calls.
 
@@ -1178,6 +1187,182 @@ def context_aware_facet_merge(
 
     if top_k is not None:
         output = output[:top_k]
+
+    output = [
+        item.model_copy(update={"rank": rank})
+        for rank, item in enumerate(output, start=1)
+    ]
+
+    if include_context_candidates:
+        injected_context_candidates = (
+            _strong_multiple_facet_context_candidates(executions)
+        )
+        return _merge_context_injections_with_facet_results(
+            output,
+            injected_context_candidates,
+            top_k=top_k,
+        )
+
+    return output
+
+
+def _strong_multiple_facet_context_candidates(
+    executions: Sequence[KGToolExecution],
+) -> list[KGCombinedSectionResult]:
+    context_executions = [
+        execution
+        for execution in executions
+        if execution.status == "success"
+        and execution.call.role == "context"
+    ]
+
+    candidates: list[
+        tuple[float, int, str, KGCombinedSectionResult]
+    ] = []
+
+    for execution in context_executions:
+        context_phrases = _anchor_fallback_phrases(execution.call.terms)
+
+        for fallback_rank, result in enumerate(execution.results, start=1):
+            if _is_excluded_fallback_title(result.title):
+                continue
+
+            source_rank = result.rank or fallback_rank
+            raw_score = float(result.score or 0.0)
+            matched_count = len(
+                {item.casefold() for item in result.matched_terms or []}
+            )
+            title_norm = _normalize_anchor_fallback_text(result.title)
+            title_phrase_matches = [
+                phrase
+                for phrase in context_phrases
+                if phrase and phrase in title_norm
+            ]
+
+            accepted = (
+                source_rank <= 3
+                and raw_score >= 12.0
+                and matched_count >= 2
+            ) or (
+                len(title_phrase_matches) >= 1
+                and raw_score >= 8.0
+            ) or (
+                source_rank == 1
+                and raw_score >= 10.0
+            )
+
+            if not accepted:
+                continue
+
+            injection_score = 80.0
+            injection_score += raw_score * 4.0
+            injection_score += matched_count * 10.0
+            injection_score += len(title_phrase_matches) * 30.0
+            injection_score -= source_rank * 0.05
+
+            combined = _combined_result(
+                result,
+                rank=1,
+                method="context_aware_facet_context_injection",
+                combination_score=injection_score,
+                best_source_rank=source_rank,
+                contributions=[
+                    _source_contribution(execution, source_rank)
+                ],
+                context_supported=True,
+                covered_facets=[],
+            )
+            candidates.append(
+                (
+                    -injection_score,
+                    source_rank,
+                    result.section_uid,
+                    combined,
+                )
+            )
+
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]))
+
+    output: list[KGCombinedSectionResult] = []
+    seen: set[str] = set()
+    for _score, _source_rank, section_uid, result in candidates:
+        if section_uid in seen:
+            continue
+        seen.add(section_uid)
+        output.append(result)
+
+    return output
+
+
+def _merge_context_injections_with_facet_results(
+    facet_results: Sequence[KGCombinedSectionResult],
+    context_candidates: Sequence[KGCombinedSectionResult],
+    *,
+    top_k: int | None = None,
+) -> list[KGCombinedSectionResult]:
+    if not context_candidates:
+        output = list(facet_results)
+        if top_k is not None:
+            output = output[:top_k]
+        return [
+            item.model_copy(update={"rank": rank})
+            for rank, item in enumerate(output, start=1)
+        ]
+
+    sortable: list[
+        tuple[float, int, int, str, KGCombinedSectionResult]
+    ] = []
+
+    for fallback_rank, result in enumerate(facet_results, start=1):
+        source_rank = result.best_source_rank or fallback_rank
+        facet_score = 50.0 - source_rank * 0.01
+        sortable.append(
+            (
+                -facet_score,
+                1,
+                source_rank,
+                result.section_uid,
+                result.model_copy(
+                    update={
+                        "combination_method": (
+                            "context_aware_facet_context_injection"
+                        ),
+                        "combination_score": facet_score,
+                    }
+                ),
+            )
+        )
+
+    for fallback_rank, result in enumerate(context_candidates, start=1):
+        context_score = result.combination_score or 0.0
+        source_rank = result.best_source_rank or result.rank or fallback_rank
+        sortable.append(
+            (
+                -context_score,
+                0,
+                source_rank,
+                result.section_uid,
+                result.model_copy(
+                    update={
+                        "combination_method": (
+                            "context_aware_facet_context_injection"
+                        ),
+                    }
+                ),
+            )
+        )
+
+    sortable.sort(key=lambda item: item[:4])
+
+    output: list[KGCombinedSectionResult] = []
+    seen: set[str] = set()
+    for _score, _priority, _source_rank, section_uid, result in sortable:
+        if section_uid in seen:
+            continue
+        seen.add(section_uid)
+        output.append(result)
+        if top_k is not None and len(output) >= top_k:
+            break
 
     return [
         item.model_copy(update={"rank": rank})

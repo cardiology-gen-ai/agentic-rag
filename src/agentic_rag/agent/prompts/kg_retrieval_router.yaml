@@ -74,6 +74,28 @@ default:
       the same evidence units. Do not use this mode merely because one call
       supplies context and another supplies section intent.
 
+    Schema consistency rules:
+
+    - If combination_mode is direct, expected_scope may be single_section or
+      multiple_sections, depending on the question, but the plan must contain
+      exactly one anchor call.
+    - If combination_mode is same_section, expected_scope must be single_section.
+    - If combination_mode is multiple_facets, expected_scope must be
+      multiple_sections or cross_document. Never use single_section with
+      multiple_facets.
+    - If combination_mode is alternative_retrieval, the two calls must both have
+      role alternative and must retrieve alternative rankings of the same
+      evidence units.
+    - If a question asks to distinguish definitions, diagnostic categories,
+      criteria, or related clinical entities that are likely represented by
+      separate Sections, use expected_scope = multiple_sections.
+    - If a question asks for several independent management, diagnosis,
+      monitoring, or treatment components, use expected_scope =
+      multiple_sections.
+    - Do not use multiple_facets for details that are likely contained within
+      one coherent Section, such as thresholds, measurements, age groups,
+      relatives, or descriptive qualifiers.
+
     Important distinction:
 
     Multiple populations, thresholds, measurements, age groups, relatives, or
@@ -96,6 +118,13 @@ default:
     example, prefer anticoagulation, rate control, and rhythm control over the
     single generic term management for a comprehensive atrial-fibrillation
     management question.
+
+    Avoid generic facet terms when a more specific clinical component is
+    available. Generic words such as evaluation, treatment, management,
+    indications, diagnosis, or approach should not be emitted alone unless they
+    are part of a precise section topic. Prefer clinically anchored phrases such
+    as initial evaluation, diagnostic criteria, electrophysiological study,
+    implantable loop recorder, genetic testing, or cardiac magnetic resonance.
 
     Do not invent narrow treatment details, drugs, procedures, thresholds, or
     recommendations that are not stated or strongly implied by the clinical
@@ -197,6 +226,85 @@ default:
     call 1 role = anchor
     call 1 terms = cardiac magnetic resonance; cardiomyopathy
     call 1 require_all = false
+
+    Explanation encoded by the example:
+    a generic title facet such as indications is not useful here because the
+    clinically meaningful retrieval target is cardiac magnetic resonance in
+    cardiomyopathy. One concept-based anchor call is sufficient.
+
+    Example D: definitions spanning multiple Sections
+
+    Question:
+    What definitions and pathophysiological criteria distinguish syncope from
+    other forms of transient loss of consciousness?
+
+    Plan fields:
+    intent = definition
+    expected_scope = multiple_sections
+    combination_mode = multiple_facets
+    call 1 tool = search_sections_by_concepts
+    call 1 role = context
+    call 1 terms = syncope; transient loss of consciousness
+    call 1 require_all = false
+    call 2 tool = search_sections_by_title
+    call 2 role = facet
+    call 2 terms = definitions; syncope; non-syncopal forms
+    call 2 require_all = false
+
+    Explanation encoded by the example:
+    the question asks to distinguish related definitions and criteria that may
+    be represented by separate Sections, so the expected scope is
+    multiple_sections, not single_section.
+
+    Example E: two independent diagnostic components
+
+    Question:
+    When should an implantable loop recorder be used in the evaluation of
+    unexplained syncope, and which ECG findings establish a diagnosis of
+    arrhythmic syncope?
+
+    Plan fields:
+    intent = diagnosis
+    expected_scope = multiple_sections
+    combination_mode = multiple_facets
+    call 1 tool = search_sections_by_concepts
+    call 1 role = context
+    call 1 terms = unexplained syncope; arrhythmic syncope
+    call 1 require_all = false
+    call 2 tool = search_sections_by_title
+    call 2 role = facet
+    call 2 terms = implantable loop recorder; diagnostic criteria
+    call 2 require_all = false
+
+    Explanation encoded by the example:
+    the question has two independent evidence needs: indications for implantable
+    loop recorder use and ECG-based diagnostic criteria for arrhythmic syncope.
+    Both facets should be represented.
+
+    Example F: multi-section treatment block
+
+    Question:
+    What lifestyle, physical, medication-adjustment, and pharmacological
+    measures are recommended for orthostatic hypotension and orthostatic
+    intolerance syndromes?
+
+    Plan fields:
+    intent = treatment
+    expected_scope = multiple_sections
+    combination_mode = multiple_facets
+    call 1 tool = search_sections_by_concepts
+    call 1 role = context
+    call 1 terms = orthostatic hypotension; orthostatic intolerance
+    call 1 require_all = false
+    call 2 tool = search_sections_by_title
+    call 2 role = facet
+    call 2 terms = lifestyle measures; vasoactive drugs; counter-pressure manoeuvres; midodrine; fludrocortisone
+    call 2 require_all = false
+
+    Explanation encoded by the example:
+    the question explicitly asks for several treatment components. Prefer
+    clinically specific facet terms over generic phrases such as treatment or
+    pharmacological treatment.
 
   human: |
     Question:

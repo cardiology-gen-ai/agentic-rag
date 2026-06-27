@@ -36,6 +36,7 @@ KGCombinationMethod = Literal[
     "direct",
     "hierarchical_context",
     "facet_preserving",
+    "context_aware_facet",
     "rrf",
 ]
 
@@ -313,6 +314,7 @@ class KGParameterizedRetriever:
         rrf_k: int = 60,
         hierarchy_max_depth: int = 6,
         exclude_summary_sections: bool = True,
+        multiple_facets_context_aware_merge: bool = False,
     ) -> None:
         self.router = router
         self.tools = tools
@@ -337,6 +339,9 @@ class KGParameterizedRetriever:
         )
         self.ranking_mode = _validate_ranking_mode(ranking_mode)
         self.exclude_summary_sections = bool(exclude_summary_sections)
+        self.multiple_facets_context_aware_merge = bool(
+            multiple_facets_context_aware_merge
+        )
 
     def retrieve(
         self,
@@ -459,6 +464,13 @@ class KGParameterizedRetriever:
             )
 
         if plan.combination_mode == "multiple_facets":
+            if self.multiple_facets_context_aware_merge:
+                return context_aware_facet_merge(
+                    executions,
+                    rrf_k=self.rrf_k,
+                    top_k=self.final_k,
+                )
+
             return facet_preserving_merge(
                 executions,
                 top_k=self.final_k,
@@ -777,6 +789,111 @@ def facet_preserving_merge(
         )
 
     return results
+
+
+def context_aware_facet_merge(
+    executions: Sequence[KGToolExecution],
+    *,
+    rrf_k: int = 60,
+    top_k: int | None = None,
+) -> list[KGCombinedSectionResult]:
+    """Rerank facet results using document-level support from context calls.
+
+    This is an ablation-friendly variant of facet_preserving_merge. It keeps
+    the facet-generated candidates, but promotes candidates whose document is
+    supported by successful context calls. If facet retrieval returns no
+    results, successful context calls are used as a conservative fallback.
+    """
+
+    facet_results = facet_preserving_merge(
+        executions,
+        top_k=None,
+    )
+
+    context_executions = [
+        execution
+        for execution in executions
+        if execution.status == "success"
+        and execution.call.role == "context"
+    ]
+
+    if not facet_results:
+        if not context_executions:
+            return []
+        return reciprocal_rank_fusion(
+            context_executions,
+            rrf_k=rrf_k,
+            top_k=top_k,
+        )
+
+    context_results: list[KGSectionResult] = []
+    for execution in context_executions:
+        context_results.extend(execution.results)
+
+    if not context_results:
+        output = facet_results[:top_k] if top_k is not None else facet_results
+        return [
+            item.model_copy(
+                update={
+                    "rank": rank,
+                    "combination_method": "context_aware_facet",
+                }
+            )
+            for rank, item in enumerate(output, start=1)
+        ]
+
+    context_rank_by_document: dict[str, int] = {}
+    for fallback_rank, result in enumerate(context_results, start=1):
+        document_id = result.document_id
+        if not document_id:
+            continue
+        rank = result.rank or fallback_rank
+        current = context_rank_by_document.get(document_id)
+        if current is None or rank < current:
+            context_rank_by_document[document_id] = rank
+
+    sortable: list[
+        tuple[tuple[int, int, int, str], KGCombinedSectionResult]
+    ] = []
+
+    for fallback_rank, result in enumerate(facet_results, start=1):
+        document_id = result.document_id
+        source_rank = result.best_source_rank or fallback_rank
+        context_document_rank = context_rank_by_document.get(
+            document_id,
+            10**9,
+        )
+        supported_by_context_document = document_id in context_rank_by_document
+
+        sort_key = (
+            0 if supported_by_context_document else 1,
+            context_document_rank,
+            source_rank,
+            result.section_uid,
+        )
+
+        sortable.append(
+            (
+                sort_key,
+                result.model_copy(
+                    update={
+                        "combination_method": "context_aware_facet",
+                        "context_supported": supported_by_context_document,
+                    }
+                ),
+            )
+        )
+
+    sortable.sort(key=lambda item: item[0])
+    output = [item[1] for item in sortable]
+
+    if top_k is not None:
+        output = output[:top_k]
+
+    return [
+        item.model_copy(update={"rank": rank})
+        for rank, item in enumerate(output, start=1)
+    ]
 
 
 def reciprocal_rank_fusion(

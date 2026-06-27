@@ -813,7 +813,9 @@ def same_section_anchor_rescue_merge(
     """Merge same_section results with strong anchor-sensitive context hits."""
     rescue_candidates = [
         candidate
-        for candidate in _same_section_anchor_fallback_candidates(executions)
+        for candidate in _same_section_anchor_context_rescue_candidates(
+            executions
+        )
         if candidate.combination_score is not None
         and candidate.combination_score >= _RESCUE_MIN_SCORE
     ]
@@ -974,6 +976,139 @@ def _same_section_anchor_fallback_candidates(
                 result,
                 rank=1,
                 method="same_section_anchor_fallback",
+                combination_score=score,
+                best_source_rank=source_rank,
+                contributions=[
+                    _source_contribution(execution, source_rank)
+                ],
+                context_supported=True,
+                covered_facets=[],
+            )
+            candidates.append(
+                (-score, source_rank, result.section_uid, combined)
+            )
+
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]))
+
+    output: list[KGCombinedSectionResult] = []
+    seen: set[str] = set()
+    for _negative_score, _source_rank, section_uid, combined in candidates:
+        if section_uid in seen:
+            continue
+        seen.add(section_uid)
+        output.append(combined)
+
+    return output
+
+
+def _same_section_anchor_context_rescue_candidates(
+    executions: Sequence[KGToolExecution],
+) -> list[KGCombinedSectionResult]:
+    anchor_terms: list[str] = []
+    context_terms: list[str] = []
+    for execution in executions:
+        if execution.call.role == "anchor":
+            anchor_terms.extend(execution.call.terms)
+        elif execution.call.role == "context":
+            context_terms.extend(execution.call.terms)
+
+    anchor_tokens: set[str] = set()
+    for term in anchor_terms:
+        anchor_tokens.update(_anchor_fallback_tokens(term))
+    anchor_phrases = _anchor_fallback_phrases(anchor_terms)
+
+    context_tokens: set[str] = set()
+    for term in context_terms:
+        context_tokens.update(_anchor_fallback_tokens(term))
+    context_phrases = _anchor_fallback_phrases(context_terms)
+
+    context_executions = [
+        execution
+        for execution in executions
+        if execution.status == "success"
+        and execution.call.role == "context"
+    ]
+
+    candidates: list[
+        tuple[float, int, str, KGCombinedSectionResult]
+    ] = []
+
+    for execution in context_executions:
+        for fallback_rank, result in enumerate(execution.results, start=1):
+            if _is_excluded_fallback_title(result.title):
+                continue
+
+            source_rank = result.rank or fallback_rank
+            raw_score = float(result.score or 0.0)
+            matched_count = len(set(result.matched_terms or []))
+            title_norm = _normalize_anchor_fallback_text(result.title)
+            text_norm = _normalize_anchor_fallback_text(result.text)
+            title_tokens = _anchor_fallback_tokens(result.title)
+            text_tokens = _anchor_fallback_tokens(result.text)
+
+            anchor_title_overlap = anchor_tokens & title_tokens
+            anchor_text_overlap = anchor_tokens & text_tokens
+            context_title_overlap = context_tokens & title_tokens
+            context_text_overlap = context_tokens & text_tokens
+
+            has_anchor_title_phrase = any(
+                phrase and phrase in title_norm
+                for phrase in anchor_phrases
+            )
+            has_anchor_text_phrase = any(
+                phrase and phrase in text_norm
+                for phrase in anchor_phrases
+            )
+            has_context_title_phrase = any(
+                phrase and phrase in title_norm
+                for phrase in context_phrases
+            )
+            has_context_text_phrase = any(
+                phrase and phrase in text_norm
+                for phrase in context_phrases
+            )
+
+            accepted = (
+                has_context_title_phrase
+                or has_anchor_title_phrase
+                or (source_rank <= 3 and raw_score >= 10.0)
+                or len(context_title_overlap) >= 2
+                or len(anchor_title_overlap) >= 2
+                or (
+                    len(context_text_overlap) >= 3
+                    and raw_score >= 8.0
+                )
+                or (
+                    len(anchor_text_overlap) >= 3
+                    and raw_score >= 8.0
+                )
+            )
+
+            if not accepted:
+                continue
+
+            score = 0.0
+            if has_context_title_phrase:
+                score += 90.0
+            if has_anchor_title_phrase:
+                score += 70.0
+            if has_context_text_phrase:
+                score += 25.0
+            if has_anchor_text_phrase:
+                score += 20.0
+
+            score += 18.0 * len(context_title_overlap)
+            score += 14.0 * len(anchor_title_overlap)
+            score += min(len(context_text_overlap), 8) * 3.0
+            score += min(len(anchor_text_overlap), 8) * 2.5
+            score += raw_score * 2.0
+            score += matched_count * 5.0
+            score -= source_rank * 0.05
+
+            combined = _combined_result(
+                result,
+                rank=1,
+                method="same_section_anchor_rescue",
                 combination_score=score,
                 best_source_rank=source_rank,
                 contributions=[

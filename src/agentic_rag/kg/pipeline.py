@@ -15,9 +15,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from agentic_rag.agent.output import KGMentionsPlan
 from agentic_rag.kg.candidate_generators import (
     CandidateGeneratorProtocol,
+    ConceptGraphExpansionCandidateGenerator,
     KGCandidate,
     KGSectionSearchProtocol,
     MentionsCandidateGenerator,
+    RescueConceptGraphExpansionCandidateGenerator,
 )
 from agentic_rag.kg.expanders import (
     CandidateExpanderProtocol,
@@ -37,6 +39,10 @@ ModularKGMode = Literal[
     "mentions_only",
     "mentions_weighted",
     "mentions_descendants",
+    "mentions_same_as",
+    "mentions_umls_safe",
+    "mentions_same_as_rescue",
+    "mentions_umls_safe_rescue",
 ]
 ModularKGStatus = Literal[
     "success",
@@ -251,6 +257,10 @@ def build_modular_kg_pipeline(
     preserves the candidate set but enables the existing lexical weights and
     title bonus. ``mentions_descendants`` expands the pure MENTIONS seeds over
     HAS_CHILD and applies a deterministic seed-by-seed ordering.
+    ``mentions_same_as`` and ``mentions_umls_safe`` keep the same MENTIONS plan
+    terms but expand at the Concept/CUI level inside candidate generation.
+    Their rescue variants preserve direct MENTIONS order and append only
+    SAME_AS/UMLS-supported candidates not already present.
     """
 
     normalized_mode = _validate_mode(mode)
@@ -273,7 +283,89 @@ def build_modular_kg_pipeline(
         expander = NoOpExpander()
         reranker = NoOpReranker()
 
-    else:
+    elif normalized_mode == "mentions_same_as":
+        if client is None:
+            raise ValueError(
+                "client is required for mode='mentions_same_as'"
+            )
+        generator = ConceptGraphExpansionCandidateGenerator(
+            client,
+            include_same_as=True,
+            umls_policies=[],
+            include_review_needed=False,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_umls_safe":
+        if client is None:
+            raise ValueError(
+                "client is required for mode='mentions_umls_safe'"
+            )
+        generator = ConceptGraphExpansionCandidateGenerator(
+            client,
+            include_same_as=True,
+            umls_policies=["safe"],
+            include_review_needed=False,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_same_as_rescue":
+        if client is None:
+            raise ValueError(
+                "client is required for mode='mentions_same_as_rescue'"
+            )
+        direct_generator = MentionsCandidateGenerator(
+            tools,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expansion_generator = ConceptGraphExpansionCandidateGenerator(
+            client,
+            include_same_as=True,
+            umls_policies=[],
+            include_review_needed=False,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        generator = RescueConceptGraphExpansionCandidateGenerator(
+            direct_generator,
+            expansion_generator,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_umls_safe_rescue":
+        if client is None:
+            raise ValueError(
+                "client is required for mode='mentions_umls_safe_rescue'"
+            )
+        direct_generator = MentionsCandidateGenerator(
+            tools,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expansion_generator = ConceptGraphExpansionCandidateGenerator(
+            client,
+            include_same_as=True,
+            umls_policies=["safe"],
+            include_review_needed=False,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        generator = RescueConceptGraphExpansionCandidateGenerator(
+            direct_generator,
+            expansion_generator,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_descendants":
         if client is None:
             raise ValueError(
                 "client is required for mode='mentions_descendants'"
@@ -293,6 +385,9 @@ def build_modular_kg_pipeline(
             descendants_per_seed=descendants_per_seed
         )
 
+    else:
+        raise RuntimeError(f"Unhandled modular KG mode: {normalized_mode}")
+
     return ModularKGRetrievalPipeline(
         router=router,
         candidate_generator=generator,
@@ -311,6 +406,10 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_only",
         "mentions_weighted",
         "mentions_descendants",
+        "mentions_same_as",
+        "mentions_umls_safe",
+        "mentions_same_as_rescue",
+        "mentions_umls_safe_rescue",
     }
     if normalized not in allowed:
         raise ValueError(f"Unsupported modular KG mode: {value!r}")

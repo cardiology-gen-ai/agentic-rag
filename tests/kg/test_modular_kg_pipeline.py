@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from agentic_rag.agent.output import KGMentionsPlan
-from agentic_rag.kg.candidate_generators import MentionsCandidateGenerator
+from agentic_rag.kg.candidate_generators import (
+    ConceptGraphExpansionCandidateGenerator,
+    MentionsCandidateGenerator,
+    RescueConceptGraphExpansionCandidateGenerator,
+)
 from agentic_rag.kg.models import KGSectionResult, KGRetrievalScores
-from agentic_rag.kg.pipeline import build_modular_kg_pipeline
+from agentic_rag.kg.pipeline import build_modular_kg_pipeline, _validate_mode
 
 
 class FakeRouter:
@@ -99,6 +103,43 @@ def descendant_row(
     }
 
 
+def concept_graph_row(
+    uid: str,
+    *,
+    evidence_source: str,
+    title: str,
+    relation_type: str = "SAME_AS",
+    traversal_policy: str | None = None,
+):
+    document_id, section_id = uid.split("::", 1)
+    return {
+        "section_uid": uid,
+        "document_id": document_id,
+        "section_id": section_id,
+        "printed_section_id": section_id,
+        "title": title,
+        "level": 4,
+        "text": f"Text for {title}",
+        "page_start": 1,
+        "page_end": 1,
+        "part_index": 0,
+        "part_count": 1,
+        "query_term": "hypertrophic cardiomyopathy",
+        "concept_name": title.casefold(),
+        "matched_value": "hypertrophic cardiomyopathy",
+        "match_type": "exact_name",
+        "evidence_weight": 0.9 if evidence_source == "same_as" else 0.5,
+        "evidence_source": evidence_source,
+        "relation_type": relation_type,
+        "traversal_policy": traversal_policy,
+        "review_needed": False,
+        "lexical_weight": 3.0,
+        "seed_concept_name": "hypertrophic cardiomyopathy",
+        "seed_cui": "C0000001",
+        "target_cui": "C0000002",
+    }
+
+
 def test_mentions_plan_normalizes_terms():
     plan = KGMentionsPlan.model_validate(
         {
@@ -108,6 +149,19 @@ def test_mentions_plan_normalizes_terms():
     )
 
     assert plan.terms == ["Atrial fibrillation", "HCM"]
+
+
+def test_validate_mode_accepts_concept_graph_ablation_modes():
+    assert _validate_mode("mentions_same_as") == "mentions_same_as"
+    assert _validate_mode("mentions_umls_safe") == "mentions_umls_safe"
+    assert (
+        _validate_mode("mentions_same_as_rescue")
+        == "mentions_same_as_rescue"
+    )
+    assert (
+        _validate_mode("mentions_umls_safe_rescue")
+        == "mentions_umls_safe_rescue"
+    )
 
 
 def test_mentions_only_uses_pure_concept_match_and_returns_subsections():
@@ -222,6 +276,254 @@ def test_mentions_descendants_expands_has_child_and_interleaves_by_seed():
     assert run.results[2].graph_distance == 2
     assert run.results[2].seed_uid == seed_1.section_uid
     assert client.calls[0][1]["max_depth"] == 3
+
+
+def test_mentions_same_as_builds_and_uses_graph_expansion_generator():
+    tools = FakeTools([])
+    client = FakeClient(
+        [
+            concept_graph_row(
+                "Doc::7.1.1",
+                evidence_source="same_as",
+                title="Diagnosis",
+            )
+        ]
+    )
+    pipeline = build_modular_kg_pipeline(
+        "mentions_same_as",
+        router=FakeRouter(
+            KGMentionsPlan(
+                terms=["hypertrophic cardiomyopathy"],
+                require_all=False,
+            )
+        ),
+        tools=tools,
+        client=client,
+    )
+
+    run = pipeline.retrieve("Question")
+
+    assert run.status == "success"
+    assert run.expander_name == "none"
+    assert run.reranker_name == "none"
+    assert run.ranking_mode == "concept_match"
+    assert tools.calls == []
+    assert len(client.calls) == 2
+    assert client.calls[0][1]["umls_policies"] == []
+    assert run.results[0].source == "same_as"
+    assert run.results[0].direct is False
+    assert run.results[0].graph_distance == 1
+
+
+def test_mentions_umls_safe_builds_with_safe_policy_only():
+    tools = FakeTools([])
+    client = FakeClient(
+        [
+            concept_graph_row(
+                "Doc::7.1.2",
+                evidence_source="umls_neighbor",
+                title="Family screening",
+                relation_type="UMLS_NARROWER_THAN",
+                traversal_policy="safe",
+            )
+        ]
+    )
+    pipeline = build_modular_kg_pipeline(
+        "mentions_umls_safe",
+        router=FakeRouter(
+            KGMentionsPlan(
+                terms=["hypertrophic cardiomyopathy"],
+                require_all=False,
+            )
+        ),
+        tools=tools,
+        client=client,
+    )
+
+    run = pipeline.retrieve("Question")
+
+    assert run.status == "success"
+    assert tools.calls == []
+    assert len(client.calls) == 4
+    assert client.calls[0][1]["umls_policies"] == ["safe"]
+    assert client.calls[0][1]["include_review_needed"] is False
+    assert run.results[0].source == "umls_neighbor"
+    assert run.results[0].graph_distance == 2
+
+
+def test_mentions_same_as_rescue_builds_and_appends_after_direct():
+    direct = make_result("Doc::7.1", 1, "Hypertrophic cardiomyopathy")
+    tools = FakeTools([direct])
+    client = FakeClient(
+        [
+            concept_graph_row(
+                "Doc::7.1.1",
+                evidence_source="same_as",
+                title="Diagnosis",
+            )
+        ]
+    )
+    pipeline = build_modular_kg_pipeline(
+        "mentions_same_as_rescue",
+        router=FakeRouter(
+            KGMentionsPlan(
+                terms=["hypertrophic cardiomyopathy"],
+                require_all=False,
+            )
+        ),
+        tools=tools,
+        client=client,
+        final_k=5,
+    )
+
+    run = pipeline.retrieve("Question")
+
+    assert run.status == "success"
+    assert run.expander_name == "none"
+    assert run.reranker_name == "none"
+    assert run.ranking_mode == "concept_match"
+    assert tools.calls[0][2]["ranking_mode"] == "concept_match"
+    assert len(client.calls) == 2
+    assert [item.section_uid for item in run.results] == [
+        "Doc::7.1",
+        "Doc::7.1.1",
+    ]
+    assert run.results[0].source == "mentions"
+    assert run.results[1].source == "same_as"
+
+
+def test_mentions_umls_safe_rescue_builds_with_safe_policy_only():
+    direct = make_result("Doc::7.1", 1, "Hypertrophic cardiomyopathy")
+    tools = FakeTools([direct])
+    client = FakeClient(
+        [
+            concept_graph_row(
+                "Doc::7.1.2",
+                evidence_source="umls_neighbor",
+                title="Family screening",
+                relation_type="UMLS_NARROWER_THAN",
+                traversal_policy="safe",
+            )
+        ]
+    )
+    pipeline = build_modular_kg_pipeline(
+        "mentions_umls_safe_rescue",
+        router=FakeRouter(
+            KGMentionsPlan(
+                terms=["hypertrophic cardiomyopathy"],
+                require_all=False,
+            )
+        ),
+        tools=tools,
+        client=client,
+        final_k=5,
+    )
+
+    run = pipeline.retrieve("Question")
+
+    assert run.status == "success"
+    assert len(client.calls) == 4
+    assert client.calls[0][1]["umls_policies"] == ["safe"]
+    assert client.calls[0][1]["include_review_needed"] is False
+    assert [item.section_uid for item in run.results] == [
+        "Doc::7.1",
+        "Doc::7.1.2",
+    ]
+    assert run.results[1].source == "umls_neighbor"
+    assert run.results[1].metadata["expansion_source"] == "umls_neighbor"
+
+
+def test_rescue_generator_preserves_direct_order_and_enriches_duplicates():
+    direct_1 = make_result("Doc::2", 1, "Direct second section")
+    direct_2 = make_result("Doc::1", 2, "Direct first section")
+    tools = FakeTools([direct_1, direct_2])
+    client = FakeClient(
+        [
+            concept_graph_row(
+                "Doc::1",
+                evidence_source="same_as",
+                title="Same-as support for direct section",
+            ),
+            concept_graph_row(
+                "Doc::3",
+                evidence_source="same_as",
+                title="Same-as rescued section",
+            ),
+        ]
+    )
+    direct_generator = MentionsCandidateGenerator(
+        tools,
+        ranking_mode="concept_match",
+    )
+    expansion_generator = ConceptGraphExpansionCandidateGenerator(
+        client,
+        include_same_as=True,
+        umls_policies=[],
+        include_review_needed=False,
+        ranking_mode="concept_match",
+    )
+    generator = RescueConceptGraphExpansionCandidateGenerator(
+        direct_generator,
+        expansion_generator,
+    )
+
+    candidates = generator.generate(
+        ["hypertrophic cardiomyopathy"],
+        top_k=5,
+    )
+
+    assert [item.section_uid for item in candidates] == [
+        "Doc::2",
+        "Doc::1",
+        "Doc::3",
+    ]
+    assert candidates[0].source == "mentions"
+    assert candidates[1].source == "mentions"
+    assert candidates[1].source_rank == 2
+    assert candidates[1].direct is True
+    assert candidates[1].metadata["has_expansion_support"] is True
+    assert candidates[1].metadata["expansion_evidence_sources"] == [
+        "same_as"
+    ]
+    assert candidates[1].metadata["expansion_source"] == "same_as"
+    assert candidates[2].source == "same_as"
+    assert candidates[2].direct is False
+    assert candidates[2].metadata["has_expansion_support"] is True
+
+
+def test_rescue_generator_does_not_displace_direct_top_k():
+    direct_1 = make_result("Doc::1", 1, "Direct one")
+    direct_2 = make_result("Doc::2", 2, "Direct two")
+    tools = FakeTools([direct_1, direct_2])
+    client = FakeClient(
+        [
+            concept_graph_row(
+                "Doc::3",
+                evidence_source="umls_neighbor",
+                title="Potential rescue",
+                relation_type="UMLS_RELATED_TO",
+                traversal_policy="safe",
+            )
+        ]
+    )
+    generator = RescueConceptGraphExpansionCandidateGenerator(
+        MentionsCandidateGenerator(tools, ranking_mode="concept_match"),
+        ConceptGraphExpansionCandidateGenerator(
+            client,
+            include_same_as=True,
+            umls_policies=["safe"],
+            include_review_needed=False,
+            ranking_mode="concept_match",
+        ),
+    )
+
+    candidates = generator.generate(
+        ["hypertrophic cardiomyopathy"],
+        top_k=2,
+    )
+
+    assert [item.section_uid for item in candidates] == ["Doc::1", "Doc::2"]
+    assert all(item.source == "mentions" for item in candidates)
 
 
 def test_mentions_generator_can_be_used_independently():

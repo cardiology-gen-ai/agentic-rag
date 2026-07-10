@@ -843,11 +843,29 @@ def same_section_anchor_rescue_merge(
             for rank, item in enumerate(output, start=1)
         ]
 
+    strong_base_results = [
+        result
+        for result in base_results
+        if _is_strong_same_section_base_result(result)
+    ]
+    weak_base_results = [
+        result
+        for result in base_results
+        if not _is_strong_same_section_base_result(result)
+    ]
+    protected_results = strong_base_results
+    competitive_base_results = (
+        weak_base_results if protected_results else list(base_results)
+    )
+
     sortable: list[
         tuple[float, int, int, str, KGCombinedSectionResult]
     ] = []
 
-    for fallback_rank, result in enumerate(base_results, start=1):
+    for fallback_rank, result in enumerate(
+        competitive_base_results,
+        start=1,
+    ):
         source_rank = result.best_source_rank or result.rank or fallback_rank
         result_rank = result.rank or fallback_rank
         score = 50.0 - result_rank * 0.01
@@ -885,20 +903,89 @@ def same_section_anchor_rescue_merge(
 
     sortable.sort(key=lambda item: item[:4])
 
+    protected_output: list[KGCombinedSectionResult] = []
+    for fallback_rank, result in enumerate(protected_results, start=1):
+        source_rank = (
+            _anchor_contribution_source_rank(result)
+            or result.best_source_rank
+            or result.rank
+            or fallback_rank
+        )
+        protected_score = 1_000.0 - source_rank * 0.01
+        protected_output.append(
+            result.model_copy(
+                update={
+                    "combination_method": "same_section_anchor_rescue",
+                    "combination_score": protected_score,
+                }
+            )
+        )
+
     output: list[KGCombinedSectionResult] = []
     seen: set[str] = set()
+    for result in protected_output:
+        if result.section_uid in seen:
+            continue
+        seen.add(result.section_uid)
+        output.append(result)
+        if top_k is not None and len(output) >= top_k:
+            break
+
     for _score, _priority, _source_rank, section_uid, result in sortable:
+        if top_k is not None and len(output) >= top_k:
+            break
         if section_uid in seen:
             continue
         seen.add(section_uid)
         output.append(result)
-        if top_k is not None and len(output) >= top_k:
-            break
 
     return [
         item.model_copy(update={"rank": rank})
         for rank, item in enumerate(output, start=1)
     ]
+
+
+def _is_strong_same_section_base_result(
+    result: KGCombinedSectionResult,
+) -> bool:
+    anchor_source_rank = _anchor_contribution_source_rank(result)
+    if anchor_source_rank is None or anchor_source_rank > 3:
+        return False
+
+    return bool(result.context_supported or result.context_matches)
+
+
+def _anchor_contribution_source_rank(
+    result: KGCombinedSectionResult,
+) -> int | None:
+    best_rank: int | None = None
+    for contribution in result.contributions:
+        role = _contribution_value(contribution, "role")
+        if role != "anchor":
+            continue
+
+        raw_rank = _contribution_value(contribution, "source_rank")
+        if raw_rank is None:
+            continue
+
+        try:
+            source_rank = int(raw_rank)
+        except (TypeError, ValueError):
+            continue
+
+        if best_rank is None or source_rank < best_rank:
+            best_rank = source_rank
+
+    return best_rank
+
+
+def _contribution_value(
+    contribution: KGResultContribution | Mapping[str, Any],
+    key: str,
+) -> Any:
+    if isinstance(contribution, Mapping):
+        return contribution.get(key)
+    return getattr(contribution, key, None)
 
 
 def _same_section_anchor_fallback_candidates(
@@ -1021,6 +1108,7 @@ def _same_section_anchor_context_rescue_candidates(
     for term in context_terms:
         context_tokens.update(_anchor_fallback_tokens(term))
     context_phrases = _anchor_fallback_phrases(context_terms)
+    unique_context_phrases = set(context_phrases)
 
     context_executions = [
         execution
@@ -1067,6 +1155,19 @@ def _same_section_anchor_context_rescue_candidates(
                 phrase and phrase in text_norm
                 for phrase in context_phrases
             )
+
+            has_any_anchor_evidence = (
+                has_anchor_title_phrase
+                or has_anchor_text_phrase
+                or len(anchor_title_overlap) >= 1
+                or len(anchor_text_overlap) >= 2
+            )
+
+            if (
+                len(unique_context_phrases) <= 1
+                and not has_any_anchor_evidence
+            ):
+                continue
 
             accepted = (
                 has_context_title_phrase

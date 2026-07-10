@@ -44,6 +44,10 @@ def parse_args() -> argparse.Namespace:
             "mentions_only",
             "mentions_weighted",
             "mentions_descendants",
+            "mentions_same_as",
+            "mentions_umls_safe",
+            "mentions_same_as_rescue",
+            "mentions_umls_safe_rescue",
         ),
         default="mentions_only",
     )

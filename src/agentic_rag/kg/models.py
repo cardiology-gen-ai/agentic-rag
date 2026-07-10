@@ -40,6 +40,14 @@ class KGMatchDiagnostic(BaseModel):
     matched_value: str | None = None
     match_type: str
     weight: float
+    evidence_source: Literal["direct", "same_as", "umls_neighbor"] | None = None
+    relation_type: str | None = None
+    traversal_policy: str | None = None
+    review_needed: bool | None = None
+    lexical_weight: float | None = None
+    seed_concept_name: str | None = None
+    seed_cui: str | None = None
+    target_cui: str | None = None
 
     @field_validator("query_term", "match_type")
     @classmethod
@@ -49,7 +57,15 @@ class KGMatchDiagnostic(BaseModel):
             raise ValueError("Value must be a non-empty string")
         return normalized
 
-    @field_validator("concept_name", "matched_value")
+    @field_validator(
+        "concept_name",
+        "matched_value",
+        "relation_type",
+        "traversal_policy",
+        "seed_concept_name",
+        "seed_cui",
+        "target_cui",
+    )
     @classmethod
     def normalize_optional_text(cls, value: str | None) -> str | None:
         if value is None:

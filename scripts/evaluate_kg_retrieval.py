@@ -2,7 +2,8 @@
 
 For each question the MENTIONS router is called once. The resulting
 ``KGMentionsPlan`` is replayed unchanged across ``mentions_only``,
-``mentions_weighted``, and ``mentions_descendants`` so those modes form a
+``mentions_weighted``, ``mentions_descendants``, ``mentions_same_as``, and
+``mentions_umls_safe`` plus their rescue variants so those modes form a
 controlled ablation. ``planned_role_aware`` uses its own richer router.
 
 Gold annotations are never passed to retrieval. They are used only after a
@@ -50,6 +51,10 @@ MODULAR_MODES = (
     "mentions_only",
     "mentions_weighted",
     "mentions_descendants",
+    "mentions_same_as",
+    "mentions_umls_safe",
+    "mentions_same_as_rescue",
+    "mentions_umls_safe_rescue",
 )
 ALL_MODES = (*MODULAR_MODES, "planned_role_aware")
 

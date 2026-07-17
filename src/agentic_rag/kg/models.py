@@ -74,6 +74,23 @@ class KGMatchDiagnostic(BaseModel):
         return normalized or None
 
 
+class KGSeededMatchDiagnostic(KGMatchDiagnostic):
+    """Diagnostic information for explicit Concept seeding ablations."""
+
+    seed_rank: int = Field(ge=1)
+    seeding_method: Literal["lexical", "embedding"]
+    similarity: float | None = None
+    umls_cui: str | None = None
+
+    @field_validator("umls_cui")
+    @classmethod
+    def normalize_seeded_optional_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        return normalized or None
+
+
 class KGSectionResult(BaseModel):
     """Validated Section returned by a KG retrieval query."""
 
@@ -98,7 +115,9 @@ class KGSectionResult(BaseModel):
     score: float | None = None
     score_type: KGRankingMode | None = None
     scores: KGRetrievalScores | None = None
-    match_diagnostics: list[KGMatchDiagnostic] = Field(default_factory=list)
+    match_diagnostics: list[
+        KGMatchDiagnostic | KGSeededMatchDiagnostic
+    ] = Field(default_factory=list)
     rank: int | None = Field(default=None, ge=1)
 
     @field_validator("section_uid", "document_id")

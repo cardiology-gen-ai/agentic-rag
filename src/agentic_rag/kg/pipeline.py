@@ -20,6 +20,13 @@ from agentic_rag.kg.candidate_generators import (
     KGSectionSearchProtocol,
     MentionsCandidateGenerator,
     RescueConceptGraphExpansionCandidateGenerator,
+    SeededMentionsCandidateGenerator,
+)
+from agentic_rag.kg.concept_seeders import (
+    ConceptSeed,
+    ConceptSeederProtocol,
+    EmbeddingConceptSeeder,
+    LexicalConceptSeeder,
 )
 from agentic_rag.kg.expanders import (
     CandidateExpanderProtocol,
@@ -37,6 +44,8 @@ from agentic_rag.kg.rerankers import (
 
 ModularKGMode = Literal[
     "mentions_only",
+    "mentions_lexical_seeded",
+    "mentions_embedding_seeded",
     "mentions_weighted",
     "mentions_descendants",
     "mentions_same_as",
@@ -74,6 +83,7 @@ class ModularKGRetrievalRun(BaseModel):
     raw_candidates: list[KGCandidate] = Field(default_factory=list)
     expanded_candidates: list[KGCandidate] = Field(default_factory=list)
     results: list[KGCandidate] = Field(default_factory=list)
+    concept_seeds: list[ConceptSeed] = Field(default_factory=list)
 
     candidate_k: int = Field(ge=1)
     final_k: int = Field(ge=1)
@@ -160,6 +170,8 @@ class ModularKGRetrievalPipeline:
             )
 
         try:
+            if hasattr(self.candidate_generator, "last_concept_seeds"):
+                self.candidate_generator.last_concept_seeds = []
             raw_candidates = self.candidate_generator.generate(
                 plan.terms,
                 top_k=self.candidate_k,
@@ -231,6 +243,9 @@ class ModularKGRetrievalPipeline:
             ranking_mode=self.ranking_mode,
             expander_name=self.expander.name,
             reranker_name=self.reranker.name,
+            concept_seeds=_generator_concept_seeds(
+                self.candidate_generator
+            ),
             document_filtering=(self.document_ids or None),
             latency_ms=(time.perf_counter() - started) * 1000.0,
             error=error,
@@ -250,6 +265,10 @@ def build_modular_kg_pipeline(
     hierarchy_max_depth: int = 3,
     descendants_per_seed: int = 3,
     max_expanded_rows: int = 1000,
+    concepts_per_term: int = 3,
+    concept_embedding_model: str | None = None,
+    concept_embedding_cache: str | None = None,
+    concept_seeder: ConceptSeederProtocol | None = None,
 ) -> ModularKGRetrievalPipeline:
     """Build one named ablation configuration.
 
@@ -261,6 +280,9 @@ def build_modular_kg_pipeline(
     terms but expand at the Concept/CUI level inside candidate generation.
     Their rescue variants preserve direct MENTIONS order and append only
     SAME_AS/UMLS-supported candidates not already present.
+    ``mentions_lexical_seeded`` and ``mentions_embedding_seeded`` both first
+    select explicit local Concepts, then use the same exact
+    ``Concept.name -> MENTIONS -> Section`` candidate generator.
     """
 
     normalized_mode = _validate_mode(mode)
@@ -273,6 +295,41 @@ def build_modular_kg_pipeline(
         )
         expander: CandidateExpanderProtocol = NoOpExpander()
         reranker: CandidateRerankerProtocol = NoOpReranker()
+
+    elif normalized_mode == "mentions_lexical_seeded":
+        seeder = concept_seeder or LexicalConceptSeeder(
+            tools,
+            concepts_per_term=concepts_per_term,
+        )
+        generator = SeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_embedding_seeded":
+        seeder = concept_seeder
+        if seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    "mode='mentions_embedding_seeded'"
+                )
+            seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                cache_path=concept_embedding_cache,
+            )
+        generator = SeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
 
     elif normalized_mode == "mentions_weighted":
         generator = MentionsCandidateGenerator(
@@ -404,6 +461,8 @@ def _validate_mode(value: str) -> ModularKGMode:
     normalized = str(value).strip().lower()
     allowed = {
         "mentions_only",
+        "mentions_lexical_seeded",
+        "mentions_embedding_seeded",
         "mentions_weighted",
         "mentions_descendants",
         "mentions_same_as",
@@ -455,3 +514,10 @@ def _validate_question(value: str) -> str:
 
 def _format_exception(exc: Exception) -> str:
     return f"{type(exc).__name__}: {exc}"
+
+
+def _generator_concept_seeds(
+    generator: CandidateGeneratorProtocol,
+) -> list[ConceptSeed]:
+    seeds = getattr(generator, "last_concept_seeds", [])
+    return list(seeds or [])

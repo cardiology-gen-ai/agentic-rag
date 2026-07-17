@@ -12,6 +12,11 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from agentic_rag.kg.concept_seeders import (
+    ConceptSeed,
+    ConceptSeederProtocol,
+    flatten_seed_groups,
+)
 from agentic_rag.kg.models import KGSectionResult, KGRankingMode
 
 
@@ -416,6 +421,23 @@ class KGSectionSearchProtocol(Protocol):
         exclude_summary_sections: bool = True,
     ) -> list[KGSectionResult]: ...
 
+    def list_concept_catalogue(
+        self,
+        *,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> list[dict[str, Any]]: ...
+
+    def search_sections_by_concept_seeds(
+        self,
+        seeds: Sequence[ConceptSeed],
+        *,
+        query_terms: Sequence[str] | str | None = None,
+        document_ids: Sequence[str] | str | None = None,
+        top_k: int = 10,
+        require_all: bool = False,
+        exclude_summary_sections: bool = True,
+    ) -> list[KGSectionResult]: ...
+
 
 class GraphReadClientProtocol(Protocol):
     """Read-only graph client interface used by concept expansion."""
@@ -484,6 +506,58 @@ class MentionsCandidateGenerator:
             exclude_summary_sections=self.exclude_summary_sections,
         )
         return _wrap_results(results, source="mentions")
+
+
+class SeededMentionsCandidateGenerator:
+    """Generate Sections through explicit Concept seeds and MENTIONS only."""
+
+    name = "seeded_mentions"
+
+    def __init__(
+        self,
+        tools: KGSectionSearchProtocol,
+        seeder: ConceptSeederProtocol,
+        *,
+        exclude_summary_sections: bool = True,
+    ) -> None:
+        self.tools = tools
+        self.seeder = seeder
+        self.ranking_mode: KGRankingMode = "concept_match"
+        self.exclude_summary_sections = bool(exclude_summary_sections)
+        self.last_concept_seeds: list[ConceptSeed] = []
+
+    def generate(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> list[KGCandidate]:
+        normalized_terms = _normalize_terms(terms)
+        validated_top_k = _validate_top_k(top_k)
+        seed_groups = self.seeder.seed_concepts(
+            normalized_terms,
+            document_ids=document_ids,
+        )
+        seeds = flatten_seed_groups(seed_groups)
+        self.last_concept_seeds = seeds
+        if not seeds:
+            return []
+
+        results = self.tools.search_sections_by_concept_seeds(
+            seeds,
+            query_terms=normalized_terms,
+            document_ids=document_ids,
+            top_k=validated_top_k,
+            require_all=bool(require_all),
+            exclude_summary_sections=self.exclude_summary_sections,
+        )
+        return _wrap_seeded_results(
+            results,
+            seeding_methods=_ordered_unique(seed.method for seed in seeds),
+            seed_count=len(seeds),
+        )
 
 
 class ConceptGraphExpansionCandidateGenerator:
@@ -720,6 +794,40 @@ def _wrap_results(
                 graph_distance=0,
             )
         )
+    return candidates
+
+
+def _wrap_seeded_results(
+    results: Sequence[KGSectionResult],
+    *,
+    seeding_methods: Sequence[str],
+    seed_count: int,
+) -> list[KGCandidate]:
+    candidates: list[KGCandidate] = []
+    seen: set[str] = set()
+
+    for fallback_rank, result in enumerate(results, start=1):
+        if result.section_uid in seen:
+            continue
+        seen.add(result.section_uid)
+        source_rank = result.rank or fallback_rank
+        candidates.append(
+            KGCandidate(
+                section=result,
+                source="mentions",
+                source_rank=source_rank,
+                direct=True,
+                seed_uid=result.section_uid,
+                seed_rank=source_rank,
+                graph_distance=0,
+                metadata={
+                    "generator": "seeded_mentions",
+                    "seeding_methods": list(seeding_methods),
+                    "concept_seed_count": int(seed_count),
+                },
+            )
+        )
+
     return candidates
 
 

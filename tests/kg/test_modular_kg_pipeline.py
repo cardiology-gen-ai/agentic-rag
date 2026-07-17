@@ -6,6 +6,7 @@ from agentic_rag.kg.candidate_generators import (
     MentionsCandidateGenerator,
     RescueConceptGraphExpansionCandidateGenerator,
 )
+from agentic_rag.kg.concept_seeders import ConceptSeed, LexicalConceptSeeder
 from agentic_rag.kg.models import KGSectionResult, KGRetrievalScores
 from agentic_rag.kg.pipeline import build_modular_kg_pipeline, _validate_mode
 
@@ -19,8 +20,10 @@ class FakeRouter:
 
 
 class FakeTools:
-    def __init__(self, results):
+    def __init__(self, results, *, catalogue=None, seeded_results=None):
         self.results = results
+        self.catalogue = catalogue or []
+        self.seeded_results = seeded_results or []
         self.calls = []
 
     def search_sections_by_concepts(self, concepts, **kwargs):
@@ -29,6 +32,20 @@ class FakeTools:
 
     def search_sections_by_title(self, title_terms, **kwargs):
         raise AssertionError("Title search must not be used by these baselines")
+
+    def list_concept_catalogue(self, **kwargs):
+        self.calls.append(("catalogue", [], kwargs))
+        return self.catalogue
+
+    def search_sections_by_concept_seeds(self, seeds, **kwargs):
+        self.calls.append(
+            (
+                "seeded_concepts",
+                [seed.model_dump(mode="json") for seed in seeds],
+                kwargs,
+            )
+        )
+        return self.seeded_results
 
 
 class FakeClient:
@@ -39,6 +56,19 @@ class FakeClient:
     def run_read(self, query, parameters=None):
         self.calls.append((query, parameters))
         return self.rows
+
+
+class FakeSeeder:
+    name = "fake_seeder"
+    concepts_per_term = 3
+
+    def __init__(self, seeds):
+        self.seeds = seeds
+        self.calls = []
+
+    def seed_concepts(self, terms, *, document_ids=None):
+        self.calls.append((list(terms), document_ids))
+        return {term: list(self.seeds) for term in terms}
 
 
 def make_result(
@@ -152,6 +182,11 @@ def test_mentions_plan_normalizes_terms():
 
 
 def test_validate_mode_accepts_concept_graph_ablation_modes():
+    assert _validate_mode("mentions_lexical_seeded") == "mentions_lexical_seeded"
+    assert (
+        _validate_mode("mentions_embedding_seeded")
+        == "mentions_embedding_seeded"
+    )
     assert _validate_mode("mentions_same_as") == "mentions_same_as"
     assert _validate_mode("mentions_umls_safe") == "mentions_umls_safe"
     assert (
@@ -162,6 +197,47 @@ def test_validate_mode_accepts_concept_graph_ablation_modes():
         _validate_mode("mentions_umls_safe_rescue")
         == "mentions_umls_safe_rescue"
     )
+
+
+def test_lexical_concept_seeder_uses_categorical_ordering():
+    tools = FakeTools(
+        [],
+        catalogue=[
+            {
+                "concept_name": "partial concept",
+                "name": "advanced heart failure therapy",
+            },
+            {
+                "concept_name": "canonical concept",
+                "umls_canonical_name": "heart failure",
+            },
+            {
+                "concept_name": "normalized concept",
+                "normalized_name": "heart failure",
+            },
+            {
+                "concept_name": "prefix concept",
+                "name": "heart failure with preserved ejection fraction",
+            },
+            {
+                "concept_name": "local concept",
+                "name": "heart failure",
+            },
+        ],
+    )
+    seeder = LexicalConceptSeeder(tools, concepts_per_term=5)
+
+    seed_groups = seeder.seed_concepts(["heart failure"])
+    seeds = seed_groups["heart failure"]
+
+    assert [seed.concept_name for seed in seeds] == [
+        "local concept",
+        "normalized concept",
+        "canonical concept",
+        "prefix concept",
+        "partial concept",
+    ]
+    assert [seed.seed_rank for seed in seeds] == [1, 2, 3, 4, 5]
 
 
 def test_mentions_only_uses_pure_concept_match_and_returns_subsections():
@@ -192,6 +268,105 @@ def test_mentions_only_uses_pure_concept_match_and_returns_subsections():
     assert run.results[0].section_uid == subsection.section_uid
     assert tools.calls[0][2]["ranking_mode"] == "concept_match"
     assert tools.calls[0][2]["document_ids"] == []
+
+
+def test_mentions_lexical_seeded_uses_explicit_seed_tool():
+    result = make_result("Doc::1", 1, "Hypertrophic cardiomyopathy")
+    tools = FakeTools(
+        [],
+        catalogue=[
+            {
+                "concept_name": "hypertrophic cardiomyopathy",
+                "name": "hypertrophic cardiomyopathy",
+                "umls_aliases": ["HCM"],
+                "canonical_type": "condition",
+                "umls_cui": "C0000001",
+            }
+        ],
+        seeded_results=[result],
+    )
+    pipeline = build_modular_kg_pipeline(
+        "mentions_lexical_seeded",
+        router=FakeRouter(
+            KGMentionsPlan(
+                terms=["HCM"],
+                require_all=True,
+            )
+        ),
+        tools=tools,
+    )
+
+    run = pipeline.retrieve("Question")
+
+    assert run.status == "success"
+    assert run.ranking_mode == "concept_match"
+    assert [call[0] for call in tools.calls] == [
+        "catalogue",
+        "seeded_concepts",
+    ]
+    assert tools.calls[1][1][0]["concept_name"] == (
+        "hypertrophic cardiomyopathy"
+    )
+    assert tools.calls[1][1][0]["method"] == "lexical"
+    assert tools.calls[1][2]["query_terms"] == ["HCM"]
+    assert tools.calls[1][2]["require_all"] is True
+    assert run.concept_seeds[0].method == "lexical"
+    assert run.results[0].source == "mentions"
+
+
+def test_mentions_embedding_seeded_accepts_prebuilt_seeder():
+    result = make_result("Doc::1", 1, "Dilated cardiomyopathy")
+    seed = ConceptSeed(
+        query_term="cardiomyopathy",
+        concept_name="dilated cardiomyopathy",
+        canonical_type="condition",
+        umls_cui=None,
+        method="embedding",
+        match_type="embedding",
+        seed_rank=1,
+        similarity=0.9,
+    )
+    seeder = FakeSeeder([seed])
+    tools = FakeTools([], seeded_results=[result])
+    pipeline = build_modular_kg_pipeline(
+        "mentions_embedding_seeded",
+        router=FakeRouter(
+            KGMentionsPlan(
+                terms=["cardiomyopathy"],
+                require_all=False,
+            )
+        ),
+        tools=tools,
+        concept_seeder=seeder,
+    )
+
+    run = pipeline.retrieve("Question")
+
+    assert run.status == "success"
+    assert seeder.calls == [(["cardiomyopathy"], [])]
+    assert tools.calls[0][0] == "seeded_concepts"
+    assert tools.calls[0][1][0]["method"] == "embedding"
+    assert run.concept_seeds == [seed]
+
+
+def test_mentions_embedding_seeded_requires_model_without_prebuilt_seeder():
+    tools = FakeTools([])
+
+    try:
+        build_modular_kg_pipeline(
+            "mentions_embedding_seeded",
+            router=FakeRouter(
+                KGMentionsPlan(
+                    terms=["cardiomyopathy"],
+                    require_all=False,
+                )
+            ),
+            tools=tools,
+        )
+    except ValueError as exc:
+        assert "concept_embedding_model is required" in str(exc)
+    else:
+        raise AssertionError("Expected missing embedding model to fail")
 
 
 def test_mentions_weighted_changes_only_the_local_ranking_mode():

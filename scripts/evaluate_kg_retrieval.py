@@ -1,10 +1,11 @@
 """Batch-evaluate modular and role-aware KG retrieval configurations.
 
 For each question the MENTIONS router is called once. The resulting
-``KGMentionsPlan`` is replayed unchanged across ``mentions_only``,
-``mentions_weighted``, ``mentions_descendants``, ``mentions_same_as``, and
-``mentions_umls_safe`` plus their rescue variants so those modes form a
-controlled ablation. ``planned_role_aware`` uses its own richer router.
+``KGMentionsPlan`` is replayed unchanged across ``mentions_only``, the
+controlled lexical/embedding seeded MENTIONS modes, ``mentions_weighted``,
+``mentions_descendants``, ``mentions_same_as``, and ``mentions_umls_safe`` plus
+their rescue variants so those modes form a controlled ablation.
+``planned_role_aware`` uses its own richer router.
 
 Gold annotations are never passed to retrieval. They are used only after a
 ranking has been produced, to calculate section- and document-level metrics.
@@ -38,6 +39,7 @@ from agentic_rag.evaluation.kg_batch import (
     section_keys_from_results,
 )
 from agentic_rag.kg.client import Neo4jKGClient
+from agentic_rag.kg.concept_seeders import EmbeddingConceptSeeder
 from agentic_rag.kg.pipeline import build_modular_kg_pipeline
 from agentic_rag.kg.retriever import KGParameterizedRetriever
 from agentic_rag.kg.router import KGMentionsRouter, KGStructuredRouter
@@ -49,6 +51,8 @@ DEFAULT_DATASET = Path("tests/data/subset_test_en_cm_syn.json")
 DEFAULT_OUTPUT_ROOT = Path("artifacts/kg_retrieval")
 MODULAR_MODES = (
     "mentions_only",
+    "mentions_lexical_seeded",
+    "mentions_embedding_seeded",
     "mentions_weighted",
     "mentions_descendants",
     "mentions_same_as",
@@ -113,6 +117,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start-after", default=None)
     parser.add_argument("--candidate-k", type=int, default=15)
     parser.add_argument("--top-k", type=int, default=10)
+    parser.add_argument("--concept-embedding-model", default=None)
+    parser.add_argument("--concepts-per-term", type=int, default=3)
+    parser.add_argument(
+        "--concept-embedding-cache",
+        type=Path,
+        default=None,
+    )
+    parser.add_argument(
+        "--mentions-plans-file",
+        type=Path,
+        default=None,
+        help=(
+            "JSONL file with existing question_id/question/plan rows. When "
+            "supplied, selected modular questions use these plans and do not "
+            "invoke the MENTIONS router."
+        ),
+    )
     parser.add_argument("--hierarchy-max-depth", type=int, default=3)
     parser.add_argument("--descendants-per-seed", type=int, default=5)
     parser.add_argument("--max-expanded-rows", type=int, default=1000)
@@ -259,6 +280,31 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def load_mentions_plans(path: Path) -> dict[str, KGMentionsPlan]:
+    rows = load_jsonl(path)
+    plans: dict[str, KGMentionsPlan] = {}
+    for row in rows:
+        question_id = str(row.get("question_id") or "").strip()
+        if not question_id:
+            raise ValueError(
+                f"Mentions plans file row is missing question_id: {path}"
+            )
+        if question_id in plans:
+            raise ValueError(
+                f"Duplicate question_id in mentions plans file: {question_id}"
+            )
+
+        plan_payload = row.get("plan")
+        if plan_payload is None:
+            plan_payload = {
+                "terms": row.get("terms"),
+                "require_all": row.get("require_all", False),
+            }
+        plans[question_id] = KGMentionsPlan.model_validate(plan_payload)
+
+    return plans
+
+
 def append_jsonl(path: Path, payload: Mapping[str, Any]) -> None:
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -328,6 +374,10 @@ def build_query_record(
             if expanded_keys is not None
             else None
         ),
+        "concept_seeds": [
+            seed.model_dump(mode="json")
+            for seed in getattr(run, "concept_seeds", [])
+        ],
         "final_ranking": evaluation["section_ranking"],
         "document_ranking": evaluation["document_ranking"],
         "candidate_diagnostics": diagnostics,
@@ -393,6 +443,103 @@ def write_aggregate_csv(
         writer.writerows(rows)
 
 
+def build_concept_seed_diagnostics(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    by_question: dict[str, dict[str, Any]] = {}
+
+    for row in rows:
+        question_id = str(row.get("question_id") or "").strip()
+        if not question_id:
+            continue
+        entry = by_question.setdefault(
+            question_id,
+            {
+                "question_id": question_id,
+                "question": row.get("question"),
+                "lexical_seeds": [],
+                "embedding_seeds": [],
+            },
+        )
+
+        seeds = row.get("concept_seeds")
+        if seeds is None:
+            trace = row.get("retrieval_trace") or {}
+            if isinstance(trace, Mapping):
+                seeds = trace.get("concept_seeds")
+        if not isinstance(seeds, list):
+            continue
+
+        for seed in seeds:
+            if not isinstance(seed, Mapping):
+                continue
+            method = str(seed.get("method") or "").strip()
+            if method == "lexical":
+                entry["lexical_seeds"].append(dict(seed))
+            elif method == "embedding":
+                entry["embedding_seeds"].append(dict(seed))
+
+    diagnostics: list[dict[str, Any]] = []
+    for entry in by_question.values():
+        lexical = _deduplicate_seed_dicts(entry["lexical_seeds"])
+        embedding = _deduplicate_seed_dicts(entry["embedding_seeds"])
+        lexical_keys = {_seed_key(seed) for seed in lexical}
+        embedding_keys = {_seed_key(seed) for seed in embedding}
+
+        diagnostics.append(
+            {
+                "question_id": entry["question_id"],
+                "question": entry["question"],
+                "lexical_seeds": lexical,
+                "embedding_seeds": embedding,
+                "shared_concept_seeds": _seed_key_dicts(
+                    lexical_keys & embedding_keys
+                ),
+                "lexical_only_seeds": _seed_key_dicts(
+                    lexical_keys - embedding_keys
+                ),
+                "embedding_only_seeds": _seed_key_dicts(
+                    embedding_keys - lexical_keys
+                ),
+            }
+        )
+
+    diagnostics.sort(key=lambda item: item["question_id"])
+    return diagnostics
+
+
+def _deduplicate_seed_dicts(
+    seeds: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for seed in seeds:
+        key = _seed_key(seed)
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(dict(seed))
+    return output
+
+
+def _seed_key(seed: Mapping[str, Any]) -> tuple[str, str]:
+    return (
+        str(seed.get("query_term") or "").casefold(),
+        str(seed.get("concept_name") or "").casefold(),
+    )
+
+
+def _seed_key_dicts(keys: set[tuple[str, str]]) -> list[dict[str, str]]:
+    return [
+        {
+            "query_term": query_term,
+            "concept_name": concept_name,
+        }
+        for query_term, concept_name in sorted(keys)
+        if query_term and concept_name
+    ]
+
+
 def print_query_summary(record: Mapping[str, Any]) -> None:
     section_metrics = record["metrics"]["section"]
     diagnostics = record["candidate_diagnostics"]["final_ranking"]
@@ -421,6 +568,14 @@ def main() -> None:
         limit=args.limit,
     )
     modes = list(dict.fromkeys(args.modes or ALL_MODES))
+    if (
+        "mentions_embedding_seeded" in modes
+        and not args.concept_embedding_model
+    ):
+        raise ValueError(
+            "--concept-embedding-model is required when "
+            "mentions_embedding_seeded is selected"
+        )
 
     output_root = args.output_root.expanduser().resolve()
     coverage_path = (
@@ -429,6 +584,28 @@ def main() -> None:
         else find_latest_coverage_artifact(output_root)
     )
     evaluation_sets = load_coverage_evaluation_sets(coverage_path)
+
+    supplied_plans_path = (
+        resolve_file(args.mentions_plans_file, "Mentions plans file")
+        if args.mentions_plans_file is not None
+        else None
+    )
+    supplied_plan_by_question = (
+        load_mentions_plans(supplied_plans_path)
+        if supplied_plans_path is not None
+        else {}
+    )
+    if supplied_plans_path is not None:
+        missing_plan_ids = [
+            question_id
+            for question_id in selected_ids
+            if question_id not in supplied_plan_by_question
+        ]
+        if missing_plan_ids:
+            raise KeyError(
+                "Selected question IDs missing from --mentions-plans-file: "
+                f"{missing_plan_ids}"
+            )
 
     run_id = args.run_id or make_run_id()
     output_dir = output_root / run_id
@@ -448,6 +625,23 @@ def main() -> None:
         str(row["question_id"]): KGMentionsPlan.model_validate(row["plan"])
         for row in existing_plan_rows
     }
+    if supplied_plans_path is not None:
+        plan_by_question.update(supplied_plan_by_question)
+        if not args.resume:
+            for question_id in selected_ids:
+                question = str(
+                    indexed_questions[question_id]["question"]
+                ).strip()
+                append_jsonl(
+                    plans_path,
+                    {
+                        "question_id": question_id,
+                        "question": question,
+                        "plan": plan_by_question[
+                            question_id
+                        ].model_dump(mode="json"),
+                    },
+                )
     completed = {
         (str(row["question_id"]), str(row["mode"]))
         for row in existing_query_rows
@@ -467,6 +661,18 @@ def main() -> None:
             "question_ids": selected_ids,
             "candidate_k": args.candidate_k,
             "top_k": args.top_k,
+            "concept_embedding_model": args.concept_embedding_model,
+            "concepts_per_term": args.concepts_per_term,
+            "concept_embedding_cache": (
+                str(args.concept_embedding_cache)
+                if args.concept_embedding_cache is not None
+                else None
+            ),
+            "concept_catalogue_size": None,
+            "concept_catalogue_build_load_seconds": None,
+            "concept_embedding_model_load_seconds": None,
+            "concept_embedding_cache_loaded": None,
+            "concept_embedding_cache_file": None,
             "hierarchy_max_depth": args.hierarchy_max_depth,
             "descendants_per_seed": args.descendants_per_seed,
             "max_expanded_rows": args.max_expanded_rows,
@@ -488,50 +694,106 @@ def main() -> None:
             "document_filtering": None,
             "gold_annotations_used_for_retrieval": False,
             "mentions_plan_reused_across_modular_modes": True,
+            "mentions_plans_file": (
+                str(supplied_plans_path)
+                if supplied_plans_path is not None
+                else None
+            ),
+            "mentions_plans_source": (
+                "loaded_from_file"
+                if supplied_plans_path is not None
+                else "generated_or_resumed"
+            ),
         },
         "status": "running",
     }
     write_json(manifest_path, manifest)
 
-    llm_service, router_config = build_llm_service(
-        model_name=args.model,
-        nodes_config_path=args.nodes_config,
+    needs_llm_service = (
+        "planned_role_aware" in modes
+        or (
+            any(mode in MODULAR_MODES for mode in modes)
+            and supplied_plans_path is None
+        )
     )
-    mentions_router = KGMentionsRouter(
-        llm_service=llm_service,
-        router_config=router_config,
-    )
-    advanced_router = KGStructuredRouter(
-        llm_service=llm_service,
-        router_config=router_config,
-    )
+    if needs_llm_service:
+        llm_service, router_config = build_llm_service(
+            model_name=args.model,
+            nodes_config_path=args.nodes_config,
+        )
+        mentions_router: KGMentionsRouter | None = KGMentionsRouter(
+            llm_service=llm_service,
+            router_config=router_config,
+        )
+        advanced_router: KGStructuredRouter | None = KGStructuredRouter(
+            llm_service=llm_service,
+            router_config=router_config,
+        )
+    else:
+        mentions_router = None
+        advanced_router = None
 
     started = time.perf_counter()
     failure_count = 0
+    generated_plan_count = 0
     with Neo4jKGClient.from_env(env_path=env_path) as client:
         tools = KGSectionTools(client)
-        advanced_retriever = KGParameterizedRetriever(
-            router=advanced_router,
-            tools=tools,
-            candidate_k=args.candidate_k,
-            final_k=args.top_k,
-            ranking_mode=args.advanced_ranking_mode,
-            rrf_k=args.rrf_k,
-            hierarchy_max_depth=args.hierarchy_max_depth,
-            exclude_summary_sections=not args.include_summary_sections,
-            multiple_facets_context_aware_merge=(
-                args.advanced_multiple_facets_context_aware_merge
-            ),
-            multiple_facets_context_candidate_injection=(
-                args.advanced_multiple_facets_context_candidate_injection
-            ),
-            same_section_anchor_fallback=(
-                args.advanced_same_section_anchor_fallback
-            ),
-            same_section_anchor_rescue=(
-                args.advanced_same_section_anchor_rescue
-            ),
-        )
+        advanced_retriever = None
+        if "planned_role_aware" in modes:
+            if advanced_router is None:
+                raise RuntimeError("planned_role_aware requires LLM routing")
+            advanced_retriever = KGParameterizedRetriever(
+                router=advanced_router,
+                tools=tools,
+                candidate_k=args.candidate_k,
+                final_k=args.top_k,
+                ranking_mode=args.advanced_ranking_mode,
+                rrf_k=args.rrf_k,
+                hierarchy_max_depth=args.hierarchy_max_depth,
+                exclude_summary_sections=not args.include_summary_sections,
+                multiple_facets_context_aware_merge=(
+                    args.advanced_multiple_facets_context_aware_merge
+                ),
+                multiple_facets_context_candidate_injection=(
+                    args.advanced_multiple_facets_context_candidate_injection
+                ),
+                same_section_anchor_fallback=(
+                    args.advanced_same_section_anchor_fallback
+                ),
+                same_section_anchor_rescue=(
+                    args.advanced_same_section_anchor_rescue
+                ),
+            )
+
+        embedding_seeder = None
+        if "mentions_embedding_seeded" in modes:
+            embedding_seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=args.concept_embedding_model,
+                concepts_per_term=args.concepts_per_term,
+                cache_path=args.concept_embedding_cache,
+            )
+            embedding_seeder.prepare()
+            manifest["configuration"].update(
+                {
+                    "concept_catalogue_size": (
+                        embedding_seeder.catalogue_size
+                    ),
+                    "concept_catalogue_build_load_seconds": (
+                        embedding_seeder.catalogue_build_load_seconds
+                    ),
+                    "concept_embedding_model_load_seconds": (
+                        embedding_seeder.model_load_seconds
+                    ),
+                    "concept_embedding_cache_loaded": (
+                        embedding_seeder.loaded_from_cache
+                    ),
+                    "concept_embedding_cache_file": (
+                        embedding_seeder.resolved_cache_file
+                    ),
+                }
+            )
+            write_json(manifest_path, manifest)
 
         for question_id in selected_ids:
             question_record = indexed_questions[question_id]
@@ -544,6 +806,11 @@ def main() -> None:
                 for mode in modes
             )
             if needs_modular and question_id not in plan_by_question:
+                if mentions_router is None:
+                    raise RuntimeError(
+                        "No reusable MENTIONS plan available and the "
+                        "MENTIONS router was not initialized"
+                    )
                 try:
                     plan = mentions_router.route(question)
                 except Exception as exc:
@@ -559,6 +826,7 @@ def main() -> None:
                     if args.fail_fast:
                         raise
                 if plan is not None:
+                    generated_plan_count += 1
                     plan_by_question[question_id] = plan
                     append_jsonl(
                         plans_path,
@@ -592,6 +860,20 @@ def main() -> None:
                             hierarchy_max_depth=args.hierarchy_max_depth,
                             descendants_per_seed=args.descendants_per_seed,
                             max_expanded_rows=args.max_expanded_rows,
+                            concepts_per_term=args.concepts_per_term,
+                            concept_embedding_model=(
+                                args.concept_embedding_model
+                            ),
+                            concept_embedding_cache=(
+                                str(args.concept_embedding_cache)
+                                if args.concept_embedding_cache is not None
+                                else None
+                            ),
+                            concept_seeder=(
+                                embedding_seeder
+                                if mode == "mentions_embedding_seeded"
+                                else None
+                            ),
                         )
                         run = pipeline.retrieve(question)
                         raw_results = key_results_from_modular(
@@ -602,6 +884,11 @@ def main() -> None:
                         )
                         final_results = key_results_from_modular(run, "results")
                     else:
+                        if advanced_retriever is None:
+                            raise RuntimeError(
+                                "planned_role_aware retriever is not "
+                                "initialized"
+                            )
                         run = advanced_retriever.retrieve(question)
                         raw_results = [
                             result
@@ -653,9 +940,12 @@ def main() -> None:
     ]
     metric_rows = build_metric_rows(current_rows, evaluation_sets)
     aggregates = aggregate_metric_rows(metric_rows) if metric_rows else []
+    concept_seed_diagnostics = build_concept_seed_diagnostics(current_rows)
 
     write_metric_csv(output_dir / "per_query_metrics.csv", metric_rows)
     write_aggregate_csv(output_dir / "aggregate_metrics.csv", aggregates)
+    concept_seed_diagnostics_path = output_dir / "concept_seed_diagnostics.json"
+    write_json(concept_seed_diagnostics_path, concept_seed_diagnostics)
     status_counts: dict[str, int] = {}
     for row in current_rows:
         status = str(row.get("status") or "unknown")
@@ -669,6 +959,8 @@ def main() -> None:
         "completed_query_mode_runs": len(current_rows),
         "status_counts": status_counts,
         "failure_count": failure_count,
+        "mentions_plans_generated_count": generated_plan_count,
+        "concept_seed_diagnostics_file": str(concept_seed_diagnostics_path),
         "elapsed_seconds": time.perf_counter() - started,
         "configuration": manifest["configuration"],
         "aggregates": aggregates,
@@ -678,6 +970,10 @@ def main() -> None:
     manifest["status"] = "completed_with_errors" if failure_count else "completed"
     manifest["completed_at"] = datetime.now(timezone.utc).isoformat()
     manifest["summary_file"] = str(output_dir / "summary.json")
+    manifest["concept_seed_diagnostics_file"] = str(
+        concept_seed_diagnostics_path
+    )
+    manifest["mentions_plans_generated_count"] = generated_plan_count
     write_json(manifest_path, manifest)
 
     print()

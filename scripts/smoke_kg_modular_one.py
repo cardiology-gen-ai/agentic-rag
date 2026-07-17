@@ -42,6 +42,8 @@ def parse_args() -> argparse.Namespace:
         "--mode",
         choices=(
             "mentions_only",
+            "mentions_lexical_seeded",
+            "mentions_embedding_seeded",
             "mentions_weighted",
             "mentions_descendants",
             "mentions_same_as",
@@ -53,6 +55,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--candidate-k", type=int, default=15)
     parser.add_argument("--top-k", type=int, default=10)
+    parser.add_argument("--concept-embedding-model", default=None)
+    parser.add_argument("--concepts-per-term", type=int, default=3)
+    parser.add_argument(
+        "--concept-embedding-cache",
+        type=Path,
+        default=None,
+    )
     parser.add_argument("--hierarchy-max-depth", type=int, default=3)
     parser.add_argument("--descendants-per-seed", type=int, default=3)
     parser.add_argument("--max-expanded-rows", type=int, default=1000)
@@ -199,6 +208,15 @@ def save_artifact(
 
 def main() -> None:
     args = parse_args()
+    if (
+        args.mode == "mentions_embedding_seeded"
+        and not args.concept_embedding_model
+    ):
+        raise ValueError(
+            "--concept-embedding-model is required for "
+            "mentions_embedding_seeded"
+        )
+
     env_path = resolve_existing_file(args.env_file, "Environment file")
     load_dotenv(dotenv_path=env_path, override=False)
 
@@ -231,6 +249,13 @@ def main() -> None:
             hierarchy_max_depth=args.hierarchy_max_depth,
             descendants_per_seed=args.descendants_per_seed,
             max_expanded_rows=args.max_expanded_rows,
+            concepts_per_term=args.concepts_per_term,
+            concept_embedding_model=args.concept_embedding_model,
+            concept_embedding_cache=(
+                str(args.concept_embedding_cache)
+                if args.concept_embedding_cache is not None
+                else None
+            ),
         )
         run = pipeline.retrieve(question)
 

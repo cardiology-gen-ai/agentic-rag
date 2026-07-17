@@ -1,0 +1,493 @@
+{
+  "metadata": {
+    "schema_version": "2.0",
+    "total_questions": 20,
+    "single_document_questions": 20,
+    "cross_document_questions": 0,
+    "questions_per_primary_guideline": 10,
+    "language": "en",
+    "creation_date": "2026-06-11",
+    "conversion_date": "2026-06-11",
+    "purpose": "Quick retrieval evaluation subset for the cardiology guideline KG-RAG prototype",
+    "source_format": "legacy_nested",
+    "section_annotation_policy": "Use the most specific section or set of sections needed to answer each question; avoid adding parent sections when the answer is confined to a child section.",
+    "complexity_levels": [
+      "basic",
+      "intermediate",
+      "advanced",
+      "cross-document"
+    ],
+    "subset_of": "retrieval_test_set_full_canonical_corrected_all_guidelines.json",
+    "selection": {
+      "question_ids": [
+        "CM_01",
+        "CM_02",
+        "CM_03",
+        "CM_04",
+        "CM_05",
+        "CM_06",
+        "CM_07",
+        "CM_08",
+        "CM_09",
+        "CM_10",
+        "SYN_01",
+        "SYN_02",
+        "SYN_03",
+        "SYN_04",
+        "SYN_05",
+        "SYN_06",
+        "SYN_07",
+        "SYN_08",
+        "SYN_09",
+        "SYN_10"
+      ],
+      "guidelines": [
+        "Cardiomyopathies_2023",
+        "Syncope_2018"
+      ]
+    }
+  },
+  "questions": [
+    {
+      "id": "CM_01",
+      "question": "What are the diagnostic criteria for hypertrophic cardiomyopathy in adults, children, and first-degree relatives, including specific wall thickness measurements?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.1.1. Diagnostic criteria"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_02",
+      "question": "Describe the ESC approach to sudden cardiac death risk stratification in hypertrophic cardiomyopathy, including the variables used in the adult and paediatric risk models, additional risk modifiers, risk categories, and ICD decision thresholds.",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.5. Sudden cardiac death prevention in hypertrophic cardiomyopathy",
+            "7.1.5.6. Prevention of sudden cardiac death"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "revision_note": "Refined the question to match the risk-model information reproduced in the guideline and added the subsection containing risk categories and ICD decision thresholds."
+      }
+    },
+    {
+      "id": "CM_03",
+      "question": "What are the key differentiating features between dilated cardiomyopathy, non-dilated left ventricular cardiomyopathy, and arrhythmogenic right ventricular cardiomyopathy?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "3.2.2. Dilated cardiomyopathy",
+            "3.2.3. Non-dilated left ventricular cardiomyopathy",
+            "3.2.4. Arrhythmogenic right ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_04",
+      "question": "Which family-history, extracardiac, and electrocardiographic findings should raise suspicion of a specific genetic aetiology in patients with cardiomyopathy, and what genetic testing and counselling approach is recommended?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.4. History and physical examination",
+            "6.5. Resting and ambulatory electrocardiography",
+            "6.8.2. Genetic testing",
+            "6.8.3. Genetic counselling"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "revision_note": "Rephrased the question so that red flags indicate suspicion of a genetic aetiology rather than acting as automatic testing indications, and replaced the parent genetic section with the specific testing and counselling subsections."
+      }
+    },
+    {
+      "id": "CM_05",
+      "question": "What are the specific management recommendations for patients with cardiac amyloidosis, including both AL and ATTR types?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.7.4. Management",
+            "7.7.4.1. Specific therapies"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_06",
+      "question": "Describe the recommended approach to atrial fibrillation management in different cardiomyopathy subtypes, including anticoagulation strategies.",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.3.1. Anticoagulation",
+            "6.10.3.2. Rate control",
+            "6.10.3.3. Rhythm control"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_07",
+      "question": "What are the indications for cardiac MRI in the evaluation of cardiomyopathies and what specific features should be assessed?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.7.3. Cardiac magnetic resonance"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_08",
+      "question": "Outline the exercise and sports participation recommendations for patients with different cardiomyopathy phenotypes.",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "8.1.3. Exercise recommendations in hypertrophic cardiomyopathy",
+            "8.1.4. Exercise recommendations in arrhythmogenic right ventricular cardiomyopathy",
+            "8.1.5. Exercise recommendations in dilated cardiomyopathy and non-dilated left ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_09",
+      "question": "What are the specific pregnancy-related considerations and management strategies for women with cardiomyopathies?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "8.2.2.1. Pre-pregnancy",
+            "8.2.2.2. Pregnancy",
+            "8.2.2.3. Timing and mode of delivery",
+            "8.2.2.4. Post-partum",
+            "8.2.2.5. Pharmacological treatment: general aspects",
+            "8.2.2.6. Specific cardiomyopathies",
+            "8.2.2.7. Peripartum cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "CM_10",
+      "question": "Describe the indications and timing for consideration of advanced heart failure therapies (LVAD, transplantation) in cardiomyopathy patients.",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.2.2. Cardiac transplantation",
+            "6.10.2.3. Left ventricular assist devices"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_01",
+      "question": "What definitions and pathophysiological criteria distinguish syncope from other forms of transient loss of consciousness?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "3.1. Definitions",
+            "3.2.1. Syncope",
+            "3.2.2. Non-syncopal forms of (real or apparent) transient loss of consciousness"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_02",
+      "question": "What should the initial evaluation of suspected syncope include, and how should emergency-department management and disposition be guided by risk stratification?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "4.1. Initial evaluation",
+            "4.1.1. Diagnosis of syncope",
+            "4.1.2. Management of syncope in the emergency department based on risk stratification"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_03",
+      "question": "What are the indications, diagnostic criteria, interpretation, and main limitations of carotid sinus massage and tilt testing in patients with suspected syncope?",
+      "complexity": "intermediate",
+      "expected_format": "comparison",
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "4.2.1. Carotid sinus massage",
+            "4.2.2.2. Tilt testing"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_04",
+      "question": "When should an implantable loop recorder be used in the evaluation of unexplained syncope, and which ECG findings establish a diagnosis of arrhythmic syncope?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "4.2.4.7. Implantable loop recorders",
+            "4.2.4.8. Diagnostic criteria"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_05",
+      "question": "What is the recommended diagnostic role of electrophysiological study in patients with bifascicular bundle branch block and unexplained syncope?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "4.2.6.2. Syncope in bifascicular bundle branch block (impending high-degree atrioventricular block)"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_06",
+      "question": "What non-pharmacological and pharmacological treatments are recommended for recurrent reflex syncope, and how should patients be selected for cardiac pacing?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "5.2.1. Education and lifestyle modifications",
+            "5.2.2. Discontinuation/reduction of hypotensive therapy",
+            "5.2.3. Physical counter-pressure manoeuvres",
+            "5.2.5. Pharmacological therapy",
+            "5.2.6.6. Selection of patients for pacing and proposed algorithm"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_07",
+      "question": "What lifestyle, physical, medication-adjustment, and pharmacological measures are recommended for orthostatic hypotension and orthostatic intolerance syndromes?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "5.3.1. Education and lifestyle measures",
+            "5.3.2. Adequate hydration and salt intake",
+            "5.3.3. Discontinuation/reduction of vasoactive drugs",
+            "5.3.4. Counter-pressure manoeuvres",
+            "5.3.5. Abdominal binders and/or support stockings",
+            "5.3.6. Head-up tilt sleeping",
+            "5.3.7. Midodrine",
+            "5.3.8. Fludrocortisone"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_08",
+      "question": "How should unexplained syncope influence sudden cardiac death risk assessment and ICD or monitoring decisions in hypertrophic and arrhythmogenic right ventricular cardiomyopathy?",
+      "complexity": "advanced",
+      "expected_format": "comparison",
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "5.6.3. Hypertrophic cardiomyopathy",
+            "5.6.4. Arrhythmogenic right ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_09",
+      "question": "What special diagnostic and management considerations apply to syncope, unexplained falls, polypharmacy, and cognitive impairment in older or frail patients?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "6.1.1. Comorbidity and polypharmacy",
+            "6.1.2. Falls",
+            "6.1.3. Cognitive assessment and physical performance tests"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    },
+    {
+      "id": "SYN_10",
+      "question": "How should syncope be evaluated and treated in paediatric patients, and which findings suggest a potentially serious cardiac cause?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "6.2.1. Diagnostic evaluation",
+            "6.2.2. Therapy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "syncope_2018",
+        "question_type": "single_document"
+      }
+    }
+  ]
+}

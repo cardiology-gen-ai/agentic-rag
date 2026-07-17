@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "schema_version": "2.0",
+    "total_questions": 2,
+    "single_document_questions": 0,
+    "cross_document_questions": 2,
+    "language": "en",
+    "creation_date": "2026-06-11",
+    "purpose": "Small cross-document smoke set for Cardiomyopathies_2023 and Syncope_2018",
+    "source_format": "legacy_nested",
+    "section_annotation_policy": "Use the most specific section or set of sections needed to answer each question; preserve separate source objects for each guideline.",
+    "complexity_levels": [
+      "cross-document"
+    ],
+    "selection": {
+      "question_ids": [
+        "CROSS_CM_SYN_01",
+        "CROSS_CM_SYN_02"
+      ],
+      "guidelines": [
+        "Cardiomyopathies_2023",
+        "Syncope_2018"
+      ]
+    }
+  },
+  "questions": [
+    {
+      "id": "CROSS_CM_SYN_01",
+      "question": "How should unexplained syncope be incorporated into sudden cardiac death risk stratification and ICD decision-making in patients with hypertrophic cardiomyopathy according to the two guidelines?",
+      "complexity": "cross-document",
+      "expected_format": "cross-guideline comparison",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.5. Sudden cardiac death prevention in hypertrophic cardiomyopathy",
+            "7.1.5.6. Prevention of sudden cardiac death"
+          ]
+        },
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "5.6.3. Hypertrophic cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "reasoning_type": "cross-guideline risk stratification and management"
+      }
+    },
+    {
+      "id": "CROSS_CM_SYN_02",
+      "question": "How do the cardiomyopathy and syncope guidelines incorporate unexplained syncope into risk stratification and ICD decision-making for arrhythmogenic right ventricular cardiomyopathy?",
+      "complexity": "cross-document",
+      "expected_format": "cross-guideline comparison",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.4.5. Sudden cardiac death prevention in arrhythmogenic right ventricular cardiomyopathy",
+            "7.4.5.1. Secondary prevention of sudden cardiac death",
+            "7.4.5.2. Primary prevention of sudden cardiac death"
+          ]
+        },
+        {
+          "document_id": "Syncope_2018",
+          "filename": "Syncope_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the diagnosis and management of syncope",
+          "sections": [
+            "5.6.4. Arrhythmogenic right ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "reasoning_type": "cross-guideline cardiomyopathy risk assessment"
+      }
+    }
+  ]
+}

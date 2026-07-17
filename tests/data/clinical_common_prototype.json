@@ -1,0 +1,2031 @@
+{
+  "metadata": {
+    "schema_version": "2.0",
+    "total_questions": 68,
+    "single_document_questions": 58,
+    "cross_document_questions": 10,
+    "standard_single_document_questions": 40,
+    "standard_cross_document_questions": 0,
+    "multi_hop_single_document_questions": 18,
+    "multi_hop_cross_document_questions": 10,
+    "questions_per_primary_guideline": 10,
+    "language": "en",
+    "creation_date": "2026-06-27",
+    "conversion_date": "2026-06-27",
+    "purpose": "Clinical-realistic v2 retrieval evaluation subset for the cardiology guideline KG-RAG prototype restricted to CVD prevention, CVD and diabetes, elevated blood pressure and hypertension, and cardiovascular diseases during pregnancy.",
+    "source_format": "canonical_flat_prototype_clinical_realistic_v2",
+    "section_annotation_policy": "Use the most specific section or set of sections needed to answer each question; avoid adding parent sections when the answer is confined to a child section.",
+    "complexity_levels": [
+      "basic",
+      "intermediate",
+      "advanced",
+      "cross-document"
+    ],
+    "subset_of": "retrieval_test_set_full_canonical_corrected_all_guidelines.json",
+    "allowed_document_ids": [
+      "CVD_Prevention_2021",
+      "CVD_and_Diabetes_2023",
+      "Elevated_Blood_Pressure_and_Hypertension_2024",
+      "Cardiovascular_Diseases_during_Pregnancy_2018"
+    ],
+    "selection": {
+      "guidelines": [
+        "CVD_Prevention_2021",
+        "CVD_and_Diabetes_2023",
+        "Elevated_Blood_Pressure_and_Hypertension_2024",
+        "Cardiovascular_Diseases_during_Pregnancy_2018"
+      ],
+      "standard_single_document_question_counts": {
+        "CVD_Prevention_2021": 10,
+        "CVD_and_Diabetes_2023": 10,
+        "Elevated_Blood_Pressure_and_Hypertension_2024": 10,
+        "Cardiovascular_Diseases_during_Pregnancy_2018": 10
+      },
+      "included_existing_question_types": [
+        "multi_hop_single_document",
+        "multi_hop_cross_document"
+      ],
+      "excluded_existing_cross_document_questions_note": "Original standard cross-document questions were excluded when any annotated source fell outside the four allowed document_ids.",
+      "question_ids": [
+        "PREV_01",
+        "PREV_02",
+        "PREV_03",
+        "PREV_04",
+        "PREV_05",
+        "PREV_06",
+        "PREV_07",
+        "PREV_08",
+        "PREV_09",
+        "PREV_10",
+        "DIAB_01",
+        "DIAB_02",
+        "DIAB_03",
+        "DIAB_04",
+        "DIAB_05",
+        "DIAB_06",
+        "DIAB_07",
+        "DIAB_08",
+        "DIAB_09",
+        "DIAB_10",
+        "HTN_01",
+        "HTN_02",
+        "HTN_03",
+        "HTN_04",
+        "HTN_05",
+        "HTN_06",
+        "HTN_07",
+        "HTN_08",
+        "HTN_09",
+        "HTN_10",
+        "PREG_01",
+        "PREG_02",
+        "PREG_03",
+        "PREG_04",
+        "PREG_05",
+        "PREG_06",
+        "PREG_07",
+        "PREG_08",
+        "PREG_09",
+        "PREG_10",
+        "MH_01",
+        "MH_02",
+        "MH_03",
+        "MH_04",
+        "MH_05",
+        "MH_06",
+        "MH_07",
+        "MH_08",
+        "MH_09",
+        "MH_10",
+        "MH_11",
+        "MH_12",
+        "MH_13",
+        "MH_14",
+        "MH_15",
+        "MH_16",
+        "MH_17",
+        "MH_18",
+        "MH_CROSS_01",
+        "MH_CROSS_02",
+        "MH_CROSS_03",
+        "MH_CROSS_04",
+        "MH_CROSS_05",
+        "MH_CROSS_06",
+        "MH_CROSS_07",
+        "MH_CROSS_09",
+        "MH_CROSS_10",
+        "MH_CROSS_11"
+      ],
+      "version_note": "v2 rewrites question text only; gold references and question ids are unchanged."
+    },
+    "question_style": "clinical_realistic_concise",
+    "question_rewrite_policy": "Questions were rewritten to sound like realistic clinical or expert information needs, avoiding wording that mechanically mirrors section titles. Gold sources, document_ids, filenames, guideline names, and section annotations were left unchanged from v1.",
+    "based_on_file": "cvd_prevention_diabetes_hypertension_pregnancy_prototype_subset.json"
+  },
+  "questions": [
+    {
+      "id": "PREV_01",
+      "question": "In an apparently healthy adult, how should I move from a SCORE2 or SCORE2-OP estimate to a practical decision on risk-factor treatment?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "3.2.3.1. A stepwise approach to risk factor treatment and treatment intensification",
+            "3.2.3.2. Risk estimation in apparently healthy people",
+            "3.2.3.3. Translating cardiovascular disease risk to treatment thresholds"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_02",
+      "question": "Does age change how I interpret cardiovascular risk and decide on preventive treatment in otherwise healthy adults?",
+      "complexity": "advanced",
+      "expected_format": "age-stratified comparison",
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "3.2.3.4. Risk estimation and risk factor treatment in apparently healthy people 50–69 years of age",
+            "3.2.3.5. Risk estimation and risk factor treatment estimation in apparently healthy people ≥70 years of age",
+            "3.2.3.6. Risk estimation and risk factor treatment in apparently healthy people <50 years of age"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_03",
+      "question": "In established atherosclerotic cardiovascular disease, do I still calculate risk, or should I treat risk factors as secondary prevention?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "3.2.3.7. Risk estimation and risk factor treatment in patients with established atherosclerotic cardiovascular disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_04",
+      "question": "How should type 1 and type 2 diabetes change cardiovascular risk assessment and preventive management?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "3.2.3.8. Risk estimation and risk factor treatment in persons with type 2 diabetes mellitus",
+            "3.2.3.9. Risk estimation and risk factor treatment in persons with type 1 diabetes mellitus",
+            "4.8. Diabetes mellitus"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_05",
+      "question": "When a patient's estimated cardiovascular risk is borderline, which risk modifiers can help reclassify it?",
+      "complexity": "advanced",
+      "expected_format": "risk modifier summary",
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "3.3. Potential risk modifiers",
+            "3.3.3. Imaging",
+            "3.3.3.1. Coronary artery calcium",
+            "3.3.3.5. Ankle brachial index",
+            "3.3.4. Frailty",
+            "3.3.5. Family history"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_06",
+      "question": "Which lifestyle changes should I prioritize for cardiovascular prevention, and which are more than generic advice?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "4.3.1. Physical activity and exercise",
+            "4.3.1.4. Sedentary behaviour",
+            "4.3.2. Nutrition and alcohol",
+            "4.3.3. Bodyweight and composition"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_07",
+      "question": "For a smoker at cardiovascular risk, what cessation support and drug options should I offer?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "4.5. Smoking intervention",
+            "4.5.1. Smoking cessation",
+            "4.5.2. Evidence-based drug interventions"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_08",
+      "question": "How low should LDL-C go in cardiovascular prevention, and when should I intensify beyond statins in older adults, diabetes, or chronic kidney disease?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "4.6.2. Defining lipid goals",
+            "4.6.2.1. Low-density lipoprotein cholesterol goals",
+            "4.6.3. Strategies to control dyslipidaemias",
+            "4.6.4. Important groups",
+            "4.6.4.2. Older patients (≥70 years)",
+            "4.6.4.3. Diabetes mellitus",
+            "4.6.4.4. Chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_09",
+      "question": "In a prevention setting, how should elevated blood pressure be confirmed, when should medication start, and what target should I aim for?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "4.7.1. Definition and classification of hypertension",
+            "4.7.2. Blood pressure measurement",
+            "4.7.3. Screening and diagnosis of hypertension",
+            "4.7.5.2. Initiation of drug treatment",
+            "4.7.5.3. Blood pressure treatment targets"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREV_10",
+      "question": "In cardiovascular prevention, when is antithrombotic therapy appropriate, when should it be avoided, and when is gastric protection useful?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "4.9. Antithrombotic therapy",
+            "4.9.1. Antithrombotic therapy in individuals without atherosclerotic disease",
+            "4.9.2. Antithrombotic therapy in individuals with established atherosclerotic disease",
+            "4.9.3. Proton pump inhibitors"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_prevention_2021",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_01",
+      "question": "What laboratory criteria are used to diagnose diabetes and pre-diabetes, and how should screening be approached?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "3.1. Laboratory criteria for diagnosing diabetes and pre-diabetes",
+            "3.1.1. Fasting glucose",
+            "3.1.2. Two-hour oral glucose tolerance test and random glucose",
+            "3.1.3. Glycated haemoglobin",
+            "3.3. Screening for diabetes"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_02",
+      "question": "For a patient with type 2 diabetes, how do I decide whether their cardiovascular risk is moderate, high, or very high?",
+      "complexity": "intermediate",
+      "expected_format": "risk category summary",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "4.1. Assessing cardiovascular risk in type 2 diabetes",
+            "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+            "4.1.2. SCORE2-Diabetes: estimating 10-year cardiovascular disease risk"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_03",
+      "question": "In type 2 diabetes, which lifestyle measures matter most for cardiovascular risk reduction?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.1. Lifestyle and diabetes",
+            "5.1.1. Weight reduction",
+            "5.1.2. Change in diet or nutrition",
+            "5.1.3. Increasing physical activity and exercise",
+            "5.1.4. Smoking cessation"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_04",
+      "question": "How strict should glycaemic control be after a vascular event, and which measures besides HbA1c matter?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.2. Glycaemic targets",
+            "5.2.1. Role of glycated haemoglobin",
+            "5.2.2. Additional glycaemic targets",
+            "5.2.3. Glycaemic control following vascular events"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_05",
+      "question": "In type 2 diabetes, when should I choose an SGLT2 inhibitor or GLP-1 receptor agonist mainly for cardiovascular protection?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.3. Atherosclerotic cardiovascular disease risk reduction by glucose-lowering medications in diabetes",
+            "5.3.1. Glucose-lowering medications with cardiovascular efficacy demonstrated in dedicated cardiovascular outcomes trials",
+            "5.3.1.1. Sodium–glucose co-transporter-2 inhibitors",
+            "5.3.1.2. Glucagon-like peptide-1 receptor agonists",
+            "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_06",
+      "question": "In diabetes with elevated blood pressure, how should I confirm hypertension and choose the treatment target and drug strategy?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.4. Blood pressure and diabetes",
+            "5.4.1. Screening and diagnosis",
+            "5.4.2. Treatment targets",
+            "5.4.3. Management of hypertension",
+            "5.4.3.2. Pharmacological treatments in patients with diabetes"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_07",
+      "question": "In diabetes, how aggressive should LDL-C lowering be, and when should I add ezetimibe or a PCSK9 inhibitor?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.5. Lipids and diabetes",
+            "5.5.1. Treatment targets",
+            "5.5.2. Lipid-lowering agents",
+            "5.5.2.1. Statins",
+            "5.5.2.2. Ezetimibe",
+            "5.5.2.3. Proprotein convertase subtilisin/kexin type 9 inhibitors"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_08",
+      "question": "In diabetes, when is antithrombotic therapy indicated, and how does the answer change with ASCVD, ACS/CCS, PCI, or long-term oral anticoagulation?",
+      "complexity": "advanced",
+      "expected_format": "antithrombotic strategy comparison",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.6. Antithrombotic therapy and diabetes",
+            "5.6.1. Patients without a history of symptomatic atherosclerotic cardiovascular disease or revascularization",
+            "5.6.2. Patients with atherosclerotic cardiovascular disease and/or revascularization without an indication for long-term oral anticoagulation",
+            "5.6.3. Patients with atherosclerotic cardiovascular disease and/or revascularization requiring long-term oral anticoagulation"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_09",
+      "question": "In a patient with diabetes and possible heart failure, how should I screen, confirm the diagnosis, and adapt treatment by ejection fraction?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "7.3. Screening and diagnosis",
+            "7.4. Treatment of heart failure in patients with diabetes",
+            "7.4.1. Treatment of heart failure with reduced ejection fraction",
+            "7.4.1.1. Sodium–glucose co-transporter-2 inhibitors",
+            "7.4.2. Treatment of heart failure with mildly reduced ejection fraction",
+            "7.4.3. Treatment of heart failure with preserved ejection fraction"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "DIAB_10",
+      "question": "In diabetes with reduced eGFR or albuminuria, how do I stage kidney disease and protect both cardiovascular and kidney outcomes?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "9.1. Chronic kidney disease definitions, staging, and screening",
+            "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+            "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cvd_and_diabetes_2023",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_01",
+      "question": "What systolic blood pressure target should I usually aim for, and when should I accept a less aggressive target?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "8.5.3. Personalizing treatment strategies",
+            "9.2.6. Treatment initiation and blood pressure targets",
+            "9.6.3. Managing blood pressure in diabetes",
+            "9.7.4. Blood pressure targets in chronic kidney disease",
+            "9.8.1. Blood pressure thresholds and targets in patients with cardiac disease",
+            "9.9.2. Treatment in patients with history of prior stroke or transient ischaemic attack"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "revision_note": "Specified the populations to be compared and replaced broad parent sections with the subsections that directly contain blood pressure treatment targets.",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_02",
+      "question": "How do I confirm hypertension correctly when clinic and out-of-office readings may differ?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "5.2.2. Office blood pressure measurement",
+            "5.2.3. Home blood pressure measurement",
+            "5.2.4. Ambulatory blood pressure measurement",
+            "7.2. Confirming the diagnosis of hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_03",
+      "question": "When should I suspect secondary hypertension, and which causes should I actively look for?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "7.6.1. General considerations",
+            "7.6.2. Primary aldosteronism",
+            "7.6.3. Renovascular hypertension",
+            "7.6.4. Obstructive sleep apnoea syndrome",
+            "7.6.5. Phaeochromocytoma/paraganglioma"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_04",
+      "question": "If one antihypertensive drug is not enough, how should I escalate treatment and use single-pill combinations?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.3.2. Drug classes with evidence on clinical outcomes in the target population",
+            "8.3.4. Drug combinations and up-titrating strategies",
+            "8.3.5. A practical algorithm for intensive, effective, and tolerable blood pressure lowering with drug therapy, including considerations around single-pill combinations"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_05",
+      "question": "When is uncontrolled blood pressure truly resistant hypertension, and what comes after standard triple therapy?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "7.5. Resistant hypertension: definition and diagnosis",
+            "9.13.2. Non-pharmacological interventions",
+            "9.13.3. Pharmacological interventions",
+            "9.13.4. Devices for blood pressure lowering"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_06",
+      "question": "How should age 85 or older, frailty, dizziness, or polypharmacy change blood pressure treatment decisions?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.5.3. Personalizing treatment strategies",
+            "8.7.3. Potentially harmful consequences of blood pressure lowering for frail older people",
+            "9.3.1. Definition of frailty",
+            "9.3.2. Randomized controlled trials of blood pressure lowering in frail older patients",
+            "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+            "9.3.4. Maintaining blood pressure lowering in very old or frail patients"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "revision_note": "Expanded the annotation to include the target exceptions and frailty evidence/assessment section, and clarified that the question covers initiation, targets, monitoring, and deprescribing.",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_07",
+      "question": "Which lifestyle measures actually lower blood pressure, and when should I be cautious about sodium or potassium advice?",
+      "complexity": "basic",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.2.1.1. Sodium",
+            "8.2.1.2. Potassium",
+            "8.2.2. Physical activity and exercise",
+            "8.2.3. Weight reduction and diet",
+            "8.2.4. Alcohol, coffee, and soft drinks",
+            "8.2.5. Smoking"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "revision_note": "Distinguished blood-pressure reduction from broader cardiovascular-risk reduction and replaced the parent sodium/potassium section with its two specific subsections.",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_08",
+      "question": "How can I tell whether poor blood pressure control is due to non-adherence, and what can I do at each adherence stage?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "7.4.2. Drug adherence and persistence with treatment"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "revision_note": "Restricted the gold annotation to the section that directly defines the three adherence phases and links each phase to assessment methods and interventions.",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_09",
+      "question": "In chronic kidney disease, what blood pressure target and drug strategy should I use?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "9.7.2. Blood pressure lowering in chronic kidney disease",
+            "9.7.3. Managing blood pressure in chronic kidney disease",
+            "9.7.4. Blood pressure targets in chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "HTN_10",
+      "question": "Which tests should I order to detect hypertension-mediated organ damage, and how should the results affect management?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "7.4.3. Routine and optional tests",
+            "7.4.3.1. The kidneys",
+            "7.4.3.2. The heart",
+            "7.4.3.3. The arteries"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "hypertension_2024",
+        "question_type": "single_document",
+        "revision_note": "Replaced the indirect risk-stratification section with the parent diagnostic-work-up section that explains the clinical use of HMOD testing.",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_01",
+      "question": "Before pregnancy, how should cardiovascular risk be discussed and who should be involved in planning care?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "3.3. Pre-pregnancy counselling",
+            "3.3.1. Risk of maternal cardiovascular complications",
+            "3.3.2. Risk of obstetric and offspring complications",
+            "3.3.3. Pregnancy heart team"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_02",
+      "question": "Which cardiac tests are appropriate during pregnancy, and how do I balance diagnostic yield against radiation risk?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "3.4. Cardiovascular diagnosis in pregnancy",
+            "3.4.1. Electrocardiography",
+            "3.4.2. Echocardiography",
+            "3.4.3. Exercise testing",
+            "3.4.4. Ionizing radiation exposure",
+            "3.4.5. Chest radiography and computed tomography",
+            "3.4.6. Cardiac catheterization",
+            "3.4.7. Magnetic resonance imaging"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_03",
+      "question": "For a woman with cardiovascular disease, how should delivery timing, delivery mode, and postpartum monitoring be planned?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "3.8. Timing and mode of delivery: risk for mother and child",
+            "3.8.1. Timing of delivery",
+            "3.8.3. Vaginal or caesarean delivery",
+            "3.8.4. Delivery in anticoagulated women (not including mechanical valve; see section 5)",
+            "3.8.5. Urgent delivery on therapeutic anticoagulation",
+            "3.8.6. Haemodynamic monitoring during delivery",
+            "3.8.7. Anaesthesia/analgesia",
+            "3.8.10. Post-partum care",
+            "3.8.11. Breastfeeding"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_04",
+      "question": "In women with cardiovascular disease, what should I consider when advising on contraception, pregnancy termination, or assisted reproduction?",
+      "complexity": "intermediate",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "3.10. Methods of contraception and termination of pregnancy, and in vitro fertilization",
+            "3.10.1. Methods of contraception",
+            "3.10.2. Sterilization",
+            "3.10.3. Methods of termination of pregnancy",
+            "3.10.4. In vitro fertilization"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_05",
+      "question": "How risky is pregnancy in pulmonary hypertension, Eisenmenger syndrome, or cyanotic heart disease, and what management principles follow?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "4.2. Pulmonary hypertension and Eisenmenger’s syndrome",
+            "4.2.1. Pulmonary hypertension",
+            "4.2.2. Eisenmenger’s syndrome",
+            "4.2.3. Cyanotic heart disease without pulmonary hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_06",
+      "question": "In pregnancy with aortopathy, how should I monitor aortic risk and decide on medication, intervention, or delivery mode?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "5. Aortic diseases",
+            "5.1. Maternal and offspring risk",
+            "5.2. Specific syndromes",
+            "5.2.1. Marfan syndrome",
+            "5.2.2. Bicuspid aortic valve",
+            "5.2.3. Vascular Ehlers–Danlos syndrome",
+            "5.2.4. Turner syndrome",
+            "5.2.5. Other autosomal dominant aortopathies",
+            "5.3.1. Follow-up and medical therapy",
+            "5.3.2. Interventions",
+            "5.3.3. Delivery"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_07",
+      "question": "How does pregnancy management change in valvular disease, especially mitral or aortic stenosis and mechanical valves?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "6. Valvular heart disease",
+            "6.1. Stenotic valve lesions",
+            "6.1.1. Mitral stenosis",
+            "6.1.2. Valvular aortic stenosis",
+            "6.2. Regurgitant lesions",
+            "6.3. Atrial fibrillation in native heart valve disease",
+            "6.5. Mechanical prostheses and anticoagulation",
+            "6.5.1. Maternal risk",
+            "6.5.2. Obstetric and offspring risk",
+            "6.5.3. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_08",
+      "question": "When should I suspect peripartum cardiomyopathy or pregnancy-related heart failure, and how does management change around delivery and breastfeeding?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "8. Cardiomyopathies and heart failure",
+            "8.1. Peripartum cardiomyopathy",
+            "8.1.1. Diagnosis",
+            "8.1.2. Prognosis and counselling",
+            "8.2. Dilated cardiomyopathy",
+            "8.2.1. Prognosis and counselling",
+            "8.3. Management of heart failure during and after pregnancy",
+            "8.3.1. Acute/subacute heart failure and cardiogenic shock during or after pregnancy",
+            "8.3.4. Anticoagulation",
+            "8.3.5. Delivery and breastfeeding",
+            "8.4. Hypertrophic cardiomyopathy",
+            "8.4.1. Management",
+            "8.4.2. Delivery"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_09",
+      "question": "Which arrhythmias in pregnancy need urgent treatment, anticoagulation, cardioversion, ablation, or device management?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "9. Arrhythmias",
+            "9.4. Supraventricular tachycardia",
+            "9.5. Atrial fibrillation and atrial flutter",
+            "9.5.1. Anticoagulation",
+            "9.6. Ventricular tachycardia",
+            "9.8.1. Electrical cardioversion",
+            "9.8.2. Catheter ablation",
+            "9.8.3. Implantable cardioverter-defibrillator and pacing"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "PREG_10",
+      "question": "How should hypertension in pregnancy be classified, treated, and managed near delivery?",
+      "complexity": "advanced",
+      "expected_format": null,
+      "sources": [
+        {
+          "document_id": "Cardiovascular_Diseases_during_Pregnancy_2018",
+          "filename": "Cardiovascular_Diseases_during_Pregnancy_2018.md",
+          "guideline_name": "2018 ESC Guidelines for the management of cardiovascular diseases during pregnancy",
+          "sections": [
+            "10. Hypertensive disorders",
+            "10.1. Diagnosis and risk assessment",
+            "10.1.1. Blood pressure measurement",
+            "10.1.2. Laboratory tests",
+            "10.2. Definition and classification of hypertension in pregnancy",
+            "10.3. Prevention of hypertension and pre-eclampsia",
+            "10.4. Management of hypertension in pregnancy",
+            "10.4.2. Non-pharmacological management",
+            "10.4.3. Pharmacological management",
+            "10.5. Delivery"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "pregnancy_2018",
+        "question_type": "single_document",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_01",
+      "question": "Clinic blood pressure is repeatedly around 146/92 mmHg, but a 7-day home diary averages 128/78 mmHg; how should I interpret this and follow it up?",
+      "complexity": "intermediate",
+      "expected_format": "concise clinical assessment and follow-up plan",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "5.2.2. Office blood pressure measurement",
+            "5.2.3. Home blood pressure measurement",
+            "5.3.2. Blood pressure measurement for diagnosing hypertension",
+            "6.1. Definition and classification of elevated blood pressure and hypertension",
+            "7.2. Confirming the diagnosis of hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "cross-section diagnostic interpretation",
+        "source_question_id": "MH_01",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_02",
+      "question": "An 87-year-old treated for hypertension becomes light-headed on standing with clinic BP 126/72 mmHg; should I still aim for 120–129 mmHg systolic?",
+      "complexity": "advanced",
+      "expected_format": "individualized management recommendation",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "5.5.3. Orthostatic hypotension",
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "8.5.3. Personalizing treatment strategies",
+            "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+            "9.3.4. Maintaining blood pressure lowering in very old or frail patients"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "patient-specific target adaptation",
+        "source_question_id": "MH_02",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_03",
+      "question": "Can someone with hypertension and stage 3 chronic kidney disease safely use a potassium-containing salt substitute?",
+      "complexity": "intermediate",
+      "expected_format": "yes/no with clinical caveats",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.2.1.2. Potassium",
+            "9.7.3. Managing blood pressure in chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "conditional safety assessment",
+        "source_question_id": "MH_03",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_04",
+      "question": "A young adult with obesity, new hypertension, and loud snoring: which secondary cause should I suspect and how should I investigate it?",
+      "complexity": "intermediate",
+      "expected_format": "prioritized diagnostic plan",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "7.6. Secondary hypertension: when to screen/further investigations",
+            "7.6.4. Obstructive sleep apnoea syndrome",
+            "9.1.2. Secondary hypertension in young adulthood"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "age- and phenotype-directed diagnostic pathway",
+        "source_question_id": "MH_04",
+        "retrieval_only": true,
+        "revision_note": "Rephrased the question to avoid claiming a guideline-defined universal 'first' cause; the presentation now asks which secondary cause is particularly suggested and how to investigate it.",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_05",
+      "question": "Blood pressure remains 152/94 mmHg despite three drugs including a diuretic; what must I check before calling it resistant hypertension, and what is the next usual step?",
+      "complexity": "advanced",
+      "expected_format": "stepwise work-up and next-line treatment",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "7.4.2. Drug adherence and persistence with treatment",
+            "7.5. Resistant hypertension: definition and diagnosis",
+            "7.6. Secondary hypertension: when to screen/further investigations",
+            "9.13.3. Pharmacological interventions"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "diagnostic exclusion followed by treatment escalation",
+        "source_question_id": "MH_05",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_06",
+      "question": "In type 2 diabetes with intermittent palpitations and a normal routine ECG, how should I look for atrial fibrillation and decide on stroke prevention?",
+      "complexity": "advanced",
+      "expected_format": "diagnostic and stroke-prevention pathway",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "8.1.2. Screening and managing atrial fibrillation in patients with diabetes",
+            "8.1.3. Preventing stroke in patients with atrial fibrillation and diabetes"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "symptom-triggered screening and risk-based treatment",
+        "source_question_id": "MH_06",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_07",
+      "question": "In type 2 diabetes with new exertional breathlessness and ankle swelling, which tests confirm or exclude heart failure and which glucose-lowering class improves outcomes?",
+      "complexity": "advanced",
+      "expected_format": "diagnostic work-up and treatment implication",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "7.3. Screening and diagnosis",
+            "7.4.1.1. Sodium–glucose co-transporter-2 inhibitors",
+            "7.4.2. Treatment of heart failure with mildly reduced ejection fraction",
+            "7.4.3. Treatment of heart failure with preserved ejection fraction"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "symptom-to-diagnosis-to-treatment pathway",
+        "source_question_id": "MH_07",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_08",
+      "question": "In type 2 diabetes with eGFR 48 mL/min/1.73 m² and persistent albuminuria, which treatments should I prioritize for both cardiovascular and kidney protection?",
+      "complexity": "advanced",
+      "expected_format": "prioritized multimodal treatment plan",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "9.1. Chronic kidney disease definitions, staging, and screening",
+            "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+            "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "cardiorenal phenotype-based treatment selection",
+        "source_question_id": "MH_08",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_09",
+      "question": "In type 2 diabetes after myocardial infarction, if HbA1c is already at target, should I still add glucose-lowering therapy for cardiovascular protection?",
+      "complexity": "intermediate",
+      "expected_format": "direct treatment recommendation with rationale",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.3.1.1. Sodium–glucose co-transporter-2 inhibitors",
+            "5.3.1.2. Glucagon-like peptide-1 receptor agonists",
+            "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "treatment beyond biomarker control",
+        "source_question_id": "MH_09",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_10",
+      "question": "A 56-year-old smoker has borderline BP and cholesterol but a strong family history of premature MI; how should I estimate risk and when can coronary calcium help?",
+      "complexity": "advanced",
+      "expected_format": "risk-assessment pathway",
+      "sources": [
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "3.2.3.2. Risk estimation in apparently healthy people",
+            "3.2.3.4. Risk estimation and risk factor treatment in apparently healthy people 50–69 years of age",
+            "3.3.3.1. Coronary artery calcium",
+            "3.3.5. Family history"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "risk estimation plus modifier-based reclassification",
+        "source_question_id": "MH_10",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_11",
+      "question": "When is it reasonable not to pursue a systolic blood pressure target of 120–129 mmHg?",
+      "complexity": "intermediate",
+      "expected_format": "concise list of exceptions with management principle",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "8.5.3. Personalizing treatment strategies",
+            "8.7.3. Potentially harmful consequences of blood pressure lowering for frail older people",
+            "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+            "9.3.4. Maintaining blood pressure lowering in very old or frail patients",
+            "9.5. Orthostatic hypotension with supine hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "exception identification and target individualization",
+        "source_question_id": "MH_11",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_12",
+      "question": "When should I prefer 24-hour ambulatory BP monitoring over home BP readings?",
+      "complexity": "intermediate",
+      "expected_format": "comparison with indications",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "5.2.3. Home blood pressure measurement",
+            "5.2.4. Ambulatory blood pressure measurement",
+            "5.2.5. Comparison of home and ambulatory blood pressure monitoring",
+            "5.4.1. Home monitoring",
+            "5.4.2. Ambulatory monitoring"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "diagnostic modality selection",
+        "source_question_id": "MH_12",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_13",
+      "question": "Which comorbidities make elevated blood pressure high risk even before a formal cardiovascular risk score is calculated?",
+      "complexity": "intermediate",
+      "expected_format": "condition list with interpretation",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "6.2.1. Role of cardiovascular disease risk assessment",
+            "6.5. Summary of the cardiovascular disease risk stratification approach for allocating blood pressure treatment"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "risk classification from comorbid conditions",
+        "source_question_id": "MH_13",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_14",
+      "question": "How should I estimate cardiovascular risk in type 2 diabetes without established CVD or severe target-organ damage?",
+      "complexity": "intermediate",
+      "expected_format": "risk model and category thresholds",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "4.1. Assessing cardiovascular risk in type 2 diabetes",
+            "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+            "4.1.2. SCORE2-Diabetes: estimating 10-year cardiovascular disease risk"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "risk-model selection and category assignment",
+        "source_question_id": "MH_14",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_15",
+      "question": "If HbA1c is already at target, which glucose-lowering treatments may still be useful for cardiovascular protection?",
+      "complexity": "intermediate",
+      "expected_format": "condition-stratified treatment answer",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.3.1.1. Sodium–glucose co-transporter-2 inhibitors",
+            "5.3.1.2. Glucagon-like peptide-1 receptor agonists",
+            "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications",
+            "7.4. Treatment of heart failure in patients with diabetes",
+            "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "treatment selection independent of glycaemic control",
+        "source_question_id": "MH_15",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_16",
+      "question": "What safety checks are needed before recommending more dietary potassium to someone with hypertension?",
+      "complexity": "intermediate",
+      "expected_format": "pre-treatment safety checklist",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.2.1.2. Potassium",
+            "9.7.3. Managing blood pressure in chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "contraindication and monitoring assessment",
+        "source_question_id": "MH_16",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_17",
+      "question": "What should be ruled out before apparently uncontrolled blood pressure is labelled resistant hypertension?",
+      "complexity": "advanced",
+      "expected_format": "structured exclusion checklist",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "7.4.2. Drug adherence and persistence with treatment",
+            "7.5. Resistant hypertension: definition and diagnosis",
+            "7.6. Secondary hypertension: when to screen/further investigations",
+            "9.13.1. Definition of resistant hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "diagnosis by exclusion",
+        "source_question_id": "MH_17",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_18",
+      "question": "Which treatments protect both cardiovascular and kidney outcomes in type 2 diabetes with chronic kidney disease and albuminuria?",
+      "complexity": "advanced",
+      "expected_format": "prioritized therapy summary",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "9.1. Chronic kidney disease definitions, staging, and screening",
+            "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+            "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_single_document",
+        "reasoning_type": "cardiorenal treatment synthesis",
+        "source_question_id": "MH_18",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_01",
+      "question": "In type 2 diabetes with repeated office BP around 134/84 mmHg and no known CVD, how should I confirm the finding, assess risk, and decide on treatment?",
+      "complexity": "advanced",
+      "expected_format": "integrated clinical plan",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "5.3.2. Blood pressure measurement for diagnosing hypertension",
+            "6.2.1. Role of cardiovascular disease risk assessment",
+            "8.4. Selecting patients for pharmacological blood pressure-lowering treatment",
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "9.6.3. Managing blood pressure in diabetes"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+            "4.1.2. SCORE2-Diabetes: estimating 10-year cardiovascular disease risk",
+            "5.4.1. Screening and diagnosis",
+            "5.4.2. Treatment targets",
+            "5.4.3. Management of hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline risk stratification and treatment decision",
+        "source_question_id": "CROSS_01",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_02",
+      "question": "In type 2 diabetes with eGFR 48, albuminuria, and BP 138/84 mmHg, which measures best reduce cardiovascular and kidney risk together?",
+      "complexity": "advanced",
+      "expected_format": "prioritized treatment plan",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.2.1.1. Sodium",
+            "9.7.3. Managing blood pressure in chronic kidney disease",
+            "9.7.4. Blood pressure targets in chronic kidney disease"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+            "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline cardiorenal management",
+        "source_question_id": "CROSS_02",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_03",
+      "question": "In type 2 diabetes after myocardial infarction, with BP 136/82 mmHg and LDL-C 78 mg/dL despite statin therapy, what should I intensify?",
+      "complexity": "advanced",
+      "expected_format": "ranked risk-reduction actions",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "9.8.2. Coronary artery disease with particular reference to the blood pressure J-curve"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.3.1.1. Sodium–glucose co-transporter-2 inhibitors",
+            "5.3.1.2. Glucagon-like peptide-1 receptor agonists",
+            "5.5.1. Treatment targets",
+            "5.5.2. Lipid-lowering agents",
+            "6.1.3. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline secondary prevention prioritization",
+        "source_question_id": "CROSS_03",
+        "retrieval_only": true,
+        "revision_note": "Removed the unsupported requirement to rank preventive interventions and asked instead which therapies should be intensified.",
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_04",
+      "question": "In type 2 diabetes with chronic heart failure, BP 132/78 mmHg, and HbA1c already at target, which changes improve prognosis beyond glucose control?",
+      "complexity": "advanced",
+      "expected_format": "prognostic treatment summary",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "9.8.4. Heart failure"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "7.4.1.1. Sodium–glucose co-transporter-2 inhibitors",
+            "7.4.2. Treatment of heart failure with mildly reduced ejection fraction",
+            "7.4.3. Treatment of heart failure with preserved ejection fraction",
+            "7.5.1. Sodium–glucose co-transporter-2 inhibitors"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline heart-failure and blood-pressure integration",
+        "source_question_id": "CROSS_04",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_05",
+      "question": "In type 2 diabetes and hypertension, if asymptomatic atrial fibrillation appears on a wearable device, what needs confirmation and what prevention steps follow?",
+      "complexity": "advanced",
+      "expected_format": "diagnostic and management pathway",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "5.5.2. Atrial fibrillation",
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "9.8.5. Heart rhythm disease (including AF)"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "8.1.2. Screening and managing atrial fibrillation in patients with diabetes",
+            "8.1.3. Preventing stroke in patients with atrial fibrillation and diabetes"
+          ]
+        },
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "6.6. Atrial fibrillation"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline arrhythmia confirmation and prevention",
+        "source_question_id": "CROSS_05",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_06",
+      "question": "In an 86-year-old frail person with type 2 diabetes, BP 138/76 mmHg, dizziness, and polypharmacy, how should BP and glycaemic targets be individualized?",
+      "complexity": "advanced",
+      "expected_format": "individualized target and monitoring plan",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "5.5.3. Orthostatic hypotension",
+            "8.5.3. Personalizing treatment strategies",
+            "9.3.3. Starting blood pressure-lowering treatment in very old or frail patients",
+            "9.3.4. Maintaining blood pressure lowering in very old or frail patients"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "5.2. Glycaemic targets",
+            "5.2.1. Role of glycated haemoglobin",
+            "12. Person-centred care"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline frailty-based target individualization",
+        "source_question_id": "CROSS_06",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_07",
+      "question": "In type 2 diabetes without known ASCVD, heart failure, or kidney disease, how should I estimate future risk and decide on cardioprotective glucose-lowering therapy?",
+      "complexity": "advanced",
+      "expected_format": "risk-based treatment decision",
+      "sources": [
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "4.1.1. Cardiovascular risk categories in type 2 diabetes",
+            "4.1.2. SCORE2-Diabetes: estimating 10-year cardiovascular disease risk",
+            "5.3.5. Implications of results from cardiovascular outcomes trials of glucose-lowering medications",
+            "5.7. Multifactorial approach to risk-factor management in diabetes"
+          ]
+        },
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "3.2.3.8. Risk estimation and risk factor treatment in persons with type 2 diabetes mellitus",
+            "4.8.1.3. Newer diabetes mellitus drug classes: cardiovascular disease benefits"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline primary prevention treatment selection",
+        "source_question_id": "CROSS_07",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_09",
+      "question": "In type 2 diabetes, hypertension, and albuminuric kidney disease, is a potassium-containing salt substitute a good idea, and what monitoring is needed?",
+      "complexity": "advanced",
+      "expected_format": "practical dietary recommendation with safety checks",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.2.1.2. Potassium",
+            "9.7.3. Managing blood pressure in chronic kidney disease"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "9.2. Management of cardiovascular disease risk and kidney failure in patients with chronic kidney disease and diabetes",
+            "9.3. Blood pressure and glycaemic control in patients with diabetes and chronic kidney disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline dietary safety and medication interaction assessment",
+        "source_question_id": "CROSS_09",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_10",
+      "question": "Does BP 132/82 mmHg lead to the same treatment decision in every adult, or does type 2 diabetes change the threshold?",
+      "complexity": "advanced",
+      "expected_format": "comparative treatment decision",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "6.1. Definition and classification of elevated blood pressure and hypertension",
+            "6.2.1. Role of cardiovascular disease risk assessment",
+            "8.4. Selecting patients for pharmacological blood pressure-lowering treatment",
+            "9.6.3. Managing blood pressure in diabetes"
+          ]
+        },
+        {
+          "document_id": "CVD_and_Diabetes_2023",
+          "filename": "CVD_and_Diabetes_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes",
+          "sections": [
+            "4.1. Assessing cardiovascular risk in type 2 diabetes",
+            "5.4.2. Treatment targets",
+            "5.4.3. Management of hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline risk-dependent treatment threshold",
+        "source_question_id": "CROSS_10",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    },
+    {
+      "id": "MH_CROSS_11",
+      "question": "Why might blood pressure targets from an older prevention document differ from current hypertension practice?",
+      "complexity": "advanced",
+      "expected_format": "brief comparison of target strategies",
+      "sources": [
+        {
+          "document_id": "Elevated_Blood_Pressure_and_Hypertension_2024",
+          "filename": "Elevated_Blood_Pressure_and_Hypertension_2024.md",
+          "guideline_name": "2024 ESC Guidelines for the management of elevated blood pressure and hypertension",
+          "sections": [
+            "8.5.2. The ideal target of blood pressure-lowering treatment",
+            "8.5.3. Personalizing treatment strategies"
+          ]
+        },
+        {
+          "document_id": "CVD_Prevention_2021",
+          "filename": "CVD_Prevention_2021.md",
+          "guideline_name": "2021 ESC Guidelines on cardiovascular disease prevention in clinical practice",
+          "sections": [
+            "4.7.5.3. Blood pressure treatment targets"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "multi_hop_cross_document",
+        "reasoning_type": "cross-guideline recommendation comparison",
+        "source_question_id": "CROSS_11",
+        "retrieval_only": true,
+        "question_style": "clinical_realistic_concise",
+        "rewritten_from_v1": true
+      }
+    }
+  ]
+}

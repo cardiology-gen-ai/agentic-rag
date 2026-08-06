@@ -15,6 +15,7 @@ from agentic_rag.managers.llm_manager import LLMManager
 from agentic_rag.utils.search import build_cross_encoder
 from agentic_rag.utils.search import FusionStrategyFactory, SearchResult
 from agentic_rag.utils.faiss_loader import load_faiss_vectorstore
+from agentic_rag.utils.bm25 import rank_bm25_documents
 from agentic_rag.config.manager import SearchConfig
 from cardiology_gen_ai import IndexingConfig, IndexTypeNames, Vectorstore, QdrantVectorstore, FaissVectorstore, \
     BM25Vectorstore, BM25Dict
@@ -131,15 +132,18 @@ class SearchableFaissVectorstore(SearchableVectorstore, FaissVectorstore):
 
 
 class SearchableBM25Vectorstore(SearchableVectorstore, BM25Vectorstore):
+    """Corpus-wide BM25Plus retrieval with deterministic score provenance."""
 
     def get_retriever(self, **kwargs) -> BM25Dict:
         self.retriever = self.vectorstore
         return self.retriever
 
     def search(self, query: str) -> List[Document]:
-        scores = self.vectorstore.bm25.get_scores(BM25Vectorstore.tokenize(query))
-        top_k = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:self.search_config.kwargs["k"]]
-        return [self.vectorstore.documents[i] for i in top_k]
+        return rank_bm25_documents(
+            self.vectorstore,
+            query,
+            k=int(self.search_config.kwargs["k"]),
+        )
 
 
 class SearchableVectorstoreFactory:

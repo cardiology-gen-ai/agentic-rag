@@ -18,3 +18,7 @@ __pycache__/
 
 /logs/
 artifacts/
+outputs/
+retrieval_eval_smoke/
+scripts/
+tests/unit/

@@ -79,7 +79,7 @@ def build_retrieval_trace(
     )
 
     return {
-        "trace_schema_version": "1.1",
+        "trace_schema_version": "1.2",
         "question_id": question_id,
         "system": system,
         "query": query,

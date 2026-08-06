@@ -1,0 +1,182 @@
+{
+  "metadata": {
+    "schema_version": "3.0",
+    "dataset_name": "CM_reasoning_multihop_v6",
+    "total_questions": 5,
+    "single_document_questions": 5,
+    "cross_document_questions": 0,
+    "language": "en",
+    "creation_date": "2026-08-06",
+    "purpose": "Five guideline-audited clinical reasoning questions requiring an intermediate conclusion that determines the next evidence step.",
+    "source_format": "canonical_section_ids",
+    "allowed_document_ids": [
+      "Cardiomyopathies_2023"
+    ],
+    "evaluation_group_counts": {
+      "reasoning_multi_hop": 5
+    },
+    "selection": {
+      "guidelines": [
+        "Cardiomyopathies_2023"
+      ],
+      "question_ids": [
+        "CM_MH_11",
+        "CM_MH_12",
+        "CM_MH_13",
+        "CM_MH_14",
+        "CM_MH_15"
+      ],
+      "single_section_question_ids": [],
+      "multi_section_question_ids": [],
+      "reasoning_multi_hop_question_ids": [
+        "CM_MH_11",
+        "CM_MH_12",
+        "CM_MH_13",
+        "CM_MH_14",
+        "CM_MH_15"
+      ],
+      "graph_hop_path_verified_question_ids": []
+    },
+    "question_style_policy": "Questions are natural clinical doubts and do not name the source sections.",
+    "section_annotation_policy": "Gold annotations use the smallest section set required to support the requested answer. Broad parents and general context are excluded unless they contain indispensable independent evidence.",
+    "evaluation_policy": "Report single_section, multi_section, reasoning_multi_hop, and graph_hop_path_verified separately. Graph-conditioned results are diagnostic and must not be presented as an unbiased clinical-query sample."
+  },
+  "questions": [
+    {
+      "id": "CM_MH_11",
+      "question": "Genetic testing in a patient with cardiomyopathy identifies only a variant of uncertain significance. Can I use that result for predictive testing in first-degree relatives and discharge relatives who test negative, or how should the family be followed?",
+      "complexity": "advanced",
+      "expected_format": "variant interpretation and family-screening pathway",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.8.3.3. Genetic counselling for cascade testing",
+            "6.11. Family screening and follow-up evaluation of relatives"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "reasoning_type": "reasoning_multi_hop",
+        "hop_chain": "VUS interpretation -> predictive-testing eligibility -> continued clinical surveillance",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_audited"
+      }
+    },
+    {
+      "id": "CM_MH_12",
+      "question": "A patient with non-dilated left ventricular cardiomyopathy develops atrioventricular block and has patchy non-ischaemic late gadolinium enhancement together with mediastinal lymphadenopathy. Which inflammatory aetiology should be suspected, what targeted imaging should follow, and when would endomyocardial biopsy be justified?",
+      "complexity": "advanced",
+      "expected_format": "aetiology-directed imaging and biopsy pathway",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.3.1.4. Electrocardiographic features",
+            "7.3.1.7. Nuclear medicine",
+            "7.3.1.8. Endomyocardial biopsy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "reasoning_type": "reasoning_multi_hop",
+        "hop_chain": "conduction and scar red flags -> cardiac sarcoidosis -> targeted PET -> selective biopsy",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_audited"
+      }
+    },
+    {
+      "id": "CM_MH_13",
+      "question": "A child has biatrial enlargement, restrictive ventricular filling, and preserved ventricular size, and is already being considered for transplantation. What cardiomyopathy phenotype does this suggest, and why should pulmonary vascular resistance be measured repeatedly even if the child appears clinically stable?",
+      "complexity": "advanced",
+      "expected_format": "phenotype recognition and transplant-monitoring rationale",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.5.1. Diagnosis",
+            "7.5.4. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "reasoning_type": "reasoning_multi_hop",
+        "hop_chain": "haemodynamic phenotype -> restrictive cardiomyopathy -> transplant-relevant PVR surveillance",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_audited"
+      }
+    },
+    {
+      "id": "CM_MH_14",
+      "question": "A woman with otherwise unexplained concentric left ventricular hypertrophy also has neuropathic pain, angiokeratomas, proteinuria, and low native T1 on CMR. Which diagnosis should be pursued, how should it be confirmed in a woman, and why does recognizing it early matter for treatment?",
+      "complexity": "advanced",
+      "expected_format": "phenocopy diagnosis, confirmation, and treatment rationale",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.6.1.2. Diagnosis, clinical work-up, and differential diagnosis",
+            "7.6.1.4. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "reasoning_type": "reasoning_multi_hop",
+        "hop_chain": "cardiac and extracardiac red flags -> Anderson-Fabry disease -> sex-aware confirmation -> early disease-specific treatment",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_audited"
+      }
+    },
+    {
+      "id": "CM_MH_15",
+      "question": "A pregnant woman with hypertrophic cardiomyopathy has severe left ventricular outflow tract obstruction and reaches labour while taking oral anticoagulation. How should the mode of delivery and immediate post-partum monitoring be planned?",
+      "complexity": "intermediate",
+      "expected_format": "delivery and post-partum management plan",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "8.2.2.3. Timing and mode of delivery",
+            "8.2.2.4. Post-partum"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "reasoning_type": "reasoning_multi_hop",
+        "hop_chain": "maternal phenotype and anticoagulation -> delivery choice -> haemodynamic post-partum surveillance",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_audited"
+      }
+    }
+  ]
+}

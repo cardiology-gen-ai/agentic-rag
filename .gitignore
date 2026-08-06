@@ -22,3 +22,4 @@ outputs/
 retrieval_eval_smoke/
 scripts/
 tests/unit/
+*.tar.gz 

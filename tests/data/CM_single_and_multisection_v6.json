@@ -1,0 +1,745 @@
+{
+  "metadata": {
+    "schema_version": "3.0",
+    "dataset_name": "CM_single_and_multisection_v6",
+    "total_questions": 20,
+    "single_document_questions": 20,
+    "cross_document_questions": 0,
+    "language": "en",
+    "creation_date": "2026-08-06",
+    "purpose": "Trace-informed revision of the original 20-question Cardiomyopathies development set, separating single-section from non-sequential multi-section retrieval.",
+    "source_format": "canonical_section_ids",
+    "allowed_document_ids": [
+      "Cardiomyopathies_2023"
+    ],
+    "evaluation_group_counts": {
+      "multi_section": 11,
+      "single_section": 9
+    },
+    "selection": {
+      "guidelines": [
+        "Cardiomyopathies_2023"
+      ],
+      "question_ids": [
+        "CM_STD_01",
+        "CM_STD_02",
+        "CM_STD_03",
+        "CM_STD_04",
+        "CM_STD_05",
+        "CM_STD_06",
+        "CM_STD_07",
+        "CM_STD_08",
+        "CM_STD_09",
+        "CM_STD_10",
+        "CM_MH_01",
+        "CM_MH_02",
+        "CM_MH_03",
+        "CM_MH_04",
+        "CM_MH_05",
+        "CM_MH_06",
+        "CM_MH_07",
+        "CM_MH_08",
+        "CM_MH_09",
+        "CM_MH_10"
+      ],
+      "single_section_question_ids": [
+        "CM_STD_01",
+        "CM_STD_02",
+        "CM_STD_03",
+        "CM_STD_04",
+        "CM_STD_05",
+        "CM_STD_06",
+        "CM_STD_07",
+        "CM_STD_09",
+        "CM_STD_10"
+      ],
+      "multi_section_question_ids": [
+        "CM_STD_08",
+        "CM_MH_01",
+        "CM_MH_02",
+        "CM_MH_03",
+        "CM_MH_04",
+        "CM_MH_05",
+        "CM_MH_06",
+        "CM_MH_07",
+        "CM_MH_08",
+        "CM_MH_09",
+        "CM_MH_10"
+      ],
+      "reasoning_multi_hop_question_ids": [],
+      "graph_hop_path_verified_question_ids": []
+    },
+    "question_style_policy": "Questions are natural clinical doubts and do not name the source sections.",
+    "section_annotation_policy": "Gold annotations use the smallest section set required to support the requested answer. Broad parents and general context are excluded unless they contain indispensable independent evidence.",
+    "evaluation_policy": "Report single_section, multi_section, reasoning_multi_hop, and graph_hop_path_verified separately. Graph-conditioned results are diagnostic and must not be presented as an unbiased clinical-query sample."
+  },
+  "questions": [
+    {
+      "id": "CM_STD_01",
+      "question": "A 35-year-old man is referred after an echocardiogram shows unexplained left ventricular thickening. What findings would make hypertrophic cardiomyopathy the likely diagnosis?",
+      "complexity": "basic",
+      "expected_format": "diagnostic threshold summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.1.1. Diagnostic criteria"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "7.1.1.1"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_02",
+      "question": "A patient with suspected hypertrophic cardiomyopathy becomes breathless on exertion and has a dynamic systolic murmur. What should the echocardiogram specifically assess?",
+      "complexity": "basic",
+      "expected_format": "imaging assessment summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.1.3. Echocardiography"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "7.1.1.3"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_03",
+      "question": "My patient with obstructive hypertrophic cardiomyopathy is still symptomatic despite general measures. What medical treatment options should I try before referring for septal reduction?",
+      "complexity": "intermediate",
+      "expected_format": "treatment option summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.4.1.2. Drug therapy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "7.1.4.1.2"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_04",
+      "question": "A patient has a dilated, poorly contracting left ventricle, but the usual explanations such as coronary disease or valve disease do not fit. When should I call this dilated cardiomyopathy?",
+      "complexity": "basic",
+      "expected_format": "diagnostic feature summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "3.2.2. Dilated cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "3.2.2"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_05",
+      "question": "The CMR report describes non-ischaemic scar in a non-dilated left ventricle. How should I interpret this phenotype?",
+      "complexity": "basic",
+      "expected_format": "phenotype definition summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "3.2.3. Non-dilated left ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "3.2.3"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_06",
+      "question": "A young patient has palpitations, frequent ventricular ectopy, and possible right-sided involvement. Which ECG or Holter findings would make ARVC more likely?",
+      "complexity": "intermediate",
+      "expected_format": "ECG and Holter work-up summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.4.1.4. Electrocardiography and Holter monitoring"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "7.4.1.4"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_07",
+      "question": "Echo has already shown cardiomyopathy, but I am wondering whether CMR will really change anything. What extra information can it provide?",
+      "complexity": "basic",
+      "expected_format": "CMR role summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.7.3. Cardiac magnetic resonance"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "6.7.3"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_08",
+      "question": "My patient has a pathogenic cardiomyopathy variant and their siblings are worried. How should I talk to the family about genetic testing and follow-up?",
+      "complexity": "intermediate",
+      "expected_format": "cascade testing and family follow-up summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.8.2. Genetic testing",
+            "6.8.3.3. Genetic counselling for cascade testing"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "6.8.2",
+          "6.8.3.3"
+        ],
+        "gold_revision_reason": "Corrected the old single-section label: the question requires both testing eligibility and cascade-counselling evidence.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_09",
+      "question": "A patient with cardiomyopathy has new atrial fibrillation. Can I use the usual anticoagulation approach, or are there cardiomyopathy-specific considerations?",
+      "complexity": "intermediate",
+      "expected_format": "anticoagulation approach summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.3.1. Anticoagulation"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "6.10.3.1"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_STD_10",
+      "question": "A patient with stable cardiomyopathy asks what regular follow-up is for if they feel well. What should be monitored over time?",
+      "complexity": "basic",
+      "expected_format": "longitudinal follow-up summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.6. Routine follow-up of patients with cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "reasoning_type": "single_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": false,
+        "previous_gold_section_ids": [
+          "6.10.6"
+        ],
+        "gold_revision_reason": "Gold retained from the audited v5 development set.",
+        "audit_status": "retained_from_audited_v5"
+      }
+    },
+    {
+      "id": "CM_MH_01",
+      "question": "I am seeing a patient with mild unexplained left ventricular hypertrophy and a family history of cardiomyopathy or sudden death. How should I decide whether this is HCM, and how should I approach screening of close relatives?",
+      "complexity": "intermediate",
+      "expected_format": "diagnostic and family-screening comparison",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.1.1. Diagnostic criteria",
+            "7.1.2. Genetic testing and family screening",
+            "6.11. Family screening and follow-up evaluation of relatives"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "6.11",
+          "6.11.1",
+          "7.1.1.1",
+          "7.1.2"
+        ],
+        "gold_revision_reason": "Removed 6.11.1 because its special discharge/follow-up exceptions are not required by the focused question.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_02",
+      "question": "My patient with hypertrophic cardiomyopathy has a borderline sudden-death risk estimate. Beyond the calculator, what findings should change the discussion about ICD implantation?",
+      "complexity": "advanced",
+      "expected_format": "risk-modifier and ICD decision summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.5.1. Left ventricular apical aneurysms",
+            "7.1.5.2. Left ventricular systolic dysfunction",
+            "7.1.5.3. Late gadolinium enhancement on cardiac magnetic resonance imaging",
+            "7.1.5.6. Prevention of sudden cardiac death"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "7.1.5",
+          "7.1.5.1",
+          "7.1.5.2",
+          "7.1.5.3",
+          "7.1.5.4",
+          "7.1.5.5",
+          "7.1.5.6"
+        ],
+        "gold_revision_reason": "Removed the broad parent and weak/non-decisive modifiers; retained the specific imaging/function modifiers and the ICD-decision section.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_03",
+      "question": "A patient has palpitations, ventricular ectopy, and CMR shows non-ischaemic left ventricular scar without clear ventricular dilatation. Should I think of this as early DCM, NDLVC, or an arrhythmogenic phenotype?",
+      "complexity": "intermediate",
+      "expected_format": "phenotype classification comparison",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "3.2.2. Dilated cardiomyopathy",
+            "3.2.3. Non-dilated left ventricular cardiomyopathy",
+            "3.2.4. Arrhythmogenic right ventricular cardiomyopathy",
+            "7.3.1.6. Cardiac magnetic resonance"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "3.2.2",
+          "3.2.3",
+          "3.2.4",
+          "6.7.3",
+          "7.3.1.6"
+        ],
+        "gold_revision_reason": "Removed general CMR section 6.7.3 because phenotype-specific CMR evidence is already supplied by 7.3.1.6.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_04",
+      "question": "A patient with dilated or non-dilated left ventricular cardiomyopathy also has early conduction disease and ventricular arrhythmias. Should I suspect a high-risk inherited form, and how would that affect genetic testing and family follow-up?",
+      "complexity": "advanced",
+      "expected_format": "genotype-informed testing and family follow-up summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.2.2.1. Genetic testing",
+            "7.3.2. Genetic testing",
+            "6.11. Family screening and follow-up evaluation of relatives"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "6.11",
+          "6.4",
+          "6.5",
+          "6.8.2",
+          "6.8.3",
+          "7.2.2.1",
+          "7.3.2"
+        ],
+        "gold_revision_reason": "Removed generic history/ECG/counselling sections; retained phenotype-specific genetic testing and family follow-up evidence.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_05",
+      "question": "An older patient with heart failure, increased wall thickness, low-voltage or pseudoinfarction ECG features, and carpal tunnel symptoms might have cardiac amyloidosis. How should I confirm whether this is AL or ATTR amyloidosis, and what does that mean for treatment?",
+      "complexity": "advanced",
+      "expected_format": "amyloidosis typing and treatment summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.7.2. Diagnosis, clinical work-up, and differential diagnosis",
+            "6.7.4. Computed tomography and nuclear medicine techniques",
+            "7.7.4. Management",
+            "7.7.4.1. Specific therapies"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "6.5",
+          "6.6",
+          "6.7.4",
+          "7.7.2",
+          "7.7.4",
+          "7.7.4.1"
+        ],
+        "gold_revision_reason": "Removed generic ECG and laboratory-test sections because the query already states the red flags and asks for AL/ATTR confirmation and treatment.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_06",
+      "question": "My patient with cardiomyopathy has developed atrial fibrillation. Are there situations, such as HCM, amyloidosis, or ventricular dysfunction, where anticoagulation or rhythm-control decisions should differ from the usual approach?",
+      "complexity": "intermediate",
+      "expected_format": "phenotype-aware atrial fibrillation management comparison",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.3.1. Anticoagulation",
+            "6.10.3.2. Rate control",
+            "6.10.3.3. Rhythm control",
+            "7.7.4. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "6.10.3",
+          "6.10.3.1",
+          "6.10.3.2",
+          "6.10.3.3",
+          "7.7.4"
+        ],
+        "gold_revision_reason": "Removed the parent 6.10.3 to avoid parent-child double counting while retaining anticoagulation, rate/rhythm control, and amyloidosis management.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_07",
+      "question": "Echo confirms cardiomyopathy, but the pattern does not explain the cause. CMR suggests inflammation, infiltration, or storage disease. Which further tests would help narrow the diagnosis?",
+      "complexity": "intermediate",
+      "expected_format": "aetiology-directed testing summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.6. Laboratory tests",
+            "6.7.4. Computed tomography and nuclear medicine techniques",
+            "6.7.5. Endomyocardial biopsy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "6.3",
+          "6.6",
+          "6.7.3",
+          "6.7.4",
+          "6.7.5"
+        ],
+        "gold_revision_reason": "The question asks for tests after abnormal CMR; retained laboratory, nuclear-imaging, and biopsy evidence and removed general diagnostic/CMR context.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_08",
+      "question": "A patient with cardiomyopathy wants to keep doing high-intensity or competitive sport. What features of the phenotype and arrhythmic risk should guide whether this is reasonable or unsafe?",
+      "complexity": "intermediate",
+      "expected_format": "phenotype-specific exercise counselling comparison",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "8.1.3. Exercise recommendations in hypertrophic cardiomyopathy",
+            "8.1.4. Exercise recommendations in arrhythmogenic right ventricular cardiomyopathy",
+            "8.1.5. Exercise recommendations in dilated cardiomyopathy and non-dilated left ventricular cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "8.1.2",
+          "8.1.3",
+          "8.1.4",
+          "8.1.5"
+        ],
+        "gold_revision_reason": "Removed historical/general exercise context; retained phenotype-specific exercise recommendation sections.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_09",
+      "question": "A woman with inherited cardiomyopathy asks whether pregnancy would be safe and whether her child could inherit the condition. What should I cover before she tries to conceive?",
+      "complexity": "intermediate",
+      "expected_format": "pre-conception risk and inheritance counselling summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.8.3.4. Pre-natal or pre-implantation genetic diagnosis",
+            "8.2.2.1. Pre-pregnancy",
+            "8.2.2.6. Specific cardiomyopathies"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "6.8.3.4",
+          "8.2.1",
+          "8.2.2.1",
+          "8.2.2.6"
+        ],
+        "gold_revision_reason": "Removed contraception/IVF section 8.2.1 because the focused question asks pre-conception risk, inheritance, and phenotype-specific pregnancy implications.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    },
+    {
+      "id": "CM_MH_10",
+      "question": "A patient with cardiomyopathy keeps deteriorating despite optimal heart failure treatment. When should I refer for advanced heart failure assessment, transplant evaluation, or LVAD consideration?",
+      "complexity": "advanced",
+      "expected_format": "advanced heart-failure referral summary",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.2. Heart failure management",
+            "6.10.2.2. Cardiac transplantation",
+            "6.10.2.3. Left ventricular assist devices"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "reasoning_type": "multi_section_retrieval",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "gold_changed_from_k50_development_set": true,
+        "previous_gold_section_ids": [
+          "6.10.2",
+          "6.10.2.2",
+          "6.10.2.3",
+          "6.10.6"
+        ],
+        "gold_revision_reason": "Removed routine follow-up because the question asks escalation to advanced heart-failure assessment, transplantation, and LVAD.",
+        "audit_status": "trace_informed_requires_final_canonical_text_check"
+      }
+    }
+  ]
+}

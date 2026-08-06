@@ -1,0 +1,246 @@
+{
+  "metadata": {
+    "schema_version": "3.0",
+    "dataset_name": "CM_graph_hop_diagnostic_v6",
+    "total_questions": 5,
+    "single_document_questions": 5,
+    "cross_document_questions": 0,
+    "language": "en",
+    "creation_date": "2026-08-06",
+    "purpose": "Five graph-conditioned diagnostic questions with paths verified against the audited Neo4j snapshot; report separately from unbiased clinical questions.",
+    "source_format": "canonical_section_ids",
+    "allowed_document_ids": [
+      "Cardiomyopathies_2023"
+    ],
+    "evaluation_group_counts": {
+      "graph_hop_path_verified": 5
+    },
+    "selection": {
+      "guidelines": [
+        "Cardiomyopathies_2023"
+      ],
+      "question_ids": [
+        "CM_MH_16",
+        "CM_MH_17",
+        "CM_MH_18",
+        "CM_MH_19",
+        "CM_MH_20"
+      ],
+      "single_section_question_ids": [],
+      "multi_section_question_ids": [],
+      "reasoning_multi_hop_question_ids": [],
+      "graph_hop_path_verified_question_ids": [
+        "CM_MH_16",
+        "CM_MH_17",
+        "CM_MH_18",
+        "CM_MH_19",
+        "CM_MH_20"
+      ]
+    },
+    "question_style_policy": "Questions are natural clinical doubts and do not name the source sections.",
+    "section_annotation_policy": "Gold annotations use the smallest section set required to support the requested answer. Broad parents and general context are excluded unless they contain indispensable independent evidence.",
+    "evaluation_policy": "Report single_section, multi_section, reasoning_multi_hop, and graph_hop_path_verified separately. Graph-conditioned results are diagnostic and must not be presented as an unbiased clinical-query sample."
+  },
+  "questions": [
+    {
+      "id": "CM_MH_16",
+      "question": "A teenager with genetically confirmed Naxos disease now has syncope and frequent ventricular ectopy. Which cardiomyopathy phenotype should guide the cardiac work-up, and how should these findings affect sudden-death risk assessment and the ICD discussion?",
+      "complexity": "advanced",
+      "expected_format": "syndrome-to-phenotype diagnostic and sudden-death-risk pathway",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.9.1. Infantile and early childhood-onset cardiomyopathy",
+            "7.4.1.3. Diagnostic work-up",
+            "7.4.5.2. Primary prevention of sudden cardiac death"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "graph_hop_path_verified",
+        "reasoning_type": "graph_hop_path_verified",
+        "hop_chain": "Naxos disease -> ARVC phenotype -> phenotype-specific work-up and SCD-risk assessment",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_and_graph_path_verified",
+        "graph_conditioned": true,
+        "graph_hop_validation": {
+          "status": "path_verified_seed_explicit",
+          "query_seed": "naxos disease",
+          "relationship": "UMLS_ISA",
+          "neighbor": "arrhythmogenic right ventricular cardiomyopathy",
+          "newly_reached_gold_sections": [
+            "7.4.1.3. Diagnostic work-up",
+            "7.4.5.2. Primary prevention of sudden cardiac death"
+          ],
+          "router_seed_validation": "pending"
+        }
+      }
+    },
+    {
+      "id": "CM_MH_17",
+      "question": "A lysosomal storage disease is suspected in an adolescent boy with massive left ventricular hypertrophy, ventricular pre-excitation, skeletal myopathy, and learning difficulties. Which specific diagnosis best fits, and is an aetiological treatment available or should cardiac care follow general heart-failure, arrhythmia, and device principles?",
+      "complexity": "advanced",
+      "expected_format": "syndrome identification and management implication",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.6.4.2. Diagnosis, clinical work-up, and differential diagnosis",
+            "7.6.4.4. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "graph_hop_path_verified",
+        "reasoning_type": "graph_hop_path_verified",
+        "hop_chain": "lysosomal storage disease -> Danon disease -> absence of approved aetiological therapy and generic cardiac management",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_and_graph_path_verified",
+        "graph_conditioned": true,
+        "graph_hop_validation": {
+          "status": "path_verified_seed_explicit",
+          "query_seed": "lysosomal storage disease",
+          "relationship": "UMLS_INVERSE_ISA",
+          "neighbor": "danon disease",
+          "newly_reached_gold_sections": [
+            "7.6.4.2. Diagnosis, clinical work-up, and differential diagnosis",
+            "7.6.4.4. Management"
+          ],
+          "router_seed_validation": "pending"
+        }
+      }
+    },
+    {
+      "id": "CM_MH_18",
+      "question": "A symptomatic patient with suspected hypertrophic cardiomyopathy has no left ventricular outflow tract gradient on resting echocardiography, and the acoustic window is poor. Which echocardiographic escalation should be used to reveal latent obstruction and to define mitral and septal anatomy before any invasive treatment?",
+      "complexity": "intermediate",
+      "expected_format": "stepwise echocardiographic escalation pathway",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.7.2. Echocardiography",
+            "7.1.1.3. Echocardiography"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "graph_hop_path_verified",
+        "reasoning_type": "graph_hop_path_verified",
+        "hop_chain": "resting echocardiography -> inadequate images and unprovoked gradient -> contrast, exercise stress, and selected transoesophageal echocardiography",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_and_graph_path_verified",
+        "graph_conditioned": true,
+        "graph_hop_validation": {
+          "status": "path_verified_seed_explicit",
+          "query_seed": "echocardiography",
+          "relationship": "UMLS_INVERSE_ISA",
+          "neighbors": [
+            "exercise stress echocardiography",
+            "transoesophageal echocardiography"
+          ],
+          "newly_reached_gold_sections": [
+            "7.1.1.3. Echocardiography"
+          ],
+          "router_seed_validation": "pending"
+        }
+      }
+    },
+    {
+      "id": "CM_MH_19",
+      "question": "A patient with obstructive hypertrophic cardiomyopathy and atrial fibrillation cannot tolerate beta-blockers. Could calcium channel blockers be used for both outflow-obstruction symptoms and ventricular rate control, which agents are appropriate, and what ventricular-function or haemodynamic cautions apply?",
+      "complexity": "advanced",
+      "expected_format": "dual-indication drug selection and safety pathway",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "6.10.3.2. Rate control",
+            "7.1.4.1.2. Drug therapy"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "graph_hop_path_verified",
+        "reasoning_type": "graph_hop_path_verified",
+        "hop_chain": "calcium channel blocker class -> verapamil or diltiazem -> HCM symptom treatment plus AF rate-control safety",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_and_graph_path_verified",
+        "graph_conditioned": true,
+        "graph_hop_validation": {
+          "status": "path_verified_seed_explicit",
+          "query_seed": "calcium channel blockers",
+          "relationship": "UMLS_INVERSE_ISA",
+          "neighbors": [
+            "verapamil",
+            "diltiazem"
+          ],
+          "newly_reached_gold_sections": [
+            "6.10.3.2. Rate control",
+            "7.1.4.1.2. Drug therapy"
+          ],
+          "router_seed_validation": "pending"
+        }
+      }
+    },
+    {
+      "id": "CM_MH_20",
+      "question": "A patient with hypertrophic cardiomyopathy and a left ventricular apical aneurysm has spontaneous sustained monomorphic ventricular tachycardia causing syncope. Should the aneurysm itself determine the ICD decision, or how should both findings be integrated into sudden-death prevention?",
+      "complexity": "advanced",
+      "expected_format": "arrhythmic-risk interpretation and ICD pathway",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines on Cardiomyopathies",
+          "sections": [
+            "7.1.5.1. Left ventricular apical aneurysms",
+            "7.1.5.6. Prevention of sudden cardiac death"
+          ]
+        }
+      ],
+      "metadata": {
+        "legacy_guideline_id": "cardiomyopathies_2023",
+        "question_type": "multi_hop_single_document",
+        "evaluation_group": "graph_hop_path_verified",
+        "reasoning_type": "graph_hop_path_verified",
+        "hop_chain": "sustained monomorphic VT -> apical-aneurysm association -> secondary-prevention ICD while avoiding aneurysm-only risk attribution",
+        "retrieval_only": true,
+        "revision_version": "v6",
+        "audit_status": "guideline_and_graph_path_verified",
+        "graph_conditioned": true,
+        "graph_hop_validation": {
+          "status": "path_verified_seed_explicit",
+          "query_seed": "sustained monomorphic ventricular tachycardia",
+          "relationship": "UMLS_ISA",
+          "neighbor": "monomorphic ventricular tachycardia",
+          "newly_reached_gold_sections": [
+            "7.1.5.1. Left ventricular apical aneurysms"
+          ],
+          "router_seed_validation": "pending"
+        }
+      }
+    }
+  ]
+}

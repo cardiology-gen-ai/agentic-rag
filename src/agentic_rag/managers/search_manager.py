@@ -14,6 +14,7 @@ from agentic_rag.config.manager import FusionStrategy
 from agentic_rag.managers.llm_manager import LLMManager
 from agentic_rag.utils.search import build_cross_encoder
 from agentic_rag.utils.search import FusionStrategyFactory, SearchResult
+from agentic_rag.utils.faiss_loader import load_faiss_vectorstore
 from agentic_rag.config.manager import SearchConfig
 from cardiology_gen_ai import IndexingConfig, IndexTypeNames, Vectorstore, QdrantVectorstore, FaissVectorstore, \
     BM25Vectorstore, BM25Dict
@@ -78,9 +79,9 @@ class SearchableQdrantVectorstore(SearchableVectorstore, QdrantVectorstore):
                 must=[models.FieldCondition(
                     key="metadata.filename", match=models.MatchValue(value=metadata_filter.get("filename")))]
             )
-            self.serach_config.kwargs["filter"] = metadata_search_filter
+            self.search_config.kwargs["filter"] = metadata_search_filter
         if self.search_config.fusion:
-            self.serach_config.kwargs["hybrid_fusion"] = models.FusionQuery(fusion=models.Fusion.RRF)
+            self.search_config.kwargs["hybrid_fusion"] = models.FusionQuery(fusion=models.Fusion.RRF)
         self.retriever = self.vectorstore.as_retriever(
             search_type=self.search_config.type.value,
             search_kwargs=self.search_config.kwargs,
@@ -94,6 +95,18 @@ class SearchableFaissVectorstore(SearchableVectorstore, FaissVectorstore):
     Adds optional metadata filtering by turning :attr:`~src.agentic_rag.config.manager.SearchConfig.metadata_filter`
     into a dictionary-based filter understood by the :langchain:`FAISS <community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html>` retriever wrapper.
     """
+
+    def load_vectorstore(
+        self,
+        embeddings_model,
+        **kwargs,
+    ):
+        """Load FAISS with metric semantics matching data-etl."""
+        self.vectorstore = load_faiss_vectorstore(
+            config=self.config,
+            embeddings_model=embeddings_model,
+        )
+        return self.vectorstore
 
     def get_retriever(self, **kwargs) -> VectorStoreRetriever:
         """Build a :langchain_core:`VectorStoreRetriever <vectorstores/langchain_core.vectorstores.base.VectorStoreRetriever.html>` for :langchain:`FAISS <community/vectorstores/langchain_community.vectorstores.faiss.FAISS.html>`.
@@ -109,7 +122,7 @@ class SearchableFaissVectorstore(SearchableVectorstore, FaissVectorstore):
             metadata_search_filter = {
                 "filename": {"$in": metadata_filter.get("filename")},  # "$eq"
             }
-            self.serach_config.kwargs["filter"] = metadata_search_filter
+            self.search_config.kwargs["filter"] = metadata_search_filter
         self.retriever = self.vectorstore.as_retriever(
             search_type=self.search_config.type.value,
             search_kwargs=self.search_config.kwargs,
@@ -164,8 +177,8 @@ class SearchManager: # (metaclass=Singleton):
         self.search_config = search_config
         self.vectorstores: List[SearchableVectorstore] = self._init_vectorstores()
         self.make_searchable()
-        self.reranker = LLMManager(config=self.search_config.reranker) if (self.search_config.fusion.value == FusionStrategy.reranking.value and self.search_config.reranker is not None) else None
-        self.cross_encoder = build_cross_encoder(self.search_config.cross_encoder) if (self.search_config.fusion.value == FusionStrategy.cross_encoder.value and self.search_config.cross_encoder is not None) else None
+        self.reranker = LLMManager(config=self.search_config.reranker) if (self.search_config.fusion == FusionStrategy.reranking and self.search_config.reranker is not None) else None
+        self.cross_encoder = build_cross_encoder(self.search_config.cross_encoder) if (self.search_config.fusion == FusionStrategy.cross_encoder and self.search_config.cross_encoder is not None) else None
 
     def _init_vectorstores(self) -> List[SearchableVectorstore]:
         vectorstores = []
@@ -248,13 +261,13 @@ class SearchManager: # (metaclass=Singleton):
         assert self.search_config.fusion is not None
         self.logger.info(f"Fusing search results with {self.search_config.fusion.value} function..")
         kwargs: Dict[str, Any] = {"query": query}
-        if self.search_config.fusion.value == FusionStrategy.reranking.value:
+        if self.search_config.fusion == FusionStrategy.reranking:
             assert self.reranker is not None
             kwargs["reranker"] = self.reranker.llm
-        elif self.search_config.fusion.value == FusionStrategy.cross_encoder.value:
+        elif self.search_config.fusion == FusionStrategy.cross_encoder:
             assert self.cross_encoder is not None
             kwargs["cross_encoder"] = self.cross_encoder
-        elif self.search_config.fusion.value == FusionStrategy.rrf.value and len(self.vectorstores) <= 1:
+        elif self.search_config.fusion == FusionStrategy.rrf and len(self.vectorstores) <= 1:
             self.logger.warning("RRF makes sense only in presence on multiple vectorstores!")
         fusion_fn = FusionStrategyFactory.get_fusion_strategy(self.search_config)
         fused_results: SearchResult = fusion_fn(list_of_search_results, top_k=self.search_config.top_k, **kwargs)

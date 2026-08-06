@@ -73,17 +73,17 @@ def compute_coverage_metrics(
     cutoff_metrics: list[CutoffMetrics] = []
 
     for k in normalized_cutoffs:
+        found_at_k, _ = coverage_at_cutoff(
+            ranking,
+            gold,
+            k=k,
+        )
         top_k = ranking[:k]
-        relevant_unit_count = 0
-        covered_gold: set[EvidenceSection] = set()
-
-        for evidence in top_k:
-            intersection = evidence.covered_sections & gold
-            if intersection:
-                relevant_unit_count += 1
-                covered_gold.update(intersection)
-
-        covered_count = len(covered_gold)
+        relevant_unit_count = sum(
+            bool(evidence.covered_sections & gold)
+            for evidence in top_k
+        )
+        covered_count = len(found_at_k)
         recall = covered_count / len(gold)
 
         cutoff_metrics.append(
@@ -106,18 +106,45 @@ def compute_coverage_metrics(
             )
         )
 
-    all_found: set[EvidenceSection] = set()
-    for evidence in ranking:
-        all_found.update(evidence.covered_sections & gold)
-
-    found = frozenset(all_found)
+    found_in_pool, missing_in_pool = coverage_at_cutoff(
+        ranking,
+        gold,
+        k=len(ranking),
+    )
 
     return CoverageMetrics(
         cutoffs=tuple(cutoff_metrics),
         first_relevant_rank=first_relevant_rank,
-        found_gold_sections=found,
-        missing_gold_sections=gold - found,
+        found_gold_sections=found_in_pool,
+        missing_gold_sections=missing_in_pool,
     )
+
+
+def coverage_at_cutoff(
+    ranking: Sequence[RetrievedEvidence],
+    gold_sections: Iterable[EvidenceSection],
+    *,
+    k: int,
+) -> tuple[
+    frozenset[EvidenceSection],
+    frozenset[EvidenceSection],
+]:
+    """Return found and missing gold sections within the first ``k`` units."""
+
+    if k < 0:
+        raise ValueError("k must be >= 0")
+
+    gold = frozenset(gold_sections)
+    if not gold:
+        raise ValueError("gold_sections must contain at least one section")
+
+    found: set[EvidenceSection] = set()
+
+    for evidence in ranking[:k]:
+        found.update(evidence.covered_sections & gold)
+
+    found_frozen = frozenset(found)
+    return found_frozen, gold - found_frozen
 
 
 def _first_relevant_rank(

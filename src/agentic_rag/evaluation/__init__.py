@@ -15,6 +15,11 @@ from agentic_rag.evaluation.metrics import (
     CoverageMetrics,
     CutoffMetrics,
     compute_coverage_metrics,
+    coverage_at_cutoff,
+)
+from agentic_rag.evaluation.trace import (
+    TraceTextMode,
+    build_retrieval_trace,
 )
 
 __all__ = [
@@ -24,7 +29,10 @@ __all__ = [
     "EvidenceNormalizationResult",
     "EvidenceSection",
     "RetrievedEvidence",
+    "TraceTextMode",
+    "build_retrieval_trace",
     "compute_coverage_metrics",
+    "coverage_at_cutoff",
     "load_evaluation_questions",
     "normalize_retrieved_documents",
     "parse_section_id",

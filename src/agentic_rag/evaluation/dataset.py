@@ -15,6 +15,18 @@ _SECTION_LABEL = re.compile(
     r"^\s*(?P<section_id>\d+(?:\.\d+)*)\.\s+.+$"
 )
 
+_ALLOWED_GROUPS = frozenset(
+    {
+        "single_section",
+        "multi_section",
+        "reasoning_multi_hop",
+        "graph_hop_path_verified",
+        # Backward-compatible legacy aggregate labels:
+        "standard",
+        "multi_hop",
+    }
+)
+
 
 @dataclass(frozen=True)
 class EvaluationQuestion:
@@ -31,9 +43,10 @@ class EvaluationQuestion:
             raise ValueError("question_id must not be empty")
         if not self.question.strip():
             raise ValueError("question must not be empty")
-        if self.group not in {"standard", "multi_hop"}:
+        if self.group not in _ALLOWED_GROUPS:
             raise ValueError(
-                "group must be either 'standard' or 'multi_hop'"
+                "group must be one of "
+                f"{sorted(_ALLOWED_GROUPS)!r}; got {self.group!r}"
             )
         if not self.gold_sections:
             raise ValueError("gold_sections must not be empty")
@@ -107,12 +120,7 @@ def _parse_question(raw: Any) -> EvaluationQuestion:
             f"Question {question_id!r} must contain metadata"
         )
 
-    question_type = _required_string(metadata, "question_type")
-    group = (
-        "multi_hop"
-        if question_type.startswith("multi_hop")
-        else "standard"
-    )
+    group = _resolve_evaluation_group(metadata)
 
     sources = raw.get("sources")
     if not isinstance(sources, list) or not sources:
@@ -151,6 +159,29 @@ def _parse_question(raw: Any) -> EvaluationQuestion:
         group=group,
         complexity=complexity,
         gold_sections=frozenset(gold),
+    )
+
+
+def _resolve_evaluation_group(
+    metadata: Mapping[str, Any],
+) -> str:
+    explicit = metadata.get("evaluation_group")
+    if isinstance(explicit, str) and explicit.strip():
+        group = explicit.strip()
+        if group not in _ALLOWED_GROUPS:
+            raise ValueError(
+                "Unsupported metadata.evaluation_group "
+                f"{group!r}; expected one of "
+                f"{sorted(_ALLOWED_GROUPS)!r}"
+            )
+        return group
+
+    # Backward compatibility with schema <= 2.x.
+    question_type = _required_string(metadata, "question_type")
+    return (
+        "multi_hop"
+        if question_type.startswith("multi_hop")
+        else "standard"
     )
 
 

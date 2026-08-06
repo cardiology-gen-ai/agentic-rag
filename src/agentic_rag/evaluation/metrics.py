@@ -1,327 +1,148 @@
-"""Pure, backend-independent metrics for ranked retrieval evaluation.
+"""Coverage-aware retrieval metrics.
 
-The same functions can evaluate document rankings and semantic-section
-rankings. Inputs are hashable identifiers, for example normalized document IDs
-or :class:`agentic_rag.evaluation.retrieval.SectionKey` objects.
-
-Rankings are deduplicated while preserving first occurrence. This prevents
-repeated chunks or repeated graph hits for the same semantic target from
-inflating relevance counts.
+A retrieval unit is relevant when at least one of its covered original
+guideline sections intersects the gold section set. A unit counts once for
+precision even when it covers several gold sections. Recall is section-based.
 """
 
 from __future__ import annotations
 
-import math
-import statistics
-from collections.abc import Hashable, Iterable, Mapping, Sequence
-from typing import Any, Literal, TypeVar
+from dataclasses import dataclass
+from typing import Iterable, Sequence
+
+from agentic_rag.evaluation.evidence import EvidenceSection, RetrievedEvidence
 
 
-RankingItem = TypeVar("RankingItem", bound=Hashable)
-EvaluationLevel = Literal["document", "section"]
-EvaluationView = Literal["clean", "end_to_end"]
+@dataclass(frozen=True)
+class CutoffMetrics:
+    """Metrics computed at one ranking cutoff."""
 
-DEFAULT_CUTOFFS: tuple[int, ...] = (1, 3, 5, 10)
-
-
-def _validate_k(k: int) -> int:
-    if isinstance(k, bool) or not isinstance(k, int) or k <= 0:
-        raise ValueError(f"k must be a positive integer, got {k!r}")
-    return k
-
-
-def _validate_cutoffs(cutoffs: Iterable[int]) -> tuple[int, ...]:
-    normalized = tuple(sorted({_validate_k(k) for k in cutoffs}))
-    if not normalized:
-        raise ValueError("At least one cutoff is required")
-    return normalized
+    k: int
+    hit: float
+    precision: float
+    recall: float
+    complete_recall: float
+    reciprocal_rank: float
+    relevant_unit_count: int
+    covered_gold_count: int
 
 
-def deduplicate_ranking(
-    ranking: Iterable[RankingItem],
-) -> list[RankingItem]:
-    """Deduplicate a ranking while preserving the first-occurrence order."""
+@dataclass(frozen=True)
+class CoverageMetrics:
+    """Coverage-aware metrics for one query."""
 
-    unique: list[RankingItem] = []
-    seen: set[RankingItem] = set()
+    cutoffs: tuple[CutoffMetrics, ...]
+    first_relevant_rank: int | None
+    found_gold_sections: frozenset[EvidenceSection]
+    missing_gold_sections: frozenset[EvidenceSection]
 
-    for item in ranking:
-        if item in seen:
-            continue
-        seen.add(item)
-        unique.append(item)
+    def at(self, k: int) -> CutoffMetrics:
+        """Return metrics for cutoff ``k``."""
 
-    return unique
-
-
-def _prepare_inputs(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
-) -> tuple[set[RankingItem], list[RankingItem]]:
-    gold_set = set(gold)
-    if not gold_set:
-        raise ValueError("gold must contain at least one relevant item")
-
-    return gold_set, deduplicate_ranking(ranking)
+        for item in self.cutoffs:
+            if item.k == k:
+                return item
+        raise KeyError(f"Cutoff {k} was not computed")
 
 
-def hit_at_k(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
-    k: int,
-) -> float:
-    """Return 1 when at least one relevant item appears in the top ``k``."""
-
-    k = _validate_k(k)
-    gold_set, ranked = _prepare_inputs(gold, ranking)
-    return float(any(item in gold_set for item in ranked[:k]))
-
-
-def precision_at_k(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
-    k: int,
-) -> float:
-    """Return binary relevance precision at ``k``.
-
-    The denominator is always the requested cutoff ``k``. Therefore a backend
-    returning fewer than ``k`` unique results is penalized for the missing
-    positions, which keeps comparisons across retrievers consistent.
-    """
-
-    k = _validate_k(k)
-    gold_set, ranked = _prepare_inputs(gold, ranking)
-    relevant = sum(item in gold_set for item in ranked[:k])
-    return relevant / k
-
-
-def recall_at_k(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
-    k: int,
-) -> float:
-    """Return the fraction of all gold items found in the top ``k``."""
-
-    k = _validate_k(k)
-    gold_set, ranked = _prepare_inputs(gold, ranking)
-    relevant = sum(item in gold_set for item in ranked[:k])
-    return relevant / len(gold_set)
-
-
-def reciprocal_rank_at_k(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
-    k: int,
-) -> float:
-    """Return reciprocal rank of the first relevant item within top ``k``.
-
-    This is a per-question reciprocal-rank value. Its mean over questions is
-    MRR@k.
-    """
-
-    k = _validate_k(k)
-    gold_set, ranked = _prepare_inputs(gold, ranking)
-
-    for rank, item in enumerate(ranked[:k], start=1):
-        if item in gold_set:
-            return 1.0 / rank
-
-    return 0.0
-
-
-def ndcg_at_k(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
-    k: int,
-) -> float:
-    """Return nDCG@k using binary relevance for all gold items."""
-
-    k = _validate_k(k)
-    gold_set, ranked = _prepare_inputs(gold, ranking)
-
-    dcg = sum(
-        1.0 / math.log2(rank + 1)
-        for rank, item in enumerate(ranked[:k], start=1)
-        if item in gold_set
-    )
-
-    ideal_hits = min(len(gold_set), k)
-    idcg = sum(
-        1.0 / math.log2(rank + 1)
-        for rank in range(1, ideal_hits + 1)
-    )
-
-    return dcg / idcg if idcg else 0.0
-
-
-def complete_recall_at_k(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
-    k: int,
-) -> float:
-    """Return 1 only when every gold item appears within top ``k``."""
-
-    return float(math.isclose(recall_at_k(gold, ranking, k), 1.0))
-
-
-def compute_query_metrics(
-    gold: Iterable[RankingItem],
-    ranking: Iterable[RankingItem],
+def compute_coverage_metrics(
+    ranking: Sequence[RetrievedEvidence],
+    gold_sections: Iterable[EvidenceSection],
     *,
-    cutoffs: Iterable[int] = DEFAULT_CUTOFFS,
-    rank_cutoff: int | None = None,
-) -> dict[str, float]:
-    """Compute all standard metrics for one query.
+    cutoffs: Sequence[int] = (1, 3, 5, 10, 20),
+) -> CoverageMetrics:
+    """Compute coverage-aware metrics for one ranked result list.
 
-    ``reciprocal_rank@k`` is kept under its mathematically correct per-query
-    name. During aggregation, its mean is additionally exposed as ``mrr@k``.
+    Precision@k uses ``k`` as denominator even when fewer than ``k`` normalized
+    evidence units are available. This makes candidate-pool exhaustion visible
+    instead of silently changing the metric denominator.
+
+    A hierarchical retrieval unit that covers several gold sections:
+    - counts as one relevant unit for precision;
+    - covers every intersecting gold section for recall;
+    - occupies one ranking position.
     """
 
     normalized_cutoffs = _validate_cutoffs(cutoffs)
-    resolved_rank_cutoff = (
-        _validate_k(rank_cutoff)
-        if rank_cutoff is not None
-        else max(normalized_cutoffs)
-    )
+    gold = frozenset(gold_sections)
 
-    gold_set, ranked = _prepare_inputs(gold, ranking)
-    metrics: dict[str, float] = {}
+    if not gold:
+        raise ValueError("gold_sections must contain at least one section")
+
+    first_relevant_rank = _first_relevant_rank(ranking, gold)
+    cutoff_metrics: list[CutoffMetrics] = []
 
     for k in normalized_cutoffs:
-        metrics[f"hit@{k}"] = hit_at_k(gold_set, ranked, k)
-        metrics[f"precision@{k}"] = precision_at_k(gold_set, ranked, k)
-        metrics[f"recall@{k}"] = recall_at_k(gold_set, ranked, k)
-        metrics[f"complete_recall@{k}"] = complete_recall_at_k(
-            gold_set,
-            ranked,
-            k,
-        )
+        top_k = ranking[:k]
+        relevant_unit_count = 0
+        covered_gold: set[EvidenceSection] = set()
 
-    metrics[f"reciprocal_rank@{resolved_rank_cutoff}"] = reciprocal_rank_at_k(
-        gold_set,
-        ranked,
-        resolved_rank_cutoff,
-    )
-    metrics[f"ndcg@{resolved_rank_cutoff}"] = ndcg_at_k(
-        gold_set,
-        ranked,
-        resolved_rank_cutoff,
-    )
+        for evidence in top_k:
+            intersection = evidence.covered_sections & gold
+            if intersection:
+                relevant_unit_count += 1
+                covered_gold.update(intersection)
 
-    return metrics
+        covered_count = len(covered_gold)
+        recall = covered_count / len(gold)
 
-
-def aggregate_query_metrics(
-    rows: Sequence[Mapping[str, float]],
-) -> dict[str, Any]:
-    """Aggregate per-query metric dictionaries.
-
-    All rows must contain exactly the same metric keys. The output includes
-    macro statistics across questions. The mean reciprocal-rank value is also
-    copied to the conventional aggregate name ``mrr@k``.
-    """
-
-    if not rows:
-        raise ValueError("rows must contain at least one query metric mapping")
-
-    expected_keys = set(rows[0].keys())
-    if not expected_keys:
-        raise ValueError("metric rows must not be empty")
-
-    for index, row in enumerate(rows[1:], start=1):
-        if set(row.keys()) != expected_keys:
-            raise ValueError(
-                "All metric rows must contain the same keys; "
-                f"row 0 has {sorted(expected_keys)}, row {index} has "
-                f"{sorted(row.keys())}"
+        cutoff_metrics.append(
+            CutoffMetrics(
+                k=k,
+                hit=float(relevant_unit_count > 0),
+                precision=relevant_unit_count / k,
+                recall=recall,
+                complete_recall=float(covered_count == len(gold)),
+                reciprocal_rank=(
+                    1.0 / first_relevant_rank
+                    if (
+                        first_relevant_rank is not None
+                        and first_relevant_rank <= k
+                    )
+                    else 0.0
+                ),
+                relevant_unit_count=relevant_unit_count,
+                covered_gold_count=covered_count,
             )
-
-    per_metric: dict[str, dict[str, float | int]] = {}
-    means: dict[str, float] = {}
-
-    for name in sorted(expected_keys):
-        values = [float(row[name]) for row in rows]
-        mean = statistics.fmean(values)
-        means[name] = mean
-        per_metric[name] = {
-            "count": len(values),
-            "mean": mean,
-            "median": statistics.median(values),
-            "population_std": statistics.pstdev(values),
-            "min": min(values),
-            "max": max(values),
-        }
-
-        if name.startswith("reciprocal_rank@"):
-            cutoff = name.split("@", 1)[1]
-            means[f"mrr@{cutoff}"] = mean
-
-    return {
-        "query_count": len(rows),
-        "means": means,
-        "statistics": per_metric,
-    }
-
-
-def get_evaluation_question_ids(
-    coverage_artifact: Mapping[str, Any],
-    *,
-    level: EvaluationLevel,
-    view: EvaluationView,
-) -> list[str]:
-    """Read one clean/end-to-end question set from an enriched gold artifact."""
-
-    if level not in {"document", "section"}:
-        raise ValueError(f"Unsupported evaluation level: {level!r}")
-    if view not in {"clean", "end_to_end"}:
-        raise ValueError(f"Unsupported evaluation view: {view!r}")
-
-    coverage_summary = coverage_artifact.get("coverage_summary")
-    if not isinstance(coverage_summary, Mapping):
-        raise ValueError("Artifact must contain a 'coverage_summary' object")
-
-    evaluation_sets = coverage_summary.get("evaluation_sets")
-    if not isinstance(evaluation_sets, Mapping):
-        raise ValueError(
-            "Artifact coverage_summary must contain an 'evaluation_sets' object"
         )
 
-    key = f"{level}_level_{view}_question_ids"
-    question_ids = evaluation_sets.get(key)
-    if not isinstance(question_ids, list) or not all(
-        isinstance(item, str) and item.strip()
-        for item in question_ids
-    ):
-        raise ValueError(
-            f"Evaluation set {key!r} must be a list of non-empty strings"
-        )
+    all_found: set[EvidenceSection] = set()
+    for evidence in ranking:
+        all_found.update(evidence.covered_sections & gold)
 
-    return list(question_ids)
+    found = frozenset(all_found)
+
+    return CoverageMetrics(
+        cutoffs=tuple(cutoff_metrics),
+        first_relevant_rank=first_relevant_rank,
+        found_gold_sections=found,
+        missing_gold_sections=gold - found,
+    )
 
 
-def filter_metric_rows_by_question_ids(
-    rows: Sequence[Mapping[str, Any]],
-    question_ids: Iterable[str],
-) -> list[Mapping[str, Any]]:
-    """Filter metric rows by question ID while preserving requested order.
+def _first_relevant_rank(
+    ranking: Sequence[RetrievedEvidence],
+    gold: frozenset[EvidenceSection],
+) -> int | None:
+    for rank, evidence in enumerate(ranking, start=1):
+        if evidence.covered_sections & gold:
+            return rank
+    return None
 
-    Each row must contain a ``question_id`` field. Duplicate rows or missing
-    requested question IDs are treated as errors because either condition would
-    make aggregate retrieval metrics ambiguous.
-    """
 
-    by_question: dict[str, Mapping[str, Any]] = {}
-    for row in rows:
-        question_id = row.get("question_id")
-        if not isinstance(question_id, str) or not question_id.strip():
-            raise ValueError("Every metric row must contain a non-empty question_id")
-        if question_id in by_question:
-            raise ValueError(f"Duplicate metric row for question {question_id!r}")
-        by_question[question_id] = row
+def _validate_cutoffs(cutoffs: Sequence[int]) -> tuple[int, ...]:
+    if not cutoffs:
+        raise ValueError("cutoffs must not be empty")
 
-    requested = list(question_ids)
-    missing = [question_id for question_id in requested if question_id not in by_question]
-    if missing:
-        raise ValueError(f"Missing metric rows for questions: {missing}")
+    normalized = tuple(int(k) for k in cutoffs)
 
-    return [by_question[question_id] for question_id in requested]
+    if any(k < 1 for k in normalized):
+        raise ValueError("every cutoff must be >= 1")
+
+    if len(set(normalized)) != len(normalized):
+        raise ValueError("cutoffs must not contain duplicates")
+
+    if tuple(sorted(normalized)) != normalized:
+        raise ValueError("cutoffs must be strictly increasing")
+
+    return normalized

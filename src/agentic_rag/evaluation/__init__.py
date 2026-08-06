@@ -1,51 +1,31 @@
-"""Evaluation utilities for retrieval experiments."""
+"""Retrieval evaluation utilities."""
 
-from agentic_rag.evaluation.metrics import (
-    DEFAULT_CUTOFFS,
-    aggregate_query_metrics,
-    complete_recall_at_k,
-    compute_query_metrics,
-    deduplicate_ranking,
-    filter_metric_rows_by_question_ids,
-    get_evaluation_question_ids,
-    hit_at_k,
-    ndcg_at_k,
-    precision_at_k,
-    recall_at_k,
-    reciprocal_rank_at_k,
+from agentic_rag.evaluation.dataset import (
+    EvaluationQuestion,
+    load_evaluation_questions,
+    parse_section_id,
 )
-from agentic_rag.evaluation.retrieval import (
-    SectionKey,
-    deduplicate_section_keys,
-    normalize_document_id,
-    normalize_printed_section_id,
-    normalize_section_title,
-    parse_gold_section_label,
-    section_key_from_gold,
-    section_key_from_result,
-    sections_match,
+from agentic_rag.evaluation.evidence import (
+    EvidenceNormalizationResult,
+    EvidenceSection,
+    RetrievedEvidence,
+    normalize_retrieved_documents,
+)
+from agentic_rag.evaluation.metrics import (
+    CoverageMetrics,
+    CutoffMetrics,
+    compute_coverage_metrics,
 )
 
 __all__ = [
-    "DEFAULT_CUTOFFS",
-    "SectionKey",
-    "aggregate_query_metrics",
-    "complete_recall_at_k",
-    "compute_query_metrics",
-    "deduplicate_ranking",
-    "deduplicate_section_keys",
-    "filter_metric_rows_by_question_ids",
-    "get_evaluation_question_ids",
-    "hit_at_k",
-    "ndcg_at_k",
-    "normalize_document_id",
-    "normalize_printed_section_id",
-    "normalize_section_title",
-    "parse_gold_section_label",
-    "precision_at_k",
-    "recall_at_k",
-    "reciprocal_rank_at_k",
-    "section_key_from_gold",
-    "section_key_from_result",
-    "sections_match",
+    "CoverageMetrics",
+    "CutoffMetrics",
+    "EvaluationQuestion",
+    "EvidenceNormalizationResult",
+    "EvidenceSection",
+    "RetrievedEvidence",
+    "compute_coverage_metrics",
+    "load_evaluation_questions",
+    "normalize_retrieved_documents",
+    "parse_section_id",
 ]

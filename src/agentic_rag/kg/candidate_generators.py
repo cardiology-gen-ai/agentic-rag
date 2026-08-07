@@ -46,6 +46,7 @@ _CONCEPT_GRAPH_PREFIX_WEIGHT = 2.0
 _CONCEPT_GRAPH_PARTIAL_WEIGHT = 1.0
 
 _CONCEPT_GRAPH_SEED_MATCH = """
+// KG_CONCEPT_GRAPH_SEED_MATCH_LOCAL_ONLY
 UNWIND $terms AS term
 
 MATCH (seed:Concept)
@@ -53,75 +54,22 @@ MATCH (seed:Concept)
 WITH
     term,
     seed,
-    toLower(coalesce(seed.name, '')) AS name_lower,
-    toLower(coalesce(seed.normalized_name, '')) AS normalized_name_lower,
-    toLower(coalesce(seed.umls_canonical_name, '')) AS umls_name_lower,
-    [alias IN coalesce(seed.umls_aliases, []) | toString(alias)] AS aliases
-
-WITH
-    term,
-    seed,
-    aliases,
-    name_lower,
-    normalized_name_lower,
-    umls_name_lower,
-    [alias IN aliases | toLower(alias)] AS aliases_lower
+    toLower(coalesce(seed.name, '')) AS name_lower
 
 WITH
     term,
     seed,
     CASE
-        WHEN name_lower = term
-            THEN 'exact_name'
-        WHEN normalized_name_lower = term
-            THEN 'exact_normalized_name'
-        WHEN umls_name_lower = term
-            THEN 'exact_umls_canonical_name'
-        WHEN any(alias IN aliases_lower WHERE alias = term)
-            THEN 'exact_umls_alias'
-        WHEN name_lower STARTS WITH term
-          OR normalized_name_lower STARTS WITH term
-          OR umls_name_lower STARTS WITH term
-          OR any(alias IN aliases_lower WHERE alias STARTS WITH term)
-            THEN 'prefix'
-        WHEN name_lower CONTAINS term
-          OR normalized_name_lower CONTAINS term
-          OR umls_name_lower CONTAINS term
-          OR any(alias IN aliases_lower WHERE alias CONTAINS term)
-            THEN 'partial'
+        WHEN name_lower = term THEN 'exact_name'
+        WHEN name_lower STARTS WITH term THEN 'prefix'
+        WHEN name_lower CONTAINS term THEN 'partial'
         ELSE null
     END AS match_type,
     CASE
         WHEN name_lower = term
+          OR name_lower STARTS WITH term
+          OR name_lower CONTAINS term
             THEN coalesce(seed.name, '')
-        WHEN normalized_name_lower = term
-            THEN coalesce(seed.normalized_name, '')
-        WHEN umls_name_lower = term
-            THEN coalesce(seed.umls_canonical_name, '')
-        WHEN any(alias IN aliases_lower WHERE alias = term)
-            THEN head([alias IN aliases WHERE toLower(alias) = term])
-        WHEN name_lower STARTS WITH term
-            THEN coalesce(seed.name, '')
-        WHEN normalized_name_lower STARTS WITH term
-            THEN coalesce(seed.normalized_name, '')
-        WHEN umls_name_lower STARTS WITH term
-            THEN coalesce(seed.umls_canonical_name, '')
-        WHEN any(alias IN aliases_lower WHERE alias STARTS WITH term)
-            THEN head([
-                alias IN aliases
-                WHERE toLower(alias) STARTS WITH term
-            ])
-        WHEN name_lower CONTAINS term
-            THEN coalesce(seed.name, '')
-        WHEN normalized_name_lower CONTAINS term
-            THEN coalesce(seed.normalized_name, '')
-        WHEN umls_name_lower CONTAINS term
-            THEN coalesce(seed.umls_canonical_name, '')
-        WHEN any(alias IN aliases_lower WHERE alias CONTAINS term)
-            THEN head([
-                alias IN aliases
-                WHERE toLower(alias) CONTAINS term
-            ])
         ELSE null
     END AS matched_value
 
@@ -131,17 +79,9 @@ WITH
     match_type,
     matched_value,
     CASE
-        WHEN match_type IN [
-            'exact_name',
-            'exact_normalized_name',
-            'exact_umls_canonical_name',
-            'exact_umls_alias'
-        ]
-            THEN $exact_weight
-        WHEN match_type = 'prefix'
-            THEN $prefix_weight
-        WHEN match_type = 'partial'
-            THEN $partial_weight
+        WHEN match_type = 'exact_name' THEN $exact_weight
+        WHEN match_type = 'prefix' THEN $prefix_weight
+        WHEN match_type = 'partial' THEN $partial_weight
         ELSE 0.0
     END AS lexical_weight
 

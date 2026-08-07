@@ -51,26 +51,13 @@ WHERE ($document_ids = [] OR d.doc_id IN $document_ids)
       )
   )
 
+// KG_BASELINE_MATCHING_LOCAL_ONLY
 WITH
     d,
     s,
     c,
     term,
-    toLower(coalesce(c.name, '')) AS name_lower,
-    toLower(coalesce(c.normalized_name, '')) AS normalized_name_lower,
-    toLower(coalesce(c.umls_canonical_name, '')) AS umls_name_lower,
-    [alias IN coalesce(c.umls_aliases, []) | toString(alias)] AS aliases
-
-WITH
-    d,
-    s,
-    c,
-    term,
-    aliases,
-    name_lower,
-    normalized_name_lower,
-    umls_name_lower,
-    [alias IN aliases | toLower(alias)] AS aliases_lower
+    toLower(coalesce(c.name, '')) AS name_lower
 
 WITH
     d,
@@ -78,57 +65,16 @@ WITH
     c,
     term,
     CASE
-        WHEN name_lower = term
-            THEN 'exact_name'
-        WHEN normalized_name_lower = term
-            THEN 'exact_normalized_name'
-        WHEN umls_name_lower = term
-            THEN 'exact_umls_canonical_name'
-        WHEN any(alias IN aliases_lower WHERE alias = term)
-            THEN 'exact_umls_alias'
-        WHEN name_lower STARTS WITH term
-          OR normalized_name_lower STARTS WITH term
-          OR umls_name_lower STARTS WITH term
-          OR any(alias IN aliases_lower WHERE alias STARTS WITH term)
-            THEN 'prefix'
-        WHEN name_lower CONTAINS term
-          OR normalized_name_lower CONTAINS term
-          OR umls_name_lower CONTAINS term
-          OR any(alias IN aliases_lower WHERE alias CONTAINS term)
-            THEN 'partial'
+        WHEN name_lower = term THEN 'exact_name'
+        WHEN name_lower STARTS WITH term THEN 'prefix'
+        WHEN name_lower CONTAINS term THEN 'partial'
         ELSE null
     END AS match_type,
     CASE
         WHEN name_lower = term
+          OR name_lower STARTS WITH term
+          OR name_lower CONTAINS term
             THEN coalesce(c.name, '')
-        WHEN normalized_name_lower = term
-            THEN coalesce(c.normalized_name, '')
-        WHEN umls_name_lower = term
-            THEN coalesce(c.umls_canonical_name, '')
-        WHEN any(alias IN aliases_lower WHERE alias = term)
-            THEN head([alias IN aliases WHERE toLower(alias) = term])
-        WHEN name_lower STARTS WITH term
-            THEN coalesce(c.name, '')
-        WHEN normalized_name_lower STARTS WITH term
-            THEN coalesce(c.normalized_name, '')
-        WHEN umls_name_lower STARTS WITH term
-            THEN coalesce(c.umls_canonical_name, '')
-        WHEN any(alias IN aliases_lower WHERE alias STARTS WITH term)
-            THEN head([
-                alias IN aliases
-                WHERE toLower(alias) STARTS WITH term
-            ])
-        WHEN name_lower CONTAINS term
-            THEN coalesce(c.name, '')
-        WHEN normalized_name_lower CONTAINS term
-            THEN coalesce(c.normalized_name, '')
-        WHEN umls_name_lower CONTAINS term
-            THEN coalesce(c.umls_canonical_name, '')
-        WHEN any(alias IN aliases_lower WHERE alias CONTAINS term)
-            THEN head([
-                alias IN aliases
-                WHERE toLower(alias) CONTAINS term
-            ])
         ELSE null
     END AS matched_value
 
@@ -141,9 +87,6 @@ WITH
     matched_value,
     CASE match_type
         WHEN 'exact_name' THEN $exact_name_weight
-        WHEN 'exact_normalized_name' THEN $exact_normalized_name_weight
-        WHEN 'exact_umls_canonical_name' THEN $exact_umls_name_weight
-        WHEN 'exact_umls_alias' THEN $exact_umls_alias_weight
         WHEN 'prefix' THEN $prefix_weight
         WHEN 'partial' THEN $partial_weight
         ELSE 0.0

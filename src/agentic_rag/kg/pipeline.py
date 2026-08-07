@@ -310,6 +310,7 @@ def build_modular_kg_pipeline(
     concepts_per_term: int = 3,
     concept_embedding_model: str | None = None,
     concept_embedding_cache: str | None = None,
+    concept_embedding_min_similarity: float | None = None,
     concept_seeder: ConceptSeederProtocol | None = None,
 ) -> ModularKGRetrievalPipeline:
     """Build one named ablation configuration.
@@ -363,6 +364,7 @@ def build_modular_kg_pipeline(
                 tools,
                 embedding_model=concept_embedding_model,
                 concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
                 cache_path=concept_embedding_cache,
             )
         generator = SeededMentionsCandidateGenerator(

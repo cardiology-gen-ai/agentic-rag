@@ -168,7 +168,7 @@ class LexicalConceptSeeder:
                     query_term=term,
                     concept_name=concept.concept_name,
                     canonical_type=concept.canonical_type,
-                    umls_cui=concept.umls_cui,
+                    umls_cui=None,
                     method="lexical",
                     match_type=match_type,
                     matched_value=matched_value,
@@ -276,6 +276,7 @@ class EmbeddingConceptSeeder:
         *,
         embedding_model: str,
         concepts_per_term: int = 3,
+        min_similarity: float | None = None,
         cache_path: str | Path | None = None,
         encoder: Any | None = None,
         embedding_dimensions: int | None = None,
@@ -297,6 +298,9 @@ class EmbeddingConceptSeeder:
         )
         self.concepts_per_term = _validate_concepts_per_term(
             concepts_per_term
+        )
+        self.min_similarity = _validate_min_similarity(
+            min_similarity
         )
         self.cache_path = (
             Path(cache_path).expanduser() if cache_path is not None else None
@@ -411,9 +415,17 @@ class EmbeddingConceptSeeder:
                 ),
             )
 
+            eligible_indexes = [
+                index
+                for index in ranked_indexes
+                if (
+                    self.min_similarity is None
+                    or float(similarities[index]) >= self.min_similarity
+                )
+            ]
             seeds: list[ConceptSeed] = []
             for seed_rank, index in enumerate(
-                ranked_indexes[: self.concepts_per_term],
+                eligible_indexes[: self.concepts_per_term],
                 start=1,
             ):
                 concept = self._concepts[index]
@@ -422,7 +434,7 @@ class EmbeddingConceptSeeder:
                         query_term=term,
                         concept_name=concept.concept_name,
                         canonical_type=concept.canonical_type,
-                        umls_cui=concept.umls_cui,
+                        umls_cui=None,
                         method="embedding",
                         match_type="embedding",
                         seed_rank=seed_rank,
@@ -587,54 +599,18 @@ def _lexical_match(
     query_term: str,
     concept: ConceptCatalogueRecord,
 ) -> tuple[int, str, str] | None:
+    """Match against local Concept.name only."""
+
     term = query_term.casefold()
-    fields = [
-        (1, "exact_name", concept.name),
-        (2, "exact_normalized_name", concept.normalized_name),
-        (3, "exact_umls_canonical_name", concept.umls_canonical_name),
-    ]
-    for category, match_type, value in fields:
-        if value and value.casefold() == term:
-            return (category, match_type, value)
+    value = concept.name or concept.concept_name
+    value_key = value.casefold()
 
-    for alias in concept.umls_aliases:
-        if alias.casefold() == term:
-            return (3, "exact_umls_alias", alias)
-
-    prefix_match = _first_text_match(
-        term,
-        concept,
-        predicate=lambda value: value.startswith(term),
-    )
-    if prefix_match is not None:
-        return (4, "prefix", prefix_match)
-
-    partial_match = _first_text_match(
-        term,
-        concept,
-        predicate=lambda value: term in value,
-    )
-    if partial_match is not None:
-        return (5, "partial", partial_match)
-
-    return None
-
-
-def _first_text_match(
-    term: str,
-    concept: ConceptCatalogueRecord,
-    *,
-    predicate: Any,
-) -> str | None:
-    values = [
-        concept.name,
-        concept.normalized_name,
-        concept.umls_canonical_name,
-        *concept.umls_aliases,
-    ]
-    for value in values:
-        if value and predicate(value.casefold()):
-            return value
+    if value_key == term:
+        return (1, "exact_name", value)
+    if value_key.startswith(term):
+        return (2, "prefix", value)
+    if term in value_key:
+        return (3, "partial", value)
     return None
 
 
@@ -653,12 +629,12 @@ def _deduplicate_seed_candidates(
     return output
 
 
-def _concept_representation(concept: ConceptCatalogueRecord) -> str:
+def _concept_representation(
+    concept: ConceptCatalogueRecord,
+) -> str:
+    # KG_LOCAL_ONLY_CONCEPT_REPRESENTATION
     values = [
-        concept.name,
-        concept.normalized_name,
-        concept.umls_canonical_name,
-        *concept.umls_aliases,
+        concept.name or concept.concept_name,
         concept.canonical_type,
     ]
     return "; ".join(value for value in values if value)
@@ -675,9 +651,17 @@ def _normalize_matrix(matrix: np.ndarray) -> np.ndarray:
     return normalized / norms
 
 
-def _catalogue_hash(concepts: Sequence[ConceptCatalogueRecord]) -> str:
+def _catalogue_hash(
+    concepts: Sequence[ConceptCatalogueRecord],
+) -> str:
+    """Hash only fields that affect local-only Concept embeddings."""
+
     payload = [
-        concept.model_dump(mode="json")
+        {
+            "concept_name": concept.concept_name,
+            "name": concept.name,
+            "canonical_type": concept.canonical_type,
+        }
         for concept in sorted(
             concepts,
             key=lambda item: item.concept_name.casefold(),
@@ -780,6 +764,20 @@ def _normalize_optional_values(
         output.append(item)
 
     return output
+
+
+def _validate_min_similarity(value: float | None) -> float | None:
+    if value is None:
+        return None
+    try:
+        normalized = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("min_similarity must be a float") from exc
+    if normalized < -1.0 or normalized > 1.0:
+        raise ValueError(
+            "min_similarity must be between -1.0 and 1.0"
+        )
+    return normalized
 
 
 def _validate_embedding_dimensions(value: int | None) -> int | None:

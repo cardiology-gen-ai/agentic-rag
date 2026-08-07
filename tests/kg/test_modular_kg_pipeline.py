@@ -279,7 +279,7 @@ def test_mentions_lexical_seeded_uses_explicit_seed_tool():
                 "concept_name": "hypertrophic cardiomyopathy",
                 "name": "hypertrophic cardiomyopathy",
                 "umls_aliases": ["HCM"],
-                "canonical_type": "condition",
+                "canonical_type": "disease",
                 "umls_cui": "C0000001",
             }
         ],
@@ -319,7 +319,7 @@ def test_mentions_embedding_seeded_accepts_prebuilt_seeder():
     seed = ConceptSeed(
         query_term="cardiomyopathy",
         concept_name="dilated cardiomyopathy",
-        canonical_type="condition",
+        canonical_type="disease",
         umls_cui=None,
         method="embedding",
         match_type="embedding",

@@ -24,9 +24,10 @@ default:
     1. search_sections_by_concepts
 
        Use for concrete clinical entities or medically meaningful concepts,
-       including diseases, phenotypes, symptoms, findings, risk factors,
-       tests, imaging modalities, biomarkers, drugs, procedures, devices,
-       scores, anatomical structures, and populations.
+       including diseases and clinical findings, exposures or lifestyle
+       factors, diagnostic tests (including imaging), biomarkers, drugs,
+       procedures, devices, scores, anatomical structures, clinical outcomes,
+       and clinically meaningful populations.
 
     2. search_sections_by_title
 

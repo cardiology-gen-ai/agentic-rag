@@ -200,6 +200,20 @@ def _serialize_raw_candidates(
                 metadata.get("bm25_matched_query_tokens")
             ),
             "bm25_corpus_position": metadata.get("bm25_corpus_position"),
+            "dense_original_rank": metadata.get("dense_original_rank"),
+            "dense_original_raw_score": _optional_number(
+                metadata,
+                ("dense_original_raw_score",),
+            ),
+            "bm25plus_rerank_rank": metadata.get(
+                "bm25plus_rerank_rank"
+            ),
+            "bm25plus_rerank_score": _optional_number(
+                metadata,
+                ("bm25plus_rerank_score",),
+            ),
+            "reranker_used": metadata.get("reranker_used"),
+            "reranker_algorithm": metadata.get("reranker_algorithm"),
             "text_chars": len(page_content),
             "text_sha256": hashlib.sha256(
                 page_content.encode("utf-8")

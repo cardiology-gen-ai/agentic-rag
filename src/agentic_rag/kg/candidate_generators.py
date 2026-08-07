@@ -1290,23 +1290,6 @@ def _source_graph_distance(source: KGCandidateSource) -> int:
     return 0
 
 
-def _rows_to_results(
-    rows: Sequence[dict[str, Any]],
-) -> list[KGSectionResult]:
-    results: list[KGSectionResult] = []
-    seen: set[str] = set()
-
-    for row in rows:
-        result = KGSectionResult.from_record(row)
-        if result.section_uid in seen:
-            continue
-        seen.add(result.section_uid)
-        results.append(
-            result.model_copy(update={"rank": len(results) + 1})
-        )
-
-    return results
-
 
 def _normalize_terms(values: Sequence[str] | str) -> list[str]:
     raw_values = [values] if isinstance(values, str) else list(values)

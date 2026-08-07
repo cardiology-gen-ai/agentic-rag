@@ -36,11 +36,12 @@ default:
 
     - diseases and clinical phenotypes;
     - symptoms, signs, and clinical findings;
-    - complications and risk factors;
-    - diagnostic tests and imaging modalities;
+    - exposures and lifestyle factors;
+    - diagnostic tests, including imaging;
     - biomarkers and anatomical structures;
     - drugs, drug classes, procedures, and devices;
     - clinical scores and named therapeutic strategies;
+    - clinical outcomes;
     - clinically meaningful populations when the population itself is central
       to the question.
 

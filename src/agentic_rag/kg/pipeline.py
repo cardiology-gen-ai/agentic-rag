@@ -59,6 +59,11 @@ ModularKGStatus = Literal[
     "router_error",
     "execution_error",
 ]
+ModularKGFailureStage = Literal[
+    "candidate_generation",
+    "expansion",
+    "reranking",
+]
 
 
 class KGMentionsRouterProtocol(Protocol):
@@ -96,6 +101,7 @@ class ModularKGRetrievalRun(BaseModel):
 
     latency_ms: float = Field(ge=0)
     error: str | None = None
+    failed_stage: ModularKGFailureStage | None = None
 
     @field_validator("question")
     @classmethod
@@ -165,23 +171,19 @@ class ModularKGRetrievalPipeline:
                 raw_candidates=[],
                 expanded_candidates=[],
                 results=[],
+                concept_seeds=[],
+                failed_stage=None,
                 started=started,
                 error=_format_exception(exc),
             )
 
         try:
-            if hasattr(self.candidate_generator, "last_concept_seeds"):
-                self.candidate_generator.last_concept_seeds = []
-            raw_candidates = self.candidate_generator.generate(
+            raw_candidates, concept_seeds = _generate_candidates_with_seeds(
+                self.candidate_generator,
                 plan.terms,
                 top_k=self.candidate_k,
                 require_all=plan.require_all,
                 document_ids=self.document_ids,
-            )
-            expanded_candidates = self.expander.expand(raw_candidates)
-            results = self.reranker.rerank(
-                expanded_candidates,
-                top_k=self.final_k,
             )
         except Exception as exc:
             return self._run(
@@ -191,6 +193,43 @@ class ModularKGRetrievalPipeline:
                 raw_candidates=[],
                 expanded_candidates=[],
                 results=[],
+                concept_seeds=[],
+                failed_stage="candidate_generation",
+                started=started,
+                error=_format_exception(exc),
+            )
+
+        try:
+            expanded_candidates = self.expander.expand(raw_candidates)
+        except Exception as exc:
+            return self._run(
+                question=normalized_question,
+                status="execution_error",
+                plan=plan,
+                raw_candidates=raw_candidates,
+                expanded_candidates=[],
+                results=[],
+                concept_seeds=concept_seeds,
+                failed_stage="expansion",
+                started=started,
+                error=_format_exception(exc),
+            )
+
+        try:
+            results = self.reranker.rerank(
+                expanded_candidates,
+                top_k=self.final_k,
+            )
+        except Exception as exc:
+            return self._run(
+                question=normalized_question,
+                status="execution_error",
+                plan=plan,
+                raw_candidates=raw_candidates,
+                expanded_candidates=expanded_candidates,
+                results=[],
+                concept_seeds=concept_seeds,
+                failed_stage="reranking",
                 started=started,
                 error=_format_exception(exc),
             )
@@ -203,6 +242,8 @@ class ModularKGRetrievalPipeline:
             raw_candidates=raw_candidates,
             expanded_candidates=expanded_candidates,
             results=results,
+            concept_seeds=concept_seeds,
+            failed_stage=None,
             started=started,
             error=None,
         )
@@ -227,6 +268,8 @@ class ModularKGRetrievalPipeline:
         raw_candidates: list[KGCandidate],
         expanded_candidates: list[KGCandidate],
         results: list[KGCandidate],
+        concept_seeds: Sequence[ConceptSeed],
+        failed_stage: ModularKGFailureStage | None,
         started: float,
         error: str | None,
     ) -> ModularKGRetrievalRun:
@@ -238,17 +281,16 @@ class ModularKGRetrievalPipeline:
             raw_candidates=raw_candidates,
             expanded_candidates=expanded_candidates,
             results=results,
+            concept_seeds=list(concept_seeds),
             candidate_k=self.candidate_k,
             final_k=self.final_k,
             ranking_mode=self.ranking_mode,
             expander_name=self.expander.name,
             reranker_name=self.reranker.name,
-            concept_seeds=_generator_concept_seeds(
-                self.candidate_generator
-            ),
             document_filtering=(self.document_ids or None),
             latency_ms=(time.perf_counter() - started) * 1000.0,
             error=error,
+            failed_stage=failed_stage,
         )
 
 
@@ -515,9 +557,29 @@ def _validate_question(value: str) -> str:
 def _format_exception(exc: Exception) -> str:
     return f"{type(exc).__name__}: {exc}"
 
-
-def _generator_concept_seeds(
+def _generate_candidates_with_seeds(
     generator: CandidateGeneratorProtocol,
-) -> list[ConceptSeed]:
-    seeds = getattr(generator, "last_concept_seeds", [])
-    return list(seeds or [])
+    terms: Sequence[str] | str,
+    *,
+    top_k: int,
+    require_all: bool,
+    document_ids: Sequence[str],
+) -> tuple[list[KGCandidate], list[ConceptSeed]]:
+    generate_with_seeds = getattr(generator, "generate_with_seeds", None)
+    if callable(generate_with_seeds):
+        candidates, seeds = generate_with_seeds(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+        return list(candidates), list(seeds)
+
+    candidates = generator.generate(
+        terms,
+        top_k=top_k,
+        require_all=require_all,
+        document_ids=document_ids,
+    )
+    return list(candidates), []
+

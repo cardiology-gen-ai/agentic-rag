@@ -547,7 +547,10 @@ class MentionsCandidateGenerator:
 
 
 class SeededMentionsCandidateGenerator:
-    """Generate Sections through explicit Concept seeds and MENTIONS only."""
+    # Generate Sections through explicit Concept seeds and MENTIONS only.
+    # generate() keeps the public list[KGCandidate] API unchanged.
+    # generate_with_seeds() exposes request-local seed trace without storing
+    # per-request state on the generator instance.
 
     name = "seeded_mentions"
 
@@ -562,7 +565,6 @@ class SeededMentionsCandidateGenerator:
         self.seeder = seeder
         self.ranking_mode: KGRankingMode = "concept_match"
         self.exclude_summary_sections = bool(exclude_summary_sections)
-        self.last_concept_seeds: list[ConceptSeed] = []
 
     def generate(
         self,
@@ -572,16 +574,32 @@ class SeededMentionsCandidateGenerator:
         require_all: bool = False,
         document_ids: Sequence[str] | str | None = None,
     ) -> list[KGCandidate]:
+        candidates, _ = self.generate_with_seeds(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+        return candidates
+
+    def generate_with_seeds(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> tuple[list[KGCandidate], list[ConceptSeed]]:
         normalized_terms = _normalize_terms(terms)
         validated_top_k = _validate_top_k(top_k)
+
         seed_groups = self.seeder.seed_concepts(
             normalized_terms,
             document_ids=document_ids,
         )
         seeds = flatten_seed_groups(seed_groups)
-        self.last_concept_seeds = seeds
         if not seeds:
-            return []
+            return [], []
 
         results = self.tools.search_sections_by_concept_seeds(
             seeds,
@@ -591,11 +609,12 @@ class SeededMentionsCandidateGenerator:
             require_all=bool(require_all),
             exclude_summary_sections=self.exclude_summary_sections,
         )
-        return _wrap_seeded_results(
+        candidates = _wrap_seeded_results(
             results,
             seeding_methods=_ordered_unique(seed.method for seed in seeds),
             seed_count=len(seeds),
         )
+        return candidates, list(seeds)
 
 
 class ConceptGraphExpansionCandidateGenerator:

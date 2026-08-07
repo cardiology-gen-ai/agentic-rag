@@ -7,6 +7,7 @@ advanced graph strategies to be added as controlled ablations.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable, Sequence
 from typing import Any, Literal, Protocol
 
@@ -149,7 +150,9 @@ WHERE match_type IS NOT NULL
 
 _CONCEPT_GRAPH_SECTION_FILTER = """
   AND ($document_ids = [] OR d.doc_id IN $document_ids)
+  AND s.section_view_role = 'retrieval'
   AND coalesce(s.embed, false) = true
+  AND coalesce(s.excluded, false) = false
   AND trim(coalesce(s.text, '')) <> ''
   AND (
       NOT $exclude_summary_sections
@@ -173,6 +176,25 @@ RETURN DISTINCT
     s.page_end AS page_end,
     s.part_index AS part_index,
     s.part_count AS part_count,
+    s.retrieval_unit_id AS retrieval_unit_id,
+    s.section_view_schema_version AS section_view_schema_version,
+    s.section_view_role AS section_view_role,
+    s.retrieval_strategy AS retrieval_strategy,
+    s.aggregation_mode AS aggregation_mode,
+    coalesce(s.is_aggregated, false) AS is_aggregated,
+    s.content_owner_section_id AS content_owner_section_id,
+    coalesce(s.source_section_ids, []) AS source_section_ids,
+    coalesce(s.source_chunk_ids, []) AS source_chunk_ids,
+    coalesce(s.represented_section_ids, []) AS represented_section_ids,
+    coalesce(
+        s.structural_context_section_ids,
+        []
+    ) AS structural_context_section_ids,
+    coalesce(s.absorbed_section_ids, []) AS absorbed_section_ids,
+    coalesce(
+        s.absorbed_source_section_ids,
+        []
+    ) AS absorbed_source_section_ids,
     term AS query_term,
     coalesce(
         mentioned.name,
@@ -234,7 +256,10 @@ WITH
 _SAME_AS_CONCEPT_GRAPH_EVIDENCE = (
     _CONCEPT_GRAPH_SEED_MATCH
     + """
-MATCH (seed)-[:SAME_AS]-(same:Concept)
+MATCH (seed)-[same_as_rel:SAME_AS]-(same:Concept)
+WHERE coalesce(toString(same_as_rel.method), '') = 'umls_cui'
+  AND coalesce(toString(same_as_rel.status), '') = 'auto'
+  AND coalesce(toFloat(same_as_rel.score), 0.0) = 1.0
 MATCH (d:Document)-[:HAS_SECTION]->(s:Section)-[:MENTIONS]->(mentioned:Concept)
 WHERE (
       mentioned = same
@@ -279,8 +304,13 @@ WHERE trim(coalesce(seed.umls_cui, '')) <> ''
   AND origin_rep.umls_cui = seed.umls_cui
 MATCH (origin_rep)-[r]->(target:Concept)
 WHERE type(r) STARTS WITH 'UMLS_'
+  AND coalesce(toString(r.provenance), '') = 'umls_connections'
+  AND coalesce(toString(r.materialization_mode), '') = 'safe_only'
+  AND coalesce(r.materialization_decision, false) = true
+  AND coalesce(toString(r.compatibility_status), '') = 'compatible'
+  AND coalesce(r.local_type_compatible, false) = true
+  AND coalesce(r.review_needed, true) = false
   AND coalesce(toString(r.traversal_policy), '') IN $umls_policies
-  AND ($include_review_needed OR coalesce(r.review_needed, false) = false)
   AND trim(coalesce(target.umls_cui, '')) <> ''
 MATCH (d:Document)-[:HAS_SECTION]->(s:Section)-[:MENTIONS]->(mentioned:Concept)
 WHERE mentioned.umls_cui = target.umls_cui
@@ -315,14 +345,22 @@ WITH
 _UMLS_SAME_AS_CONCEPT_GRAPH_EVIDENCE = (
     _CONCEPT_GRAPH_SEED_MATCH
     + """
-MATCH (seed)-[:SAME_AS]-(same:Concept)
+MATCH (seed)-[same_as_rel:SAME_AS]-(same:Concept)
+WHERE coalesce(toString(same_as_rel.method), '') = 'umls_cui'
+  AND coalesce(toString(same_as_rel.status), '') = 'auto'
+  AND coalesce(toFloat(same_as_rel.score), 0.0) = 1.0
 MATCH (origin_rep:Concept)
 WHERE trim(coalesce(same.umls_cui, '')) <> ''
   AND origin_rep.umls_cui = same.umls_cui
 MATCH (origin_rep)-[r]->(target:Concept)
 WHERE type(r) STARTS WITH 'UMLS_'
+  AND coalesce(toString(r.provenance), '') = 'umls_connections'
+  AND coalesce(toString(r.materialization_mode), '') = 'safe_only'
+  AND coalesce(r.materialization_decision, false) = true
+  AND coalesce(toString(r.compatibility_status), '') = 'compatible'
+  AND coalesce(r.local_type_compatible, false) = true
+  AND coalesce(r.review_needed, true) = false
   AND coalesce(toString(r.traversal_policy), '') IN $umls_policies
-  AND ($include_review_needed OR coalesce(r.review_needed, false) = false)
   AND trim(coalesce(target.umls_cui, '')) <> ''
 MATCH (d:Document)-[:HAS_SECTION]->(s:Section)-[:MENTIONS]->(mentioned:Concept)
 WHERE mentioned.umls_cui = target.umls_cui
@@ -585,6 +623,11 @@ class ConceptGraphExpansionCandidateGenerator:
         self.include_same_as = bool(include_same_as)
         self.umls_policies = _normalize_policy_values(umls_policies)
         self.include_review_needed = bool(include_review_needed)
+        if self.include_review_needed and self.umls_policies:
+            raise ValueError(
+                "Review-needed UMLS relations are not allowed in automatic "
+                "KG retrieval; use only materialized safe/hierarchy edges"
+            )
         self.ranking_mode = _validate_ranking_mode(ranking_mode)
         self.exclude_summary_sections = bool(exclude_summary_sections)
 
@@ -606,6 +649,9 @@ class ConceptGraphExpansionCandidateGenerator:
             "exclude_summary_sections": self.exclude_summary_sections,
             "excluded_title_prefixes": _EXCLUDED_TITLE_PREFIXES,
             "umls_policies": list(self.umls_policies),
+            # Kept in the trace payload for backward-compatible diagnostics.
+            # Safe UMLS Cypher intentionally ignores it and always requires
+            # review_needed=false.
             "include_review_needed": self.include_review_needed,
             "direct_weight": _CONCEPT_GRAPH_DIRECT_WEIGHT,
             "same_as_weight": _CONCEPT_GRAPH_SAME_AS_WEIGHT,
@@ -1007,11 +1053,10 @@ def _score_concept_graph_diagnostics(
             for item in term_diagnostics
         )
 
-    concept_match_score = (
-        float(len(by_term))
-        + (lexical_score_sum / 10.0)
-        + (evidence_score_sum / 100.0)
-    )
+    # Keep the meaning of concept_match identical to the pure MENTIONS
+    # baseline: number of distinct query terms supported by the Section.
+    # Lexical quality and graph-evidence strength belong only to weighted_match.
+    concept_match_score = float(len(by_term))
     return {
         "concept_match": concept_match_score,
         "weighted_match": weighted_match_score,
@@ -1081,7 +1126,32 @@ def _merge_expansion_support(
         evidence_sources,
         expansion_candidate=expansion_candidate,
     )
-    return direct_candidate.model_copy(update={"metadata": metadata})
+    merged_section = direct_candidate.section.model_copy(
+        update={
+            "matched_concepts": _ordered_unique(
+                [
+                    *direct_candidate.section.matched_concepts,
+                    *expansion_candidate.section.matched_concepts,
+                ]
+            ),
+            "matched_terms": _ordered_unique(
+                [
+                    *direct_candidate.section.matched_terms,
+                    *expansion_candidate.section.matched_terms,
+                ]
+            ),
+            "match_diagnostics": _merge_match_diagnostics(
+                direct_candidate.section.match_diagnostics,
+                expansion_candidate.section.match_diagnostics,
+            ),
+        }
+    )
+    return direct_candidate.model_copy(
+        update={
+            "section": merged_section,
+            "metadata": metadata,
+        }
+    )
 
 
 def _as_rescue_candidate(
@@ -1131,9 +1201,39 @@ def _expansion_support_metadata(
             "expansion_candidate_source_rank": (
                 expansion_candidate.source_rank
             ),
+            "expansion_candidate_score": expansion_candidate.section.score,
+            "expansion_candidate_score_type": (
+                expansion_candidate.section.score_type
+            ),
+            "expansion_candidate_scores": (
+                expansion_candidate.section.scores.model_dump(mode="json")
+                if expansion_candidate.section.scores is not None
+                else None
+            ),
         }
     )
     return merged
+
+
+def _merge_match_diagnostics(
+    direct_diagnostics: Sequence[Any],
+    expansion_diagnostics: Sequence[Any],
+) -> list[Any]:
+    output: list[Any] = []
+    seen: set[str] = set()
+
+    for diagnostic in [*direct_diagnostics, *expansion_diagnostics]:
+        if hasattr(diagnostic, "model_dump"):
+            payload = diagnostic.model_dump(mode="json")
+        else:
+            payload = diagnostic
+        key = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(diagnostic)
+
+    return output
 
 
 def _primary_expansion_source(
@@ -1237,10 +1337,18 @@ def _normalize_optional_values(
 
 
 def _normalize_policy_values(values: Sequence[str] | str) -> tuple[str, ...]:
-    return tuple(
+    normalized = tuple(
         item.casefold()
         for item in _normalize_values_without_required(values)
     )
+    allowed = {"safe", "hierarchy"}
+    invalid = sorted(set(normalized) - allowed)
+    if invalid:
+        raise ValueError(
+            "umls_policies may contain only materialized automatic policies "
+            f"{sorted(allowed)}; got unsupported values {invalid}"
+        )
+    return normalized
 
 
 def _normalize_values_without_required(

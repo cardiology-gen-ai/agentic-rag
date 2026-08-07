@@ -28,7 +28,9 @@ UNWIND $seeds AS seed
 MATCH (root:Section {uid: seed.uid})
 MATCH path = (root)-[:HAS_CHILD*1..8]->(s:Section)
 WHERE length(path) <= $max_depth
+  AND s.section_view_role = 'retrieval'
   AND coalesce(s.embed, false) = true
+  AND coalesce(s.excluded, false) = false
   AND trim(coalesce(s.text, '')) <> ''
   AND (
       NOT $exclude_summary_sections
@@ -54,6 +56,25 @@ RETURN
     s.page_end AS page_end,
     s.part_index AS part_index,
     s.part_count AS part_count,
+    s.retrieval_unit_id AS retrieval_unit_id,
+    s.section_view_schema_version AS section_view_schema_version,
+    s.section_view_role AS section_view_role,
+    s.retrieval_strategy AS retrieval_strategy,
+    s.aggregation_mode AS aggregation_mode,
+    coalesce(s.is_aggregated, false) AS is_aggregated,
+    s.content_owner_section_id AS content_owner_section_id,
+    coalesce(s.source_section_ids, []) AS source_section_ids,
+    coalesce(s.source_chunk_ids, []) AS source_chunk_ids,
+    coalesce(s.represented_section_ids, []) AS represented_section_ids,
+    coalesce(
+        s.structural_context_section_ids,
+        []
+    ) AS structural_context_section_ids,
+    coalesce(s.absorbed_section_ids, []) AS absorbed_section_ids,
+    coalesce(
+        s.absorbed_source_section_ids,
+        []
+    ) AS absorbed_source_section_ids,
     [] AS matched_concepts,
     [] AS matched_terms,
     null AS score,

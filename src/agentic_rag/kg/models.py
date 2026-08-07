@@ -110,6 +110,22 @@ class KGSectionResult(BaseModel):
     page_end: int | None = None
     part_index: int | None = None
     part_count: int | None = None
+
+    # Retrieval Section-view provenance written by data-etl graph_loader.py.
+    retrieval_unit_id: str | None = None
+    section_view_schema_version: str | None = None
+    section_view_role: Literal["retrieval", "structural"] | None = None
+    retrieval_strategy: str | None = None
+    aggregation_mode: str | None = None
+    is_aggregated: bool = False
+    content_owner_section_id: str | None = None
+    source_section_ids: list[str] = Field(default_factory=list)
+    source_chunk_ids: list[str] = Field(default_factory=list)
+    represented_section_ids: list[str] = Field(default_factory=list)
+    structural_context_section_ids: list[str] = Field(default_factory=list)
+    absorbed_section_ids: list[str] = Field(default_factory=list)
+    absorbed_source_section_ids: list[str] = Field(default_factory=list)
+
     matched_concepts: list[str] = Field(default_factory=list)
     matched_terms: list[str] = Field(default_factory=list)
     score: float | None = None
@@ -136,7 +152,16 @@ class KGSectionResult(BaseModel):
             raise ValueError("Section text must be non-empty")
         return original
 
-    @field_validator("section_id", "printed_section_id", "title")
+    @field_validator(
+        "section_id",
+        "printed_section_id",
+        "title",
+        "retrieval_unit_id",
+        "section_view_schema_version",
+        "retrieval_strategy",
+        "aggregation_mode",
+        "content_owner_section_id",
+    )
     @classmethod
     def normalize_optional_text(cls, value: str | None) -> str | None:
         if value is None:
@@ -145,7 +170,17 @@ class KGSectionResult(BaseModel):
         normalized = str(value).strip()
         return normalized or None
 
-    @field_validator("matched_concepts", "matched_terms", mode="before")
+    @field_validator(
+        "matched_concepts",
+        "matched_terms",
+        "source_section_ids",
+        "source_chunk_ids",
+        "represented_section_ids",
+        "structural_context_section_ids",
+        "absorbed_section_ids",
+        "absorbed_source_section_ids",
+        mode="before",
+    )
     @classmethod
     def normalize_unique_strings(cls, value: Any) -> list[str]:
         if value is None:
@@ -220,6 +255,25 @@ class KGSectionResult(BaseModel):
             page_end=data.get("page_end"),
             part_index=data.get("part_index"),
             part_count=data.get("part_count"),
+            retrieval_unit_id=data.get("retrieval_unit_id"),
+            section_view_schema_version=data.get("section_view_schema_version"),
+            section_view_role=data.get("section_view_role"),
+            retrieval_strategy=data.get("retrieval_strategy"),
+            aggregation_mode=data.get("aggregation_mode"),
+            is_aggregated=bool(data.get("is_aggregated", False)),
+            content_owner_section_id=data.get("content_owner_section_id"),
+            source_section_ids=data.get("source_section_ids", []),
+            source_chunk_ids=data.get("source_chunk_ids", []),
+            represented_section_ids=data.get("represented_section_ids", []),
+            structural_context_section_ids=data.get(
+                "structural_context_section_ids",
+                [],
+            ),
+            absorbed_section_ids=data.get("absorbed_section_ids", []),
+            absorbed_source_section_ids=data.get(
+                "absorbed_source_section_ids",
+                [],
+            ),
             matched_concepts=data["matched_concepts"],
             matched_terms=data.get("matched_terms", []),
             score=data["score"],

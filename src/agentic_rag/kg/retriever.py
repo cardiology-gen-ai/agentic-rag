@@ -264,6 +264,7 @@ class KGRetrievalRun(BaseModel):
     rrf_k: int = Field(ge=1)
     hierarchy_max_depth: int = Field(ge=0)
     exclude_summary_sections: bool = True
+    document_filtering: list[str] | None = None
 
     latency_ms: float = Field(ge=0)
     error: str | None = None
@@ -363,6 +364,7 @@ class KGParameterizedRetriever:
         rrf_k: int = 60,
         hierarchy_max_depth: int = 6,
         exclude_summary_sections: bool = True,
+        document_ids: Sequence[str] | str | None = None,
         multiple_facets_context_aware_merge: bool = False,
         multiple_facets_context_candidate_injection: bool = False,
         same_section_anchor_fallback: bool = False,
@@ -391,6 +393,7 @@ class KGParameterizedRetriever:
         )
         self.ranking_mode = _validate_ranking_mode(ranking_mode)
         self.exclude_summary_sections = bool(exclude_summary_sections)
+        self.document_ids = _normalize_optional_values(document_ids)
         self.multiple_facets_context_aware_merge = bool(
             multiple_facets_context_aware_merge
         )
@@ -429,6 +432,7 @@ class KGParameterizedRetriever:
                 rrf_k=self.rrf_k,
                 hierarchy_max_depth=self.hierarchy_max_depth,
                 exclude_summary_sections=self.exclude_summary_sections,
+                document_filtering=(self.document_ids or None),
                 latency_ms=_elapsed_ms(started),
                 error=_format_exception(exc),
             )
@@ -491,6 +495,7 @@ class KGParameterizedRetriever:
             rrf_k=self.rrf_k,
             hierarchy_max_depth=self.hierarchy_max_depth,
             exclude_summary_sections=self.exclude_summary_sections,
+            document_filtering=(self.document_ids or None),
             latency_ms=_elapsed_ms(started),
             error=error_summary,
         )
@@ -579,7 +584,7 @@ class KGParameterizedRetriever:
             if call.tool == "search_sections_by_concepts":
                 results = self.tools.search_sections_by_concepts(
                     call.terms,
-                    document_ids=None,
+                    document_ids=(self.document_ids or None),
                     top_k=self.candidate_k,
                     require_all=call.require_all,
                     ranking_mode=self.ranking_mode,
@@ -589,7 +594,7 @@ class KGParameterizedRetriever:
             elif call.tool == "search_sections_by_title":
                 results = self.tools.search_sections_by_title(
                     call.terms,
-                    document_ids=None,
+                    document_ids=(self.document_ids or None),
                     top_k=self.candidate_k,
                     require_all=call.require_all,
                     ranking_mode=self.ranking_mode,
@@ -1806,6 +1811,29 @@ def _deduplicate_results(
             continue
         seen.add(item.section_uid)
         output.append(item)
+    return output
+
+
+def _normalize_optional_values(
+    values: Sequence[str] | str | None,
+) -> list[str]:
+    if values is None:
+        return []
+
+    raw_values = [values] if isinstance(values, str) else list(values)
+    output: list[str] = []
+    seen: set[str] = set()
+
+    for value in raw_values:
+        item = str(value).strip()
+        if not item:
+            continue
+        key = item.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(item)
+
     return output
 
 

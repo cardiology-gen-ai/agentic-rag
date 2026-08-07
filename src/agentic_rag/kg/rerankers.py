@@ -98,14 +98,16 @@ class SeedRoundRobinReranker:
 
         for seed in direct:
             _append_unique(output, seen, seed)
-            for descendant in descendants_by_seed.get(seed.section_uid, [
-            ])[: self.descendants_per_seed]:
+            if len(output) >= validated_top_k:
+                return _assign_final_ranks(output[:validated_top_k])
+
+            for descendant in descendants_by_seed.get(
+                seed.section_uid,
+                [],
+            )[: self.descendants_per_seed]:
                 _append_unique(output, seen, descendant)
                 if len(output) >= validated_top_k:
-                    return _assign_final_ranks(output)
-
-            if len(output) >= validated_top_k:
-                return _assign_final_ranks(output)
+                    return _assign_final_ranks(output[:validated_top_k])
 
         # Preserve descendants whose seed was not present after deduplication.
         remaining = sorted(

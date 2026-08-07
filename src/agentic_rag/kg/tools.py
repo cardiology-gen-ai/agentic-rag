@@ -39,7 +39,9 @@ UNWIND $terms AS term
 MATCH (d:Document)-[:HAS_SECTION]->(s:Section)-[:MENTIONS]->(c:Concept)
 
 WHERE ($document_ids = [] OR d.doc_id IN $document_ids)
+  AND s.section_view_role = 'retrieval'
   AND coalesce(s.embed, false) = true
+  AND coalesce(s.excluded, false) = false
   AND trim(coalesce(s.text, '')) <> ''
   AND (
       NOT $exclude_summary_sections
@@ -250,6 +252,25 @@ RETURN
     s.page_end AS page_end,
     s.part_index AS part_index,
     s.part_count AS part_count,
+    s.retrieval_unit_id AS retrieval_unit_id,
+    s.section_view_schema_version AS section_view_schema_version,
+    s.section_view_role AS section_view_role,
+    s.retrieval_strategy AS retrieval_strategy,
+    s.aggregation_mode AS aggregation_mode,
+    coalesce(s.is_aggregated, false) AS is_aggregated,
+    s.content_owner_section_id AS content_owner_section_id,
+    coalesce(s.source_section_ids, []) AS source_section_ids,
+    coalesce(s.source_chunk_ids, []) AS source_chunk_ids,
+    coalesce(s.represented_section_ids, []) AS represented_section_ids,
+    coalesce(
+        s.structural_context_section_ids,
+        []
+    ) AS structural_context_section_ids,
+    coalesce(s.absorbed_section_ids, []) AS absorbed_section_ids,
+    coalesce(
+        s.absorbed_source_section_ids,
+        []
+    ) AS absorbed_source_section_ids,
     matched_concepts,
     active_score AS score,
     matched_terms,
@@ -276,7 +297,9 @@ UNWIND $terms AS term
 MATCH (d:Document)-[:HAS_SECTION]->(s:Section)
 
 WHERE ($document_ids = [] OR d.doc_id IN $document_ids)
+  AND s.section_view_role = 'retrieval'
   AND coalesce(s.embed, false) = true
+  AND coalesce(s.excluded, false) = false
   AND trim(coalesce(s.text, '')) <> ''
   AND (
       NOT $exclude_summary_sections
@@ -361,6 +384,25 @@ RETURN
     s.page_end AS page_end,
     s.part_index AS part_index,
     s.part_count AS part_count,
+    s.retrieval_unit_id AS retrieval_unit_id,
+    s.section_view_schema_version AS section_view_schema_version,
+    s.section_view_role AS section_view_role,
+    s.retrieval_strategy AS retrieval_strategy,
+    s.aggregation_mode AS aggregation_mode,
+    coalesce(s.is_aggregated, false) AS is_aggregated,
+    s.content_owner_section_id AS content_owner_section_id,
+    coalesce(s.source_section_ids, []) AS source_section_ids,
+    coalesce(s.source_chunk_ids, []) AS source_chunk_ids,
+    coalesce(s.represented_section_ids, []) AS represented_section_ids,
+    coalesce(
+        s.structural_context_section_ids,
+        []
+    ) AS structural_context_section_ids,
+    coalesce(s.absorbed_section_ids, []) AS absorbed_section_ids,
+    coalesce(
+        s.absorbed_source_section_ids,
+        []
+    ) AS absorbed_source_section_ids,
     [] AS matched_concepts,
     active_score AS score,
     matched_terms,
@@ -383,13 +425,14 @@ LIMIT $top_k
 _LIST_CONCEPT_CATALOGUE = """
 MATCH (c:Concept)
 WHERE trim(coalesce(c.name, '')) <> ''
-  AND (
-      $document_ids = []
-      OR EXISTS {
-          MATCH (d:Document)-[:HAS_SECTION]->(:Section)-[:MENTIONS]->(c)
-          WHERE d.doc_id IN $document_ids
-      }
-  )
+  AND EXISTS {
+      MATCH (d:Document)-[:HAS_SECTION]->(s:Section)-[:MENTIONS]->(c)
+      WHERE ($document_ids = [] OR d.doc_id IN $document_ids)
+        AND s.section_view_role = 'retrieval'
+        AND coalesce(s.embed, false) = true
+        AND coalesce(s.excluded, false) = false
+        AND trim(coalesce(s.text, '')) <> ''
+  }
 
 RETURN DISTINCT
     c.name AS concept_name,
@@ -410,7 +453,9 @@ MATCH (c:Concept {name: seed.concept_name})
 MATCH (d:Document)-[:HAS_SECTION]->(s:Section)-[:MENTIONS]->(c)
 
 WHERE ($document_ids = [] OR d.doc_id IN $document_ids)
+  AND s.section_view_role = 'retrieval'
   AND coalesce(s.embed, false) = true
+  AND coalesce(s.excluded, false) = false
   AND trim(coalesce(s.text, '')) <> ''
   AND (
       NOT $exclude_summary_sections
@@ -550,6 +595,25 @@ RETURN
     s.page_end AS page_end,
     s.part_index AS part_index,
     s.part_count AS part_count,
+    s.retrieval_unit_id AS retrieval_unit_id,
+    s.section_view_schema_version AS section_view_schema_version,
+    s.section_view_role AS section_view_role,
+    s.retrieval_strategy AS retrieval_strategy,
+    s.aggregation_mode AS aggregation_mode,
+    coalesce(s.is_aggregated, false) AS is_aggregated,
+    s.content_owner_section_id AS content_owner_section_id,
+    coalesce(s.source_section_ids, []) AS source_section_ids,
+    coalesce(s.source_chunk_ids, []) AS source_chunk_ids,
+    coalesce(s.represented_section_ids, []) AS represented_section_ids,
+    coalesce(
+        s.structural_context_section_ids,
+        []
+    ) AS structural_context_section_ids,
+    coalesce(s.absorbed_section_ids, []) AS absorbed_section_ids,
+    coalesce(
+        s.absorbed_source_section_ids,
+        []
+    ) AS absorbed_source_section_ids,
     matched_concepts,
     toFloat(matched_term_count) AS score,
     matched_terms,
@@ -565,12 +629,21 @@ RETURN
 _FIND_HIERARCHICAL_CONTEXT_MATCHES = """
 UNWIND $anchor_uids AS anchor_uid
 MATCH (anchor:Section {uid: anchor_uid})
+WHERE anchor.section_view_role = 'retrieval'
+  AND coalesce(anchor.embed, false) = true
+  AND coalesce(anchor.excluded, false) = false
+  AND trim(coalesce(anchor.text, '')) <> ''
 
 UNWIND $context_uids AS context_uid
 MATCH (context:Section {uid: context_uid})
+WHERE context.section_view_role = 'retrieval'
+  AND coalesce(context.embed, false) = true
+  AND coalesce(context.excluded, false) = false
+  AND trim(coalesce(context.text, '')) <> ''
 
 MATCH path = (context)-[:HAS_CHILD*0..8]->(anchor)
 WHERE length(path) <= $max_depth
+  AND context.doc_id = anchor.doc_id
 
 RETURN
     anchor.uid AS anchor_uid,

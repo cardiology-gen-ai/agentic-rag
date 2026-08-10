@@ -23,3 +23,4 @@ retrieval_eval_smoke/
 scripts/
 tests/unit/
 *.tar.gz 
+old_artifacts/

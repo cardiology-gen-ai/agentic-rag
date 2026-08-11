@@ -44,7 +44,12 @@ RETURN
     s.page_start AS page_start,
     s.page_end AS page_end,
     s.part_index AS part_index,
-    s.part_count AS part_count
+    s.part_count AS part_count,
+    s.section_view_role AS section_view_role,
+    s.retrieval_unit_id AS retrieval_unit_id,
+    s.represented_section_ids AS represented_section_ids,
+    s.absorbed_section_ids AS absorbed_section_ids,
+    s.is_aggregated AS is_aggregated
 ORDER BY
     document_id,
     printed_section_id,
@@ -201,6 +206,15 @@ def serialize_graph_section(row: Mapping[str, Any]) -> dict[str, Any]:
         "page_end": row.get("page_end"),
         "part_index": row.get("part_index"),
         "part_count": row.get("part_count"),
+        "section_view_role": row.get("section_view_role"),
+        "retrieval_unit_id": row.get("retrieval_unit_id"),
+        "represented_section_ids": list(
+            row.get("represented_section_ids") or []
+        ),
+        "absorbed_section_ids": list(
+            row.get("absorbed_section_ids") or []
+        ),
+        "is_aggregated": bool(row.get("is_aggregated")),
         "normalized": {
             "document_id": _safe_normalize(
                 row.get("document_id"), normalize_document_id
@@ -237,6 +251,55 @@ def build_section_number_index(
     return dict(index)
 
 
+def build_represented_section_index(
+    graph_sections: Iterable[Mapping[str, Any]],
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """Index retrieval units by every original section they represent.
+
+    Fine-grained original sections may be absorbed by a hierarchical
+    Section View and therefore no longer exist as independent Section nodes.
+    Only actual retrieval units are allowed to resolve such gold targets.
+    """
+
+    index: dict[
+        tuple[str, str],
+        list[dict[str, Any]],
+    ] = defaultdict(list)
+
+    for raw_row in graph_sections:
+        row = serialize_graph_section(raw_row)
+        normalized = row["normalized"]
+
+        document_id = normalized["document_id"]
+        if document_id is None:
+            continue
+
+        if (
+            str(row.get("section_view_role") or "")
+            .strip()
+            .casefold()
+            != "retrieval"
+        ):
+            continue
+
+        if not row.get("retrieval_unit_id"):
+            continue
+
+        for raw_section_id in row.get(
+            "represented_section_ids"
+        ) or []:
+            represented_id = _safe_normalize(
+                raw_section_id,
+                normalize_printed_section_id,
+            )
+            if represented_id is None:
+                continue
+
+            index[(document_id, represented_id)].append(row)
+
+    return dict(index)
+
+
 def _is_valid_multi_part_group(
     candidates: Sequence[Mapping[str, Any]],
 ) -> bool:
@@ -266,17 +329,41 @@ def _is_valid_multi_part_group(
 
 def resolve_gold_annotation(
     annotation: Mapping[str, Any],
-    section_index: Mapping[tuple[str, str], list[dict[str, Any]]],
+    section_index: Mapping[
+        tuple[str, str],
+        list[dict[str, Any]],
+    ],
+    represented_section_index: Mapping[
+        tuple[str, str],
+        list[dict[str, Any]],
+    ] | None = None,
 ) -> dict[str, Any]:
-    """Resolve one gold label to graph nodes and assign a diagnostic status."""
+    """Resolve one gold label against the KG Section View.
+
+    Resolution order:
+
+    1. Prefer the original exact contract:
+       document + printed section number + normalized title.
+    2. If no node with that section number exists, allow a unique retrieval
+       unit whose represented_section_ids contains the original gold section.
+
+    The retrieval-owner title is deliberately not compared with the gold
+    title in case 2, because an aggregated parent naturally has a different
+    title from the absorbed child section.
+    """
 
     key = annotation["key"]
     if not isinstance(key, SectionKey):
-        raise TypeError("annotation['key'] must be a SectionKey")
+        raise TypeError(
+            "annotation['key'] must be a SectionKey"
+        )
 
     number_candidates = list(
         section_index.get(
-            (key.document_id, key.printed_section_id),
+            (
+                key.document_id,
+                key.printed_section_id,
+            ),
             [],
         )
     )
@@ -287,12 +374,39 @@ def resolve_gold_annotation(
         if candidate["normalized"]["title"] == key.title
     ]
 
+    represented_candidates = list(
+        (represented_section_index or {}).get(
+            (
+                key.document_id,
+                key.printed_section_id,
+            ),
+            [],
+        )
+    )
+
     if not number_candidates:
-        status = "unresolved"
-        resolution_kind = None
-        matched_nodes: list[dict[str, Any]] = []
+        if len(represented_candidates) == 1:
+            status = "resolved"
+            resolution_kind = (
+                "represented_by_retrieval_unit"
+            )
+            matched_nodes = represented_candidates
+
+        elif len(represented_candidates) > 1:
+            # One original section should have one retrieval owner.
+            status = "ambiguous"
+            resolution_kind = None
+            matched_nodes = represented_candidates
+
+        else:
+            status = "unresolved"
+            resolution_kind = None
+            matched_nodes = []
 
     elif not exact_candidates:
+        # If the numbered node actually exists, preserve the strict
+        # historical title-matching contract instead of hiding a mismatch
+        # behind Section View provenance.
         status = "title_mismatch"
         resolution_kind = None
         matched_nodes = []
@@ -329,7 +443,9 @@ def resolve_gold_annotation(
         "source": {
             "document_id": annotation["document_id"],
             "filename": annotation.get("filename"),
-            "guideline_name": annotation.get("guideline_name"),
+            "guideline_name": annotation.get(
+                "guideline_name"
+            ),
         },
         "parsed_key": key.to_dict(),
         "status": status,
@@ -337,8 +453,10 @@ def resolve_gold_annotation(
         "matched_node_count": len(matched_nodes),
         "matched_nodes": matched_nodes,
         "same_number_candidates": number_candidates,
+        "represented_section_candidates": (
+            represented_candidates
+        ),
     }
-
 
 def validate_dataset_gold(
     client: ReadClient,
@@ -347,17 +465,47 @@ def validate_dataset_gold(
     """Resolve every gold annotation in a loaded dataset against Neo4j."""
 
     annotations = collect_gold_annotations(dataset)
+
     requested_document_ids = list(
-        dict.fromkeys(annotation["document_id"] for annotation in annotations)
+        dict.fromkeys(
+            annotation["document_id"]
+            for annotation in annotations
+        )
     )
-    graph_sections = fetch_graph_sections(client, requested_document_ids)
-    section_index = build_section_number_index(graph_sections)
+
+    graph_sections = fetch_graph_sections(
+        client,
+        requested_document_ids,
+    )
+
+    section_index = build_section_number_index(
+        graph_sections
+    )
+
+    represented_section_index = (
+        build_represented_section_index(
+            graph_sections
+        )
+    )
 
     resolutions = [
-        resolve_gold_annotation(annotation, section_index)
+        resolve_gold_annotation(
+            annotation,
+            section_index,
+            represented_section_index,
+        )
         for annotation in annotations
     ]
-    status_counts = Counter(item["status"] for item in resolutions)
+
+    status_counts = Counter(
+        item["status"] for item in resolutions
+    )
+
+    resolution_kind_counts = Counter(
+        item["resolution_kind"]
+        for item in resolutions
+        if item["resolution_kind"] is not None
+    )
 
     graph_document_ids = sorted(
         {
@@ -369,13 +517,26 @@ def validate_dataset_gold(
 
     return {
         "summary": {
-            "question_count": len(dataset["questions"]),
-            "gold_annotation_count": len(annotations),
-            "requested_document_ids": requested_document_ids,
-            "graph_document_ids_found": graph_document_ids,
-            "graph_section_nodes_loaded": len(graph_sections),
+            "question_count": len(
+                dataset["questions"]
+            ),
+            "gold_annotation_count": len(
+                annotations
+            ),
+            "requested_document_ids": (
+                requested_document_ids
+            ),
+            "graph_document_ids_found": (
+                graph_document_ids
+            ),
+            "graph_section_nodes_loaded": len(
+                graph_sections
+            ),
             "status_counts": {
-                status: status_counts.get(status, 0)
+                status: status_counts.get(
+                    status,
+                    0,
+                )
                 for status in (
                     "resolved",
                     "unresolved",
@@ -383,13 +544,18 @@ def validate_dataset_gold(
                     "ambiguous",
                 )
             },
+            "resolution_kind_counts": dict(
+                sorted(
+                    resolution_kind_counts.items()
+                )
+            ),
             "all_resolved": all(
-                item["status"] == "resolved" for item in resolutions
+                item["status"] == "resolved"
+                for item in resolutions
             ),
         },
         "resolutions": resolutions,
     }
-
 
 def build_artifact(
     *,
@@ -407,7 +573,16 @@ def build_artifact(
         "matching_policy": {
             "document_id": "normalized exact match",
             "printed_section_id": "normalized exact match",
-            "title": "normalized exact match",
+            "title": (
+                "normalized exact match for direct Section nodes; "
+                "not compared when an absorbed gold section is resolved "
+                "through represented_section_ids"
+            ),
+            "section_view_fallback": (
+                "when no direct numbered node exists, resolve uniquely "
+                "through a retrieval unit whose represented_section_ids "
+                "contains the gold section"
+            ),
             "fuzzy_matching": False,
             "neo4j_uid_required_in_gold": False,
         },

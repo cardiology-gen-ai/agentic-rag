@@ -46,7 +46,6 @@ ModularKGMode = Literal[
     "mentions_only",
     "mentions_lexical_seeded",
     "mentions_embedding_seeded",
-    "mentions_weighted",
     "mentions_descendants",
     "mentions_same_as",
     "mentions_umls_safe",
@@ -315,9 +314,9 @@ def build_modular_kg_pipeline(
 ) -> ModularKGRetrievalPipeline:
     """Build one named ablation configuration.
 
-    ``mentions_only`` is the pure MENTIONS baseline. ``mentions_weighted``
-    preserves the candidate set but enables the existing lexical weights and
-    title bonus. ``mentions_descendants`` expands the pure MENTIONS seeds over
+    ``mentions_only`` is the pure local MENTIONS baseline. It matches only
+    ``Concept.name`` before traversing MENTIONS. ``mentions_descendants``
+    expands the pure MENTIONS seeds over
     HAS_CHILD and applies a deterministic seed-by-seed ordering.
     ``mentions_same_as`` and ``mentions_umls_safe`` keep the same MENTIONS plan
     terms but expand at the Concept/CUI level inside candidate generation.
@@ -370,15 +369,6 @@ def build_modular_kg_pipeline(
         generator = SeededMentionsCandidateGenerator(
             tools,
             seeder,
-            exclude_summary_sections=exclude_summary_sections,
-        )
-        expander = NoOpExpander()
-        reranker = NoOpReranker()
-
-    elif normalized_mode == "mentions_weighted":
-        generator = MentionsCandidateGenerator(
-            tools,
-            ranking_mode="weighted_match",
             exclude_summary_sections=exclude_summary_sections,
         )
         expander = NoOpExpander()
@@ -507,7 +497,6 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_only",
         "mentions_lexical_seeded",
         "mentions_embedding_seeded",
-        "mentions_weighted",
         "mentions_descendants",
         "mentions_same_as",
         "mentions_umls_safe",

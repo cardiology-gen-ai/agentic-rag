@@ -29,6 +29,8 @@ from agentic_rag.agent.services.llm_service import LLMService
 from agentic_rag.config.manager import LLMConfig, LLMProvider, NodePromptConfig
 from agentic_rag.evaluation.kg_batch import (
     aggregate_metric_rows,
+    aggregate_metric_rows_by_group,
+    build_question_group_membership,
     build_metric_rows,
     candidate_diagnostics,
     evaluate_rankings,
@@ -343,17 +345,23 @@ def build_query_record(
     final_keys = section_keys_from_results(final_results)
     evaluation = evaluate_rankings(
         gold_sections=gold_sections,
-        section_ranking=final_keys,
+        section_ranking=final_results,
     )
 
     diagnostics: dict[str, Any] = {
-        "raw_candidates": candidate_diagnostics(gold_sections, raw_keys),
-        "final_ranking": candidate_diagnostics(gold_sections, final_keys),
+        "raw_candidates": candidate_diagnostics(
+            gold_sections,
+            raw_results,
+        ),
+        "final_ranking": candidate_diagnostics(
+            gold_sections,
+            final_results,
+        ),
     }
     if expanded_keys is not None:
         diagnostics["expanded_candidates"] = candidate_diagnostics(
             gold_sections,
-            expanded_keys,
+            expanded_results,
         )
 
     return {
@@ -437,6 +445,47 @@ def write_aggregate_csv(
         "mean_latency_ms",
         *sorted(metric_names),
     ]
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+
+def write_group_aggregate_csv(
+    path: Path,
+    aggregates: Sequence[Mapping[str, Any]],
+) -> None:
+    """Write evaluation-group aggregate metrics without altering base reports."""
+    rows: list[dict[str, Any]] = []
+    metric_names: set[str] = set()
+
+    for aggregate in aggregates:
+        means = aggregate.get("means") or {}
+        metric_names.update(means)
+
+        rows.append(
+            {
+                "group": aggregate["group"],
+                "mode": aggregate["mode"],
+                "level": aggregate["level"],
+                "view": aggregate["view"],
+                "query_count": aggregate["query_count"],
+                "mean_latency_ms": aggregate.get("mean_latency_ms"),
+                **means,
+            }
+        )
+
+    fieldnames = [
+        "group",
+        "mode",
+        "level",
+        "view",
+        "query_count",
+        "mean_latency_ms",
+        *sorted(metric_names),
+    ]
+
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
@@ -940,10 +989,22 @@ def main() -> None:
     ]
     metric_rows = build_metric_rows(current_rows, evaluation_sets)
     aggregates = aggregate_metric_rows(metric_rows) if metric_rows else []
+    question_groups = build_question_group_membership(dataset)
+    group_aggregates = aggregate_metric_rows_by_group(
+        metric_rows,
+        question_groups,
+    )
     concept_seed_diagnostics = build_concept_seed_diagnostics(current_rows)
 
     write_metric_csv(output_dir / "per_query_metrics.csv", metric_rows)
     write_aggregate_csv(output_dir / "aggregate_metrics.csv", aggregates)
+    group_aggregate_path = (
+        output_dir / "aggregate_metrics_by_group.csv"
+    )
+    write_group_aggregate_csv(
+        group_aggregate_path,
+        group_aggregates,
+    )
     concept_seed_diagnostics_path = output_dir / "concept_seed_diagnostics.json"
     write_json(concept_seed_diagnostics_path, concept_seed_diagnostics)
     status_counts: dict[str, int] = {}
@@ -964,6 +1025,8 @@ def main() -> None:
         "elapsed_seconds": time.perf_counter() - started,
         "configuration": manifest["configuration"],
         "aggregates": aggregates,
+        "group_aggregates_file": str(group_aggregate_path),
+        "group_aggregates": group_aggregates,
     }
     write_json(output_dir / "summary.json", summary)
 
@@ -972,6 +1035,9 @@ def main() -> None:
     manifest["summary_file"] = str(output_dir / "summary.json")
     manifest["concept_seed_diagnostics_file"] = str(
         concept_seed_diagnostics_path
+    )
+    manifest["group_aggregates_file"] = str(
+        group_aggregate_path
     )
     manifest["mentions_plans_generated_count"] = generated_plan_count
     write_json(manifest_path, manifest)

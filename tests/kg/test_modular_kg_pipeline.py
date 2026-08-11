@@ -232,12 +232,10 @@ def test_lexical_concept_seeder_uses_categorical_ordering():
 
     assert [seed.concept_name for seed in seeds] == [
         "local concept",
-        "normalized concept",
-        "canonical concept",
         "prefix concept",
         "partial concept",
     ]
-    assert [seed.seed_rank for seed in seeds] == [1, 2, 3, 4, 5]
+    assert [seed.seed_rank for seed in seeds] == [1, 2, 3]
 
 
 def test_mentions_only_uses_pure_concept_match_and_returns_subsections():
@@ -289,7 +287,7 @@ def test_mentions_lexical_seeded_uses_explicit_seed_tool():
         "mentions_lexical_seeded",
         router=FakeRouter(
             KGMentionsPlan(
-                terms=["HCM"],
+                terms=["hypertrophic cardiomyopathy"],
                 require_all=True,
             )
         ),
@@ -308,7 +306,9 @@ def test_mentions_lexical_seeded_uses_explicit_seed_tool():
         "hypertrophic cardiomyopathy"
     )
     assert tools.calls[1][1][0]["method"] == "lexical"
-    assert tools.calls[1][2]["query_terms"] == ["HCM"]
+    assert tools.calls[1][2]["query_terms"] == [
+        "hypertrophic cardiomyopathy"
+    ]
     assert tools.calls[1][2]["require_all"] is True
     assert run.concept_seeds[0].method == "lexical"
     assert run.results[0].source == "mentions"
@@ -369,26 +369,24 @@ def test_mentions_embedding_seeded_requires_model_without_prebuilt_seeder():
         raise AssertionError("Expected missing embedding model to fail")
 
 
-def test_mentions_weighted_changes_only_the_local_ranking_mode():
-    result = make_result("Doc::1", 1, "Atrial fibrillation")
-    tools = FakeTools([result])
-    pipeline = build_modular_kg_pipeline(
-        "mentions_weighted",
-        router=FakeRouter(
-            KGMentionsPlan(
-                terms=["atrial fibrillation"],
-                require_all=False,
-            )
-        ),
-        tools=tools,
-    )
+def test_mentions_weighted_mode_is_rejected():
+    tools = FakeTools([])
 
-    run = pipeline.retrieve("Question")
-
-    assert run.status == "success"
-    assert run.expander_name == "none"
-    assert run.reranker_name == "none"
-    assert tools.calls[0][2]["ranking_mode"] == "weighted_match"
+    try:
+        build_modular_kg_pipeline(
+            "mentions_weighted",
+            router=FakeRouter(
+                KGMentionsPlan(
+                    terms=["atrial fibrillation"],
+                    require_all=False,
+                )
+            ),
+            tools=tools,
+        )
+    except ValueError as exc:
+        assert "Unsupported modular KG mode" in str(exc)
+    else:
+        raise AssertionError("Removed mentions_weighted mode must be rejected")
 
 
 def test_mentions_descendants_expands_has_child_and_interleaves_by_seed():

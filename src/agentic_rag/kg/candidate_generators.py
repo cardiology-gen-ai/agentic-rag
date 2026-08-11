@@ -386,6 +386,7 @@ class KGSectionSearchProtocol(Protocol):
         require_all: bool = False,
         ranking_mode: KGRankingMode = "concept_match",
         exclude_summary_sections: bool = True,
+        local_only: bool = False,
     ) -> list[KGSectionResult]: ...
 
     def search_sections_by_title(
@@ -445,10 +446,11 @@ class CandidateGeneratorProtocol(Protocol):
 class MentionsCandidateGenerator:
     """Generate Section candidates through ``Section-[:MENTIONS]->Concept``.
 
-    With ``ranking_mode='concept_match'`` this is the pure graph baseline:
-    candidates and their order depend only on MENTIONS concept matches.
-    ``weighted_match`` keeps the same candidate set but applies the existing
-    lexical match weights and title bonus implemented by ``KGSectionTools``.
+    With ``ranking_mode='concept_match'`` this is the pure local graph
+    baseline: query terms are matched only against ``Concept.name`` and
+    Sections are reached only through ``MENTIONS``. UMLS fields,
+    ``normalized_name``, title bonuses, and weighted tie-breaking are not
+    consulted. ``weighted_match`` preserves the legacy enriched matcher.
     """
 
     name = "mentions"
@@ -482,6 +484,7 @@ class MentionsCandidateGenerator:
             require_all=bool(require_all),
             ranking_mode=self.ranking_mode,
             exclude_summary_sections=self.exclude_summary_sections,
+            local_only=self.ranking_mode == "concept_match",
         )
         return _wrap_results(results, source="mentions")
 

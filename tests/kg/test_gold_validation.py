@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from scripts.validate_kg_gold import (
+    build_represented_section_index,
     build_section_number_index,
     collect_gold_annotations,
     resolve_gold_annotation,
@@ -46,7 +47,25 @@ def make_row(
     title: str = "Diagnostic criteria",
     part_index: int = 0,
     part_count: int = 1,
+    section_view_role: str = "retrieval",
+    retrieval_unit_id: str | None = None,
+    represented_section_ids: list[str] | None = None,
+    absorbed_section_ids: list[str] | None = None,
+    is_aggregated: bool = False,
 ) -> dict[str, Any]:
+    if retrieval_unit_id is None:
+        retrieval_unit_id = (
+            f"{document_id}:{section_id}::retrieval"
+        )
+
+    if represented_section_ids is None:
+        represented_section_ids = [
+            printed_section_id
+        ]
+
+    if absorbed_section_ids is None:
+        absorbed_section_ids = []
+
     return {
         "section_uid": uid,
         "document_id": document_id,
@@ -58,8 +77,16 @@ def make_row(
         "page_end": 48,
         "part_index": part_index,
         "part_count": part_count,
+        "section_view_role": section_view_role,
+        "retrieval_unit_id": retrieval_unit_id,
+        "represented_section_ids": (
+            represented_section_ids
+        ),
+        "absorbed_section_ids": (
+            absorbed_section_ids
+        ),
+        "is_aggregated": is_aggregated,
     }
-
 
 def make_dataset(
     section_label: str = "7.1.1.1. Diagnostic criteria",
@@ -101,6 +128,78 @@ def test_exact_section_is_resolved() -> None:
     assert resolution["status"] == "resolved"
     assert resolution["resolution_kind"] == "single_node"
     assert resolution["matched_node_count"] == 1
+
+
+def test_absorbed_gold_section_resolves_to_retrieval_unit() -> None:
+    annotation = collect_gold_annotations(
+        make_dataset(
+            "7.1.4.1.2. Drug therapy"
+        )
+    )[0]
+
+    owner = make_row(
+        uid=(
+            "Cardiomyopathies_2023::"
+            "7.1.4.1"
+        ),
+        section_id="7.1.4.1",
+        printed_section_id="7.1.4.1",
+        title=(
+            "Management of left ventricular "
+            "outflow tract obstruction"
+        ),
+        retrieval_unit_id=(
+            "Cardiomyopathies_2023:"
+            "7.1.4.1:0::retrieval::"
+            "max_level_4"
+        ),
+        represented_section_ids=[
+            "7.1.4.1",
+            "7.1.4.1.1",
+            "7.1.4.1.2",
+            "7.1.4.1.3",
+        ],
+        absorbed_section_ids=[
+            "7.1.4.1.1",
+            "7.1.4.1.2",
+            "7.1.4.1.3",
+        ],
+        is_aggregated=True,
+    )
+
+    direct_index = build_section_number_index(
+        [owner]
+    )
+    represented_index = (
+        build_represented_section_index(
+            [owner]
+        )
+    )
+
+    resolution = resolve_gold_annotation(
+        annotation,
+        direct_index,
+        represented_index,
+    )
+
+    assert resolution["status"] == "resolved"
+    assert (
+        resolution["resolution_kind"]
+        == "represented_by_retrieval_unit"
+    )
+    assert resolution["matched_node_count"] == 1
+    assert resolution["same_number_candidates"] == []
+
+    matched = resolution["matched_nodes"][0]
+
+    assert (
+        matched["printed_section_id"]
+        == "7.1.4.1"
+    )
+    assert (
+        "7.1.4.1.2"
+        in matched["represented_section_ids"]
+    )
 
 
 def test_wrong_title_is_reported_as_title_mismatch() -> None:

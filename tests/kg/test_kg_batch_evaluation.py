@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+
+import pytest
+
 from agentic_rag.evaluation.kg_batch import (
     aggregate_metric_rows,
     build_metric_rows,
@@ -7,8 +11,11 @@ from agentic_rag.evaluation.kg_batch import (
     evaluate_rankings,
     gold_document_ids,
     gold_section_keys,
+    kg_results_to_evidence,
+    load_coverage_evaluation_sets,
 )
 from agentic_rag.evaluation.retrieval import SectionKey
+from agentic_rag.kg.models import KGSectionResult
 
 
 def key(document: str, section_id: str, title: str) -> SectionKey:
@@ -16,6 +23,30 @@ def key(document: str, section_id: str, title: str) -> SectionKey:
         document_id=document.casefold(),
         printed_section_id=section_id,
         title=title.casefold(),
+    )
+
+
+def kg_result(
+    *,
+    uid: str,
+    document: str,
+    section_id: str,
+    title: str,
+    represented: list[str] | None = None,
+    retrieval_unit_id: str | None = None,
+    score: float = 1.0,
+) -> KGSectionResult:
+    return KGSectionResult(
+        section_uid=uid,
+        document_id=document,
+        section_id=section_id,
+        printed_section_id=section_id,
+        title=title,
+        text=f"Text for {title}",
+        retrieval_unit_id=retrieval_unit_id,
+        represented_section_ids=represented or [],
+        score=score,
+        score_type="concept_match",
     )
 
 
@@ -83,8 +114,58 @@ def test_cm06_perfect_top_three_section_metrics() -> None:
     assert evaluated["section"]["precision@3"] == 1.0
     assert evaluated["section"]["recall@3"] == 1.0
     assert evaluated["section"]["complete_recall@3"] == 1.0
-    assert evaluated["section"]["ndcg@10"] == 1.0
+    assert evaluated["section"]["reciprocal_rank@10"] == 1.0
     assert evaluated["document"]["hit@1"] == 1.0
+
+
+def test_aggregated_kg_unit_covers_multiple_gold_sections_at_one_rank() -> None:
+    gold = [
+        key("Cardiomyopathies_2023", "6.10.3.1", "Anticoagulation"),
+        key("Cardiomyopathies_2023", "6.10.3.2", "Rate control"),
+        key("Cardiomyopathies_2023", "6.10.3.3", "Rhythm control"),
+    ]
+    ranking = [
+        kg_result(
+            uid="Cardiomyopathies_2023::6.10.3",
+            document="Cardiomyopathies_2023",
+            section_id="6.10.3",
+            title="Atrial fibrillation",
+            retrieval_unit_id="Cardiomyopathies_2023::retrieval::6.10.3",
+            represented=["6.10.3", "6.10.3.1", "6.10.3.2", "6.10.3.3"],
+        )
+    ]
+
+    evidence = kg_results_to_evidence(ranking)
+    evaluated = evaluate_rankings(
+        gold_sections=gold,
+        section_ranking=ranking,
+        cutoffs=(1, 3),
+    )
+    diagnostics = candidate_diagnostics(gold, ranking)
+
+    assert len(evidence) == 1
+    assert evidence[0].covered_section_ids == frozenset(
+        {"6.10.3", "6.10.3.1", "6.10.3.2", "6.10.3.3"}
+    )
+    assert evaluated["section"]["precision@1"] == 1.0
+    assert evaluated["section"]["recall@1"] == 1.0
+    assert evaluated["section"]["complete_recall@1"] == 1.0
+    assert diagnostics["found_count"] == 3
+    assert diagnostics["best_gold_rank"] == 1
+    assert diagnostics["worst_gold_rank"] == 1
+
+
+def test_kg_evidence_falls_back_to_printed_section_id() -> None:
+    result = kg_result(
+        uid="Cardiomyopathies_2023::7.1.1.1",
+        document="Cardiomyopathies_2023",
+        section_id="7.1.1.1",
+        title="Diagnostic criteria",
+    )
+
+    evidence = kg_results_to_evidence([result])
+
+    assert evidence[0].covered_section_ids == frozenset({"7.1.1.1"})
 
 
 def test_metric_rows_respect_clean_and_end_to_end_sets() -> None:
@@ -93,20 +174,12 @@ def test_metric_rows_respect_clean_and_end_to_end_sets() -> None:
         "precision@1": 1.0,
         "recall@1": 1.0,
         "complete_recall@1": 1.0,
+        "reciprocal_rank@1": 1.0,
         "hit@3": 1.0,
         "precision@3": 1 / 3,
         "recall@3": 1.0,
         "complete_recall@3": 1.0,
-        "hit@5": 1.0,
-        "precision@5": 0.2,
-        "recall@5": 1.0,
-        "complete_recall@5": 1.0,
-        "hit@10": 1.0,
-        "precision@10": 0.1,
-        "recall@10": 1.0,
-        "complete_recall@10": 1.0,
-        "reciprocal_rank@10": 1.0,
-        "ndcg@10": 1.0,
+        "reciprocal_rank@3": 1.0,
     }
     records = [
         {
@@ -148,3 +221,42 @@ def test_metric_rows_respect_clean_and_end_to_end_sets() -> None:
     )
     assert section_clean["query_count"] == 1
     assert section_e2e["query_count"] == 2
+    assert section_e2e["means"]["mrr@3"] == 1.0
+    assert section_e2e["statistics"]["hit@1"]["population_std"] == 0.0
+
+
+def test_load_coverage_sets_reads_current_coverage_artifact(tmp_path) -> None:
+    artifact = {
+        "coverage_summary": {
+            "evaluation_sets": {
+                "document_level_clean_question_ids": ["Q1", "Q2"],
+                "document_level_end_to_end_question_ids": ["Q1", "Q2"],
+                "section_level_clean_question_ids": ["Q1"],
+                "section_level_end_to_end_question_ids": ["Q1", "Q2"],
+            }
+        }
+    }
+    path = tmp_path / "coverage.json"
+    path.write_text(json.dumps(artifact), encoding="utf-8")
+
+    sets = load_coverage_evaluation_sets(path)
+
+    assert sets["section_clean"] == {"Q1"}
+    assert sets["section_end_to_end"] == {"Q1", "Q2"}
+    assert sets["document_clean"] == {"Q1", "Q2"}
+
+
+def test_mixed_ranking_types_are_rejected() -> None:
+    gold = [key("Cardiomyopathies_2023", "7.1.1.1", "Diagnostic criteria")]
+    result = kg_result(
+        uid="Cardiomyopathies_2023::7.1.1.1",
+        document="Cardiomyopathies_2023",
+        section_id="7.1.1.1",
+        title="Diagnostic criteria",
+    )
+
+    with pytest.raises(TypeError, match="section_ranking"):
+        evaluate_rankings(
+            gold_sections=gold,
+            section_ranking=[gold[0], result],
+        )

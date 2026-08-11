@@ -635,7 +635,6 @@ def _concept_representation(
     # KG_LOCAL_ONLY_CONCEPT_REPRESENTATION
     values = [
         concept.name or concept.concept_name,
-        concept.canonical_type,
     ]
     return "; ".join(value for value in values if value)
 

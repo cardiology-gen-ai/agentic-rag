@@ -12,7 +12,8 @@ description = "Agent-based RAG framework for cardiology protocols"
 requires-python = ">=3.11,<3.13"
 authors = [
     { name = "Christian Faccio", email = "christian.faccio@studenti.units.it" },
-    { name = "Gaia Saveri", email = "gaia.saveri@gmail.com" }
+    { name = "Gaia Saveri", email = "gaia.saveri@gmail.com" },
+    {name = "Marta Lucas", email="marta.lucas@studenti.units.it"}
 ]
 
 dependencies = [

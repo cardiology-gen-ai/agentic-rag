@@ -63,6 +63,7 @@ ModularKGMode = Literal[
     "mentions_nonhier_artifact_safe_strict",
     "mentions_nonhier_artifact_raw_strict_direct_first",
     "mentions_nonhier_artifact_safe_strict_direct_first",
+    "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
 ]
@@ -450,6 +451,7 @@ def build_modular_kg_pipeline(
         "mentions_nonhier_artifact_safe_strict",
         "mentions_nonhier_artifact_raw_strict_direct_first",
         "mentions_nonhier_artifact_safe_strict_direct_first",
+        "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
     }:
         if client is None:
             raise ValueError(
@@ -470,6 +472,7 @@ def build_modular_kg_pipeline(
             "mentions_nonhier_artifact_safe_strict",
             "mentions_nonhier_artifact_raw_strict_direct_first",
             "mentions_nonhier_artifact_safe_strict_direct_first",
+            "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
         }
         expected_artifact_name = (
             "nonhier_semantic_raw_v1"
@@ -496,7 +499,18 @@ def build_modular_kg_pipeline(
             direct_first_graph_second=normalized_mode in {
                 "mentions_nonhier_artifact_raw_strict_direct_first",
                 "mentions_nonhier_artifact_safe_strict_direct_first",
+                "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
             },
+            freeze_direct_candidate_pool=(
+                normalized_mode
+                == "mentions_nonhier_artifact_safe_strict_direct_first_frozen"
+            ),
+            baseline_tools=(
+                tools
+                if normalized_mode
+                == "mentions_nonhier_artifact_safe_strict_direct_first_frozen"
+                else None
+            ),
         )
         expander = NoOpExpander()
         reranker = NoOpReranker()
@@ -636,6 +650,7 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_nonhier_artifact_safe_strict",
         "mentions_nonhier_artifact_raw_strict_direct_first",
         "mentions_nonhier_artifact_safe_strict_direct_first",
+        "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
         "mentions_same_as_rescue",
         "mentions_umls_safe_rescue",
     }

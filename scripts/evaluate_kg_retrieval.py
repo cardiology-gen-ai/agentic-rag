@@ -68,6 +68,7 @@ MODULAR_MODES = (
     "mentions_nonhier_artifact_safe_strict",
     "mentions_nonhier_artifact_raw_strict_direct_first",
     "mentions_nonhier_artifact_safe_strict_direct_first",
+    "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
 )
@@ -701,6 +702,7 @@ def main() -> None:
             "mentions_nonhier_artifact_safe",
             "mentions_nonhier_artifact_safe_strict",
             "mentions_nonhier_artifact_safe_strict_direct_first",
+            "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
         }
     ):
         if args.nonhier_safe_artifact is None:
@@ -863,6 +865,10 @@ def main() -> None:
             "nonhier_v1_support_only_ranking_active": True,
             "nonhier_strict_support_only_ranking_active": False,
             "nonhier_v3_ranking_policy": "direct_first_graph_second",
+            "nonhier_frozen_direct_candidate_pool_mode": (
+                "mentions_nonhier_artifact_safe_strict_direct_first_frozen"
+                in modes
+            ),
             "descendants_per_seed": args.descendants_per_seed,
             "max_expanded_rows": args.max_expanded_rows,
             "advanced_ranking_mode": args.advanced_ranking_mode,
@@ -1083,6 +1089,7 @@ def main() -> None:
                                         "mentions_nonhier_artifact_safe",
                                         "mentions_nonhier_artifact_safe_strict",
                                         "mentions_nonhier_artifact_safe_strict_direct_first",
+                                        "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
                                     }
                                     and args.nonhier_safe_artifact is not None
                                     else None

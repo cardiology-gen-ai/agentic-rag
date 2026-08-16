@@ -2,9 +2,9 @@
 
 For each question the MENTIONS router is called once. The resulting
 ``KGMentionsPlan`` is replayed unchanged across ``mentions_only``, the
-controlled lexical/embedding seeded MENTIONS modes, ``mentions_weighted``,
-``mentions_descendants``, ``mentions_same_as``, and ``mentions_umls_safe`` plus
-their rescue variants so those modes form a controlled ablation.
+controlled lexical/embedding seeded MENTIONS modes,
+``mentions_descendants``, ``mentions_same_as``, ``mentions_umls_safe``, ISA artifact,
+and frozen non-hier RAW/SAFE artifact modes so those modes form controlled ablations.
 ``planned_role_aware`` uses its own richer router.
 
 Gold annotations are never passed to retrieval. They are used only after a
@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import time
 from collections.abc import Mapping, Sequence
@@ -55,10 +56,18 @@ MODULAR_MODES = (
     "mentions_only",
     "mentions_lexical_seeded",
     "mentions_embedding_seeded",
-    "mentions_weighted",
     "mentions_descendants",
     "mentions_same_as",
     "mentions_umls_safe",
+    "mentions_isa_forward_artifact",
+    "mentions_isa_forward_artifact_strict_direct_first",
+    "mentions_isa_semantic_safe_rerank",
+    "mentions_nonhier_artifact_raw",
+    "mentions_nonhier_artifact_safe",
+    "mentions_nonhier_artifact_raw_strict",
+    "mentions_nonhier_artifact_safe_strict",
+    "mentions_nonhier_artifact_raw_strict_direct_first",
+    "mentions_nonhier_artifact_safe_strict_direct_first",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
 )
@@ -137,6 +146,39 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--hierarchy-max-depth", type=int, default=3)
+    parser.add_argument(
+        "--isa-connections",
+        type=Path,
+        default=None,
+        help=(
+            "Frozen data-etl collapsed-connections JSON used only by "
+            "mentions_isa_forward_artifact modes."
+        ),
+    )
+    parser.add_argument(
+        "--isa-max-depth",
+        type=int,
+        default=1,
+        help="Forward ISA hops for the artifact ablation (v1 recommendation: 1).",
+    )
+    parser.add_argument(
+        "--nonhier-raw-artifact",
+        type=Path,
+        default=None,
+        help=(
+            "Frozen data-etl nonhier_semantic_raw_v1.json used by RAW "
+            "non-hier artifact modes (v1 and strict-v2)."
+        ),
+    )
+    parser.add_argument(
+        "--nonhier-safe-artifact",
+        type=Path,
+        default=None,
+        help=(
+            "Frozen data-etl nonhier_semantic_safe_v1.json used by SAFE "
+            "non-hier artifact modes (v1 and strict-v2)."
+        ),
+    )
     parser.add_argument("--descendants-per-seed", type=int, default=5)
     parser.add_argument("--max-expanded-rows", type=int, default=1000)
     parser.add_argument(
@@ -617,6 +659,59 @@ def main() -> None:
         limit=args.limit,
     )
     modes = list(dict.fromkeys(args.modes or ALL_MODES))
+    if any(
+        mode in modes
+        for mode in {
+            "mentions_isa_forward_artifact",
+            "mentions_isa_forward_artifact_strict_direct_first",
+            "mentions_isa_semantic_safe_rerank",
+        }
+    ):
+        if args.isa_connections is None:
+            raise ValueError(
+                "--isa-connections is required when an ISA artifact mode "
+                "is selected"
+            )
+        args.isa_connections = resolve_file(
+            args.isa_connections,
+            "ISA collapsed-connections artifact",
+        )
+        if args.isa_max_depth < 1:
+            raise ValueError("--isa-max-depth must be >= 1")
+    if any(
+        mode in modes
+        for mode in {
+            "mentions_nonhier_artifact_raw",
+            "mentions_nonhier_artifact_raw_strict",
+            "mentions_nonhier_artifact_raw_strict_direct_first",
+        }
+    ):
+        if args.nonhier_raw_artifact is None:
+            raise ValueError(
+                "--nonhier-raw-artifact is required when a RAW non-hier "
+                "artifact mode is selected"
+            )
+        args.nonhier_raw_artifact = resolve_file(
+            args.nonhier_raw_artifact,
+            "Non-hier RAW retrieval artifact",
+        )
+    if any(
+        mode in modes
+        for mode in {
+            "mentions_nonhier_artifact_safe",
+            "mentions_nonhier_artifact_safe_strict",
+            "mentions_nonhier_artifact_safe_strict_direct_first",
+        }
+    ):
+        if args.nonhier_safe_artifact is None:
+            raise ValueError(
+                "--nonhier-safe-artifact is required when a SAFE non-hier "
+                "artifact mode is selected"
+            )
+        args.nonhier_safe_artifact = resolve_file(
+            args.nonhier_safe_artifact,
+            "Non-hier SAFE retrieval artifact",
+        )
     if (
         "mentions_embedding_seeded" in modes
         and not args.concept_embedding_model
@@ -723,6 +818,51 @@ def main() -> None:
             "concept_embedding_cache_loaded": None,
             "concept_embedding_cache_file": None,
             "hierarchy_max_depth": args.hierarchy_max_depth,
+            "isa_connections": (
+                str(args.isa_connections)
+                if args.isa_connections is not None
+                else None
+            ),
+            "isa_max_depth": args.isa_max_depth,
+            "isa_direction": "forward_specific_to_general",
+            "isa_uses_neo4j_umls_edges": False,
+            "isa_includes_same_as": False,
+            "isa_includes_nonhier_relations": False,
+            "isa_v1_seed_match_policy": "permissive",
+            "isa_strict_seed_match_policy": "exact_name_only",
+            "isa_strict_ranking_policy": "direct_first_graph_second",
+            "nonhier_raw_artifact": (
+                str(args.nonhier_raw_artifact)
+                if args.nonhier_raw_artifact is not None
+                else None
+            ),
+            "nonhier_raw_artifact_sha256": (
+                hashlib.sha256(args.nonhier_raw_artifact.read_bytes()).hexdigest()
+                if args.nonhier_raw_artifact is not None
+                else None
+            ),
+            "nonhier_safe_artifact": (
+                str(args.nonhier_safe_artifact)
+                if args.nonhier_safe_artifact is not None
+                else None
+            ),
+            "nonhier_safe_artifact_sha256": (
+                hashlib.sha256(args.nonhier_safe_artifact.read_bytes()).hexdigest()
+                if args.nonhier_safe_artifact is not None
+                else None
+            ),
+            "nonhier_direction": "forward_source_to_target",
+            "nonhier_max_depth": 1,
+            "nonhier_uses_neo4j_umls_edges": False,
+            "nonhier_includes_same_as": False,
+            "nonhier_includes_isa": False,
+            "nonhier_includes_external_cuis": False,
+            "nonhier_benchmark_tuned": False,
+            "nonhier_v1_seed_match_policy": "permissive",
+            "nonhier_strict_seed_match_policy": "exact_name_only",
+            "nonhier_v1_support_only_ranking_active": True,
+            "nonhier_strict_support_only_ranking_active": False,
+            "nonhier_v3_ranking_policy": "direct_first_graph_second",
             "descendants_per_seed": args.descendants_per_seed,
             "max_expanded_rows": args.max_expanded_rows,
             "advanced_ranking_mode": args.advanced_ranking_mode,
@@ -922,6 +1062,31 @@ def main() -> None:
                                 embedding_seeder
                                 if mode == "mentions_embedding_seeded"
                                 else None
+                            ),
+                            isa_connections_path=(
+                                str(args.isa_connections)
+                                if args.isa_connections is not None
+                                else None
+                            ),
+                            isa_max_depth=args.isa_max_depth,
+                            nonhier_artifact_path=(
+                                str(args.nonhier_raw_artifact)
+                                if mode in {
+                                    "mentions_nonhier_artifact_raw",
+                                    "mentions_nonhier_artifact_raw_strict",
+                                    "mentions_nonhier_artifact_raw_strict_direct_first",
+                                }
+                                and args.nonhier_raw_artifact is not None
+                                else (
+                                    str(args.nonhier_safe_artifact)
+                                    if mode in {
+                                        "mentions_nonhier_artifact_safe",
+                                        "mentions_nonhier_artifact_safe_strict",
+                                        "mentions_nonhier_artifact_safe_strict_direct_first",
+                                    }
+                                    and args.nonhier_safe_artifact is not None
+                                    else None
+                                )
                             ),
                         )
                         run = pipeline.retrieve(question)

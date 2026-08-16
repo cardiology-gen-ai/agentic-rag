@@ -27,6 +27,7 @@ KGCandidateSource = Literal[
     "descendant",
     "same_as",
     "umls_neighbor",
+    "nonhier_artifact",
 ]
 
 _EXCLUDED_TITLE_PREFIXES = [
@@ -875,6 +876,9 @@ def _evidence_rows_to_results(
     require_all: bool,
     top_k: int,
     ranking_mode: KGRankingMode,
+    preserve_concept_match_baseline_order: bool = False,
+    ranking_neutral_expansion_modes: frozenset[str] | None = None,
+    direct_first_graph_second: bool = False,
 ) -> list[KGSectionResult]:
     grouped: dict[str, dict[str, Any]] = {}
 
@@ -901,11 +905,18 @@ def _evidence_rows_to_results(
     results: list[KGSectionResult] = []
     required_terms = {str(term).casefold() for term in terms}
 
+    neutral_modes = ranking_neutral_expansion_modes or frozenset()
+
     for group in grouped.values():
         diagnostics = group["diagnostics"]
+        scoring_diagnostics = [
+            item
+            for item in diagnostics
+            if str(item.get("expansion_mode") or "").strip() not in neutral_modes
+        ]
         matched_terms = _ordered_unique(
             str(item["query_term"]).casefold()
-            for item in diagnostics
+            for item in scoring_diagnostics
             if item.get("query_term")
         )
         if require_all and set(matched_terms) != required_terms:
@@ -913,10 +924,10 @@ def _evidence_rows_to_results(
 
         matched_concepts = _ordered_unique(
             str(item["concept_name"])
-            for item in diagnostics
+            for item in scoring_diagnostics
             if item.get("concept_name")
         )
-        scores = _score_concept_graph_diagnostics(diagnostics)
+        scores = _score_concept_graph_diagnostics(scoring_diagnostics)
         active_score = scores[ranking_mode]
         section_row = dict(group["section"])
         section_row.update(
@@ -931,22 +942,56 @@ def _evidence_rows_to_results(
         )
         results.append(KGSectionResult.from_record(section_row))
 
-    results.sort(
-        key=lambda result: (
-            -(result.score or 0.0),
-            -(
-                result.scores.weighted_match
-                if result.scores is not None
-                else 0.0
-            ),
-            -(
-                result.scores.concept_match
-                if result.scores is not None
-                else 0.0
-            ),
-            result.section_uid,
+    if direct_first_graph_second and ranking_mode == "concept_match":
+        # Conservative graph-aware ranking policy. Directly supported query
+        # terms dominate graph-only support; graph evidence is used only as a
+        # secondary discriminator among candidates with equal direct coverage.
+        # No tuned numeric coefficient is introduced.
+        results.sort(
+            key=lambda result: (
+                -(
+                    result.scores.direct_concept_match
+                    if result.scores is not None
+                    else 0.0
+                ),
+                -(
+                    result.scores.graph_only_concept_match
+                    if result.scores is not None
+                    else 0.0
+                ),
+                result.section_uid,
+            )
         )
-    )
+    elif preserve_concept_match_baseline_order and ranking_mode == "concept_match":
+        # Match the pure local MENTIONS baseline exactly: concept-match score
+        # first, then deterministic Section uid.  In particular, do not let
+        # lexical/evidence weights break ties when the active score is
+        # concept_match.  This is required for controlled graph ablations:
+        # if no expansion evidence is present, the ranked direct candidates
+        # must be identical to mentions_only.
+        results.sort(
+            key=lambda result: (
+                -(result.score or 0.0),
+                result.section_uid,
+            )
+        )
+    else:
+        results.sort(
+            key=lambda result: (
+                -(result.score or 0.0),
+                -(
+                    result.scores.weighted_match
+                    if result.scores is not None
+                    else 0.0
+                ),
+                -(
+                    result.scores.concept_match
+                    if result.scores is not None
+                    else 0.0
+                ),
+                result.section_uid,
+            )
+        )
 
     return [
         result.model_copy(update={"rank": rank})
@@ -969,6 +1014,9 @@ def _diagnostic_from_evidence_row(row: dict[str, Any]) -> dict[str, Any]:
         "seed_concept_name": _optional_str(row.get("seed_concept_name")),
         "seed_cui": _optional_str(row.get("seed_cui")),
         "target_cui": _optional_str(row.get("target_cui")),
+        "artifact_edge_id": _optional_str(row.get("artifact_edge_id")),
+        "semantic_status": _optional_str(row.get("semantic_status")),
+        "expansion_mode": _optional_str(row.get("expansion_mode")),
     }
 
 
@@ -983,6 +1031,9 @@ def _diagnostic_key(diagnostic: dict[str, Any]) -> tuple[Any, ...]:
         diagnostic.get("traversal_policy"),
         diagnostic.get("seed_cui"),
         diagnostic.get("target_cui"),
+        diagnostic.get("artifact_edge_id"),
+        diagnostic.get("semantic_status"),
+        diagnostic.get("expansion_mode"),
     )
 
 
@@ -1019,9 +1070,26 @@ def _score_concept_graph_diagnostics(
     # baseline: number of distinct query terms supported by the Section.
     # Lexical quality and graph-evidence strength belong only to weighted_match.
     concept_match_score = float(len(by_term))
+
+    direct_terms = {
+        str(item.get("query_term") or "").casefold()
+        for item in diagnostics
+        if item.get("query_term")
+        and str(item.get("evidence_source") or "").strip() == "direct"
+    }
+    graph_terms = {
+        str(item.get("query_term") or "").casefold()
+        for item in diagnostics
+        if item.get("query_term")
+        and str(item.get("evidence_source") or "").strip() not in {"", "direct"}
+    }
+    graph_only_terms = graph_terms - direct_terms
+
     return {
         "concept_match": concept_match_score,
         "weighted_match": weighted_match_score,
+        "direct_concept_match": float(len(direct_terms)),
+        "graph_only_concept_match": float(len(graph_only_terms)),
     }
 
 
@@ -1227,6 +1295,8 @@ def _candidate_source_from_diagnostics(
         return "same_as"
     if "umls_neighbor" in sources:
         return "umls_neighbor"
+    if "nonhier_artifact" in sources:
+        return "nonhier_artifact"
     return "mentions"
 
 
@@ -1248,6 +1318,9 @@ def _source_graph_distance(source: KGCandidateSource) -> int:
     if source == "same_as":
         return 1
     if source == "umls_neighbor":
+        return 2
+    if source == "nonhier_artifact":
+        # One ontology edge plus the final MENTIONS edge to Section.
         return 2
     return 0
 

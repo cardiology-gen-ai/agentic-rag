@@ -35,6 +35,11 @@ from agentic_rag.kg.expanders import (
     NoOpExpander,
 )
 from agentic_rag.kg.models import KGRankingMode
+from agentic_rag.kg.isa_artifact import (
+    ISAArtifactCandidateGenerator,
+    ISASafeRerankCandidateGenerator,
+)
+from agentic_rag.kg.nonhier_artifact import NonHierArtifactCandidateGenerator
 from agentic_rag.kg.rerankers import (
     CandidateRerankerProtocol,
     NoOpReranker,
@@ -49,6 +54,15 @@ ModularKGMode = Literal[
     "mentions_descendants",
     "mentions_same_as",
     "mentions_umls_safe",
+    "mentions_isa_forward_artifact",
+    "mentions_isa_forward_artifact_strict_direct_first",
+    "mentions_isa_semantic_safe_rerank",
+    "mentions_nonhier_artifact_raw",
+    "mentions_nonhier_artifact_safe",
+    "mentions_nonhier_artifact_raw_strict",
+    "mentions_nonhier_artifact_safe_strict",
+    "mentions_nonhier_artifact_raw_strict_direct_first",
+    "mentions_nonhier_artifact_safe_strict_direct_first",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
 ]
@@ -311,6 +325,9 @@ def build_modular_kg_pipeline(
     concept_embedding_cache: str | None = None,
     concept_embedding_min_similarity: float | None = None,
     concept_seeder: ConceptSeederProtocol | None = None,
+    isa_connections_path: str | None = None,
+    isa_max_depth: int = 1,
+    nonhier_artifact_path: str | None = None,
 ) -> ModularKGRetrievalPipeline:
     """Build one named ablation configuration.
 
@@ -370,6 +387,116 @@ def build_modular_kg_pipeline(
             tools,
             seeder,
             exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode in {
+        "mentions_isa_forward_artifact",
+        "mentions_isa_forward_artifact_strict_direct_first",
+    }:
+        if client is None:
+            raise ValueError(
+                f"client is required for mode={normalized_mode!r}"
+            )
+        if not isa_connections_path:
+            raise ValueError(
+                "isa_connections_path is required for "
+                f"mode={normalized_mode!r}"
+            )
+        is_strict_direct_first = (
+            normalized_mode
+            == "mentions_isa_forward_artifact_strict_direct_first"
+        )
+        generator = ISAArtifactCandidateGenerator(
+            client,
+            connections_path=isa_connections_path,
+            max_depth=isa_max_depth,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+            seed_match_policy=(
+                "exact_name_only"
+                if is_strict_direct_first
+                else "permissive"
+            ),
+            direct_first_graph_second=is_strict_direct_first,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_isa_semantic_safe_rerank":
+        if client is None:
+            raise ValueError(
+                "client is required for mode='mentions_isa_semantic_safe_rerank'"
+            )
+        if not isa_connections_path:
+            raise ValueError(
+                "isa_connections_path is required for "
+                "mode='mentions_isa_semantic_safe_rerank'"
+            )
+        generator = ISASafeRerankCandidateGenerator(
+            client,
+            artifact_path=isa_connections_path,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode in {
+        "mentions_nonhier_artifact_raw",
+        "mentions_nonhier_artifact_safe",
+        "mentions_nonhier_artifact_raw_strict",
+        "mentions_nonhier_artifact_safe_strict",
+        "mentions_nonhier_artifact_raw_strict_direct_first",
+        "mentions_nonhier_artifact_safe_strict_direct_first",
+    }:
+        if client is None:
+            raise ValueError(
+                f"client is required for mode={normalized_mode!r}"
+            )
+        if not nonhier_artifact_path:
+            raise ValueError(
+                "nonhier_artifact_path is required for "
+                f"mode={normalized_mode!r}"
+            )
+        is_raw = normalized_mode in {
+            "mentions_nonhier_artifact_raw",
+            "mentions_nonhier_artifact_raw_strict",
+            "mentions_nonhier_artifact_raw_strict_direct_first",
+        }
+        is_strict = normalized_mode in {
+            "mentions_nonhier_artifact_raw_strict",
+            "mentions_nonhier_artifact_safe_strict",
+            "mentions_nonhier_artifact_raw_strict_direct_first",
+            "mentions_nonhier_artifact_safe_strict_direct_first",
+        }
+        expected_artifact_name = (
+            "nonhier_semantic_raw_v1"
+            if is_raw
+            else "nonhier_semantic_safe_v1"
+        )
+        generator = NonHierArtifactCandidateGenerator(
+            client,
+            artifact_path=nonhier_artifact_path,
+            expected_artifact_name=expected_artifact_name,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+            seed_match_policy=(
+                "exact_name_only" if is_strict else "permissive"
+            ),
+            support_only_ranking_active=(
+                False
+                if normalized_mode in {
+                    "mentions_nonhier_artifact_safe_strict",
+                    "mentions_nonhier_artifact_safe_strict_direct_first",
+                }
+                else True
+            ),
+            direct_first_graph_second=normalized_mode in {
+                "mentions_nonhier_artifact_raw_strict_direct_first",
+                "mentions_nonhier_artifact_safe_strict_direct_first",
+            },
         )
         expander = NoOpExpander()
         reranker = NoOpReranker()
@@ -500,6 +627,15 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_descendants",
         "mentions_same_as",
         "mentions_umls_safe",
+        "mentions_isa_forward_artifact",
+        "mentions_isa_forward_artifact_strict_direct_first",
+    "mentions_isa_semantic_safe_rerank",
+        "mentions_nonhier_artifact_raw",
+        "mentions_nonhier_artifact_safe",
+        "mentions_nonhier_artifact_raw_strict",
+        "mentions_nonhier_artifact_safe_strict",
+        "mentions_nonhier_artifact_raw_strict_direct_first",
+        "mentions_nonhier_artifact_safe_strict_direct_first",
         "mentions_same_as_rescue",
         "mentions_umls_safe_rescue",
     }

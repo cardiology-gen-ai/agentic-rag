@@ -28,6 +28,11 @@ class KGRetrievalScores(BaseModel):
 
     concept_match: float = 0.0
     weighted_match: float = 0.0
+    # Graph-aware diagnostics. These do not change the legacy score values;
+    # they expose how many distinct query terms are supported directly versus
+    # only through graph-derived evidence.
+    direct_concept_match: float = 0.0
+    graph_only_concept_match: float = 0.0
 
 
 class KGMatchDiagnostic(BaseModel):
@@ -40,7 +45,12 @@ class KGMatchDiagnostic(BaseModel):
     matched_value: str | None = None
     match_type: str
     weight: float
-    evidence_source: Literal["direct", "same_as", "umls_neighbor"] | None = None
+    evidence_source: Literal[
+        "direct",
+        "same_as",
+        "umls_neighbor",
+        "nonhier_artifact",
+    ] | None = None
     relation_type: str | None = None
     traversal_policy: str | None = None
     review_needed: bool | None = None
@@ -48,6 +58,14 @@ class KGMatchDiagnostic(BaseModel):
     seed_concept_name: str | None = None
     seed_cui: str | None = None
     target_cui: str | None = None
+    artifact_edge_id: str | None = None
+    semantic_status: Literal["valid", "valid_but_broad"] | None = None
+    expansion_mode: Literal[
+        "expand",
+        "support_only",
+        "rerank_only",
+        "provenance_only",
+    ] | None = None
 
     @field_validator("query_term", "match_type")
     @classmethod
@@ -65,6 +83,7 @@ class KGMatchDiagnostic(BaseModel):
         "seed_concept_name",
         "seed_cui",
         "target_cui",
+        "artifact_edge_id",
     )
     @classmethod
     def normalize_optional_text(cls, value: str | None) -> str | None:

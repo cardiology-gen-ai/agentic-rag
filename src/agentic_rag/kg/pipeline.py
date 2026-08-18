@@ -64,6 +64,7 @@ ModularKGMode = Literal[
     "mentions_nonhier_artifact_raw_strict_direct_first",
     "mentions_nonhier_artifact_safe_strict_direct_first",
     "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+    "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
 ]
@@ -452,6 +453,7 @@ def build_modular_kg_pipeline(
         "mentions_nonhier_artifact_raw_strict_direct_first",
         "mentions_nonhier_artifact_safe_strict_direct_first",
         "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+        "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
     }:
         if client is None:
             raise ValueError(
@@ -473,6 +475,7 @@ def build_modular_kg_pipeline(
             "mentions_nonhier_artifact_raw_strict_direct_first",
             "mentions_nonhier_artifact_safe_strict_direct_first",
             "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+            "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
         }
         expected_artifact_name = (
             "nonhier_semantic_raw_v1"
@@ -500,6 +503,7 @@ def build_modular_kg_pipeline(
                 "mentions_nonhier_artifact_raw_strict_direct_first",
                 "mentions_nonhier_artifact_safe_strict_direct_first",
                 "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+                "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
             },
             freeze_direct_candidate_pool=(
                 normalized_mode
@@ -651,6 +655,7 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_nonhier_artifact_raw_strict_direct_first",
         "mentions_nonhier_artifact_safe_strict_direct_first",
         "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+        "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
         "mentions_same_as_rescue",
         "mentions_umls_safe_rescue",
     }

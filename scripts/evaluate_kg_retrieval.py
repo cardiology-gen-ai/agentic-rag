@@ -69,6 +69,7 @@ MODULAR_MODES = (
     "mentions_nonhier_artifact_raw_strict_direct_first",
     "mentions_nonhier_artifact_safe_strict_direct_first",
     "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+    "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
 )
@@ -703,6 +704,7 @@ def main() -> None:
             "mentions_nonhier_artifact_safe_strict",
             "mentions_nonhier_artifact_safe_strict_direct_first",
             "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+            "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
         }
     ):
         if args.nonhier_safe_artifact is None:
@@ -868,6 +870,9 @@ def main() -> None:
             "nonhier_frozen_direct_candidate_pool_mode": (
                 "mentions_nonhier_artifact_safe_strict_direct_first_frozen"
                 in modes
+            ),
+            "nonhier_controlled_candidate_rescue_mode": (
+                "mentions_nonhier_artifact_safe_strict_direct_first_rescue" in modes
             ),
             "descendants_per_seed": args.descendants_per_seed,
             "max_expanded_rows": args.max_expanded_rows,
@@ -1090,6 +1095,7 @@ def main() -> None:
                                         "mentions_nonhier_artifact_safe_strict",
                                         "mentions_nonhier_artifact_safe_strict_direct_first",
                                         "mentions_nonhier_artifact_safe_strict_direct_first_frozen",
+                                        "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
                                     }
                                     and args.nonhier_safe_artifact is not None
                                     else None

@@ -50,6 +50,8 @@ class KGMatchDiagnostic(BaseModel):
         "same_as",
         "umls_neighbor",
         "nonhier_artifact",
+        "direct_local_artifact",
+        "ontology_bridge_artifact",
     ] | None = None
     relation_type: str | None = None
     traversal_policy: str | None = None

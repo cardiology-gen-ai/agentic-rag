@@ -18,7 +18,7 @@ from agentic_rag.kg.concept_seeders import (
     ConceptSeederProtocol,
     flatten_seed_groups,
 )
-from agentic_rag.kg.models import KGSectionResult, KGRankingMode
+from agentic_rag.kg.models import KGSectionResult, KGRankingMode, KGRetrievalScores
 
 
 KGCandidateSource = Literal[
@@ -28,6 +28,8 @@ KGCandidateSource = Literal[
     "same_as",
     "umls_neighbor",
     "nonhier_artifact",
+    "direct_local_artifact",
+    "ontology_bridge_artifact",
 ]
 
 _EXCLUDED_TITLE_PREFIXES = [
@@ -559,6 +561,371 @@ class SeededMentionsCandidateGenerator:
             seed_count=len(seeds),
         )
         return candidates, list(seeds)
+
+
+def _semantic_similarity_score_from_candidate(
+    candidate: KGCandidate,
+) -> tuple[float, int]:
+    """Sum the strongest stored embedding similarity per distinct query term."""
+    per_term: dict[str, float] = {}
+    for diagnostic in candidate.section.match_diagnostics:
+        term = str(diagnostic.query_term or "").strip()
+        if not term:
+            continue
+        similarity = getattr(diagnostic, "similarity", None)
+        value = float(similarity) if similarity is not None else 0.0
+        per_term[term] = max(per_term.get(term, 0.0), value)
+    return sum(per_term.values()), len(per_term)
+
+
+def _candidate_with_seed_channel_score(
+    candidate: KGCandidate,
+    *,
+    score: float,
+    concept_match: float,
+    metadata_updates: dict[str, Any] | None = None,
+) -> KGCandidate:
+    existing_scores = candidate.section.scores or KGRetrievalScores()
+    updated_section = candidate.section.model_copy(
+        update={
+            "score": float(score),
+            "score_type": "weighted_match",
+            "scores": existing_scores.model_copy(
+                update={
+                    "concept_match": float(concept_match),
+                    "weighted_match": float(score),
+                }
+            ),
+        }
+    )
+    metadata = dict(candidate.metadata)
+    metadata.update(metadata_updates or {})
+    return candidate.model_copy(
+        update={
+            "section": updated_section,
+            "metadata": metadata,
+        }
+    )
+
+
+class SimilarityWeightedSeededMentionsCandidateGenerator:
+    """Replay the frozen semantic candidate pool using embedding confidence.
+
+    Candidate generation is unchanged: the wrapped seeded MENTIONS generator
+    still selects the same explicit local Concepts and the same Section pool.
+    Only the ordering changes. For each query term, the maximum stored cosine
+    similarity among semantic seed evidence supporting the Section is retained,
+    and the values are summed across distinct query terms.
+    """
+
+    name = "seeded_mentions_similarity_weighted"
+
+    def __init__(
+        self,
+        base_generator: SeededMentionsCandidateGenerator,
+    ) -> None:
+        self.base_generator = base_generator
+        self.ranking_mode: KGRankingMode = "weighted_match"
+
+    def generate(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> list[KGCandidate]:
+        candidates, _ = self.generate_with_seeds(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+        return candidates
+
+    def generate_with_seeds(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> tuple[list[KGCandidate], list[ConceptSeed]]:
+        candidates, seeds = self.base_generator.generate_with_seeds(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+        scored: list[tuple[KGCandidate, float, int, int]] = []
+        for fallback_rank, candidate in enumerate(candidates, start=1):
+            score, term_count = _semantic_similarity_score_from_candidate(
+                candidate
+            )
+            original_rank = candidate.source_rank or fallback_rank
+            scored.append((candidate, score, term_count, original_rank))
+
+        scored.sort(
+            key=lambda item: (
+                -item[1],
+                -item[2],
+                item[3],
+                item[0].section_uid,
+            )
+        )
+
+        output: list[KGCandidate] = []
+        for rank, (candidate, score, term_count, _old_rank) in enumerate(
+            scored,
+            start=1,
+        ):
+            updated = _candidate_with_seed_channel_score(
+                candidate,
+                score=score,
+                concept_match=float(term_count),
+                metadata_updates={
+                    "seed_channel_policy": "semantic_similarity_weighted",
+                    "original_seeded_rank": candidate.source_rank,
+                },
+            )
+            output.append(
+                updated.model_copy(
+                    update={
+                        "source_rank": rank,
+                        "seed_rank": rank,
+                    }
+                )
+            )
+        return output[:top_k], list(seeds)
+
+
+def _lexical_term_scores(candidate: KGCandidate) -> dict[str, float]:
+    scores: dict[str, float] = {}
+    for diagnostic in candidate.section.match_diagnostics:
+        term = str(diagnostic.query_term or "").strip()
+        if not term:
+            continue
+        value = float(diagnostic.weight or 1.0)
+        scores[term] = max(scores.get(term, 0.0), value)
+    return scores
+
+
+def _semantic_term_scores(candidate: KGCandidate) -> dict[str, float]:
+    scores: dict[str, float] = {}
+    for diagnostic in candidate.section.match_diagnostics:
+        term = str(diagnostic.query_term or "").strip()
+        if not term:
+            continue
+        similarity = getattr(diagnostic, "similarity", None)
+        value = float(similarity) if similarity is not None else 0.0
+        scores[term] = max(scores.get(term, 0.0), value)
+    return scores
+
+
+class HybridBestChannelCandidateGenerator:
+    """Fuse lexical and semantic MENTIONS evidence without tuned coefficients.
+
+    For each Section/query-term pair the stronger channel is retained:
+      max(lexical evidence weight, semantic cosine similarity)
+    The resulting per-term values are summed. Ties prefer more lexical-supported
+    terms and then the best original channel rank.
+
+    Each channel is generated with the same requested top_k before the union,
+    matching the offline seed-channel replay.
+    """
+
+    name = "mentions_lexical_semantic_best_channel"
+
+    def __init__(
+        self,
+        lexical_generator: MentionsCandidateGenerator,
+        semantic_generator: SeededMentionsCandidateGenerator,
+    ) -> None:
+        self.lexical_generator = lexical_generator
+        self.semantic_generator = semantic_generator
+        self.ranking_mode: KGRankingMode = "weighted_match"
+
+    def generate(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> list[KGCandidate]:
+        lexical = self.lexical_generator.generate(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+        semantic, _ = self.semantic_generator.generate_with_seeds(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+
+        merged: dict[str, dict[str, Any]] = {}
+
+        for candidate in lexical:
+            rec = merged.setdefault(
+                candidate.section_uid,
+                {
+                    "base": candidate,
+                    "lexical": {},
+                    "semantic": {},
+                    "diagnostics": [],
+                    "concepts": [],
+                    "terms": [],
+                    "lexical_rank": 10**9,
+                    "semantic_rank": 10**9,
+                },
+            )
+            rec["lexical_rank"] = min(
+                rec["lexical_rank"],
+                candidate.source_rank,
+            )
+            for term, value in _lexical_term_scores(candidate).items():
+                rec["lexical"][term] = max(
+                    rec["lexical"].get(term, 0.0),
+                    value,
+                )
+            rec["diagnostics"].extend(candidate.section.match_diagnostics)
+            rec["concepts"].extend(candidate.section.matched_concepts)
+            rec["terms"].extend(candidate.section.matched_terms)
+
+        for candidate in semantic:
+            rec = merged.setdefault(
+                candidate.section_uid,
+                {
+                    "base": candidate,
+                    "lexical": {},
+                    "semantic": {},
+                    "diagnostics": [],
+                    "concepts": [],
+                    "terms": [],
+                    "lexical_rank": 10**9,
+                    "semantic_rank": 10**9,
+                },
+            )
+            rec["semantic_rank"] = min(
+                rec["semantic_rank"],
+                candidate.source_rank,
+            )
+            for term, value in _semantic_term_scores(candidate).items():
+                rec["semantic"][term] = max(
+                    rec["semantic"].get(term, 0.0),
+                    value,
+                )
+            rec["diagnostics"].extend(candidate.section.match_diagnostics)
+            rec["concepts"].extend(candidate.section.matched_concepts)
+            rec["terms"].extend(candidate.section.matched_terms)
+
+        ranked: list[
+            tuple[KGCandidate, float, int, int]
+        ] = []
+
+        for rec in merged.values():
+            terms_all = set(rec["lexical"]) | set(rec["semantic"])
+            score = sum(
+                max(
+                    rec["lexical"].get(term, 0.0),
+                    rec["semantic"].get(term, 0.0),
+                )
+                for term in terms_all
+            )
+            lexical_term_count = len(rec["lexical"])
+            best_original_rank = min(
+                rec["lexical_rank"],
+                rec["semantic_rank"],
+            )
+
+            base: KGCandidate = rec["base"]
+            # De-duplicate diagnostics while preserving order.
+            diagnostics = []
+            seen_diag = set()
+            for diagnostic in rec["diagnostics"]:
+                key = (
+                    diagnostic.query_term,
+                    diagnostic.concept_name,
+                    diagnostic.match_type,
+                    getattr(diagnostic, "seeding_method", None),
+                    getattr(diagnostic, "seed_rank", None),
+                    getattr(diagnostic, "similarity", None),
+                )
+                if key in seen_diag:
+                    continue
+                seen_diag.add(key)
+                diagnostics.append(diagnostic)
+
+            matched_concepts = list(dict.fromkeys(rec["concepts"]))
+            matched_terms = list(dict.fromkeys(rec["terms"]))
+            updated_section = base.section.model_copy(
+                update={
+                    "matched_concepts": matched_concepts,
+                    "matched_terms": matched_terms,
+                    "match_diagnostics": diagnostics,
+                    "score": float(score),
+                    "score_type": "weighted_match",
+                    "scores": KGRetrievalScores(
+                        concept_match=float(len(terms_all)),
+                        weighted_match=float(score),
+                    ),
+                }
+            )
+            updated = base.model_copy(
+                update={
+                    "section": updated_section,
+                    "metadata": {
+                        **base.metadata,
+                        "generator": "seed_channel_hybrid",
+                        "seed_channel_policy": "hybrid_best_channel",
+                        "lexical_original_rank": (
+                            None
+                            if rec["lexical_rank"] == 10**9
+                            else rec["lexical_rank"]
+                        ),
+                        "semantic_original_rank": (
+                            None
+                            if rec["semantic_rank"] == 10**9
+                            else rec["semantic_rank"]
+                        ),
+                    },
+                }
+            )
+            ranked.append(
+                (
+                    updated,
+                    score,
+                    lexical_term_count,
+                    best_original_rank,
+                )
+            )
+
+        ranked.sort(
+            key=lambda item: (
+                -item[1],
+                -item[2],
+                item[3],
+                item[0].section_uid,
+            )
+        )
+
+        output = []
+        for rank, (candidate, _score, _lexical_terms, _best_rank) in enumerate(
+            ranked[:top_k],
+            start=1,
+        ):
+            output.append(
+                candidate.model_copy(
+                    update={
+                        "source_rank": rank,
+                        "seed_rank": rank,
+                    }
+                )
+            )
+        return output
 
 
 class ConceptGraphExpansionCandidateGenerator:
@@ -1297,6 +1664,10 @@ def _candidate_source_from_diagnostics(
         return "umls_neighbor"
     if "nonhier_artifact" in sources:
         return "nonhier_artifact"
+    if "direct_local_artifact" in sources:
+        return "direct_local_artifact"
+    if "ontology_bridge_artifact" in sources:
+        return "ontology_bridge_artifact"
     return "mentions"
 
 
@@ -1321,6 +1692,9 @@ def _source_graph_distance(source: KGCandidateSource) -> int:
         return 2
     if source == "nonhier_artifact":
         # One ontology edge plus the final MENTIONS edge to Section.
+        return 2
+    if source in {"direct_local_artifact", "ontology_bridge_artifact"}:
+        # One frozen local-local semantic connection plus MENTIONS to Section.
         return 2
     return 0
 

@@ -56,6 +56,8 @@ MODULAR_MODES = (
     "mentions_only",
     "mentions_lexical_seeded",
     "mentions_embedding_seeded",
+    "mentions_embedding_seeded_similarity_weighted",
+    "mentions_lexical_semantic_best_channel",
     "mentions_descendants",
     "mentions_same_as",
     "mentions_umls_safe",
@@ -72,6 +74,18 @@ MODULAR_MODES = (
     "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
+    "mentions_direct_balanced",
+    "mentions_bridge_sa_top5",
+    "mentions_direct_bridge_sa_top3",
+    "mentions_direct_bridge_sa_top5",
+    "mentions_direct_bridge_sa_top10",
+    "semantic_weighted_direct_balanced",
+    "semantic_weighted_bridge_sa_top5",
+    "semantic_weighted_direct_bridge_sa_top3",
+    "semantic_weighted_direct_bridge_sa_top5",
+    "semantic_weighted_direct_bridge_sa_top10",
+    "semantic_weighted_pool_union_direct_bridge_sa_top3",
+    "semantic_weighted_pool_rrf_direct_bridge_sa_top3",
 )
 ALL_MODES = (*MODULAR_MODES, "planned_role_aware")
 
@@ -129,6 +143,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--start-after", default=None)
     parser.add_argument("--candidate-k", type=int, default=15)
+    parser.add_argument("--graph-candidate-k", type=int, default=None)
     parser.add_argument("--top-k", type=int, default=10)
     parser.add_argument("--concept-embedding-model", default=None)
     parser.add_argument("--concepts-per-term", type=int, default=3)
@@ -179,6 +194,15 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Frozen data-etl nonhier_semantic_safe_v1.json used by SAFE "
             "non-hier artifact modes (v1 and strict-v2)."
+        ),
+    )
+    parser.add_argument(
+        "--connection-config",
+        type=Path,
+        default=None,
+        help=(
+            "JSON configuration for frozen DIRECT/BRIDGE connection ablation "
+            "modes."
         ),
     )
     parser.add_argument("--descendants-per-seed", type=int, default=5)
@@ -716,8 +740,45 @@ def main() -> None:
             args.nonhier_safe_artifact,
             "Non-hier SAFE retrieval artifact",
         )
+    connection_modes = {
+        "mentions_direct_balanced",
+        "mentions_bridge_sa_top5",
+        "mentions_direct_bridge_sa_top3",
+        "mentions_direct_bridge_sa_top5",
+        "mentions_direct_bridge_sa_top10",
+        "semantic_weighted_direct_balanced",
+        "semantic_weighted_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top3",
+        "semantic_weighted_direct_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top10",
+        "semantic_weighted_pool_union_direct_bridge_sa_top3",
+        "semantic_weighted_pool_rrf_direct_bridge_sa_top3",
+    }
+    if any(mode in modes for mode in connection_modes):
+        if args.connection_config is None:
+            raise ValueError(
+                "--connection-config is required when a frozen connection "
+                "ablation mode is selected"
+            )
+        args.connection_config = resolve_file(
+            args.connection_config,
+            "Connection ablation configuration",
+        )
+
+    embedding_seed_modes = {
+        "mentions_embedding_seeded",
+        "mentions_embedding_seeded_similarity_weighted",
+        "mentions_lexical_semantic_best_channel",
+        "semantic_weighted_direct_balanced",
+        "semantic_weighted_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top3",
+        "semantic_weighted_direct_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top10",
+        "semantic_weighted_pool_union_direct_bridge_sa_top3",
+        "semantic_weighted_pool_rrf_direct_bridge_sa_top3",
+    }
     if (
-        "mentions_embedding_seeded" in modes
+        any(mode in modes for mode in embedding_seed_modes)
         and not args.concept_embedding_model
     ):
         raise ValueError(
@@ -874,6 +935,30 @@ def main() -> None:
             "nonhier_controlled_candidate_rescue_mode": (
                 "mentions_nonhier_artifact_safe_strict_direct_first_rescue" in modes
             ),
+            "connection_config": (
+                str(args.connection_config)
+                if args.connection_config is not None
+                else None
+            ),
+            "connection_config_sha256": (
+                hashlib.sha256(args.connection_config.read_bytes()).hexdigest()
+                if args.connection_config is not None
+                else None
+            ),
+            "connection_modes": sorted(
+                mode for mode in modes if mode in connection_modes
+            ),
+            "connection_candidate_ranking": (
+                "concept_match_total_preserve_baseline_when_no_graph"
+            ),
+            "pool_preserving_local_candidate_k": args.candidate_k,
+            "pool_preserving_graph_candidate_k": (args.graph_candidate_k if args.graph_candidate_k is not None else args.candidate_k),
+            "pool_preserving_candidate_k_semantics": (
+                "candidate_k is the local-channel budget; graph-channel budget is independent; union is not globally truncated before final top_k"
+            ),
+            "connection_max_depth": 1,
+            "connection_second_hop": False,
+            "connection_gold_used_for_retrieval": False,
             "descendants_per_seed": args.descendants_per_seed,
             "max_expanded_rows": args.max_expanded_rows,
             "advanced_ranking_mode": args.advanced_ranking_mode,
@@ -966,7 +1051,7 @@ def main() -> None:
             )
 
         embedding_seeder = None
-        if "mentions_embedding_seeded" in modes:
+        if any(mode in modes for mode in embedding_seed_modes):
             embedding_seeder = EmbeddingConceptSeeder(
                 tools,
                 embedding_model=args.concept_embedding_model,
@@ -1071,7 +1156,7 @@ def main() -> None:
                             ),
                             concept_seeder=(
                                 embedding_seeder
-                                if mode == "mentions_embedding_seeded"
+                                if mode in embedding_seed_modes
                                 else None
                             ),
                             isa_connections_path=(
@@ -1101,6 +1186,14 @@ def main() -> None:
                                     else None
                                 )
                             ),
+                            connection_config_path=(
+                                str(args.connection_config)
+                                if mode in connection_modes
+                                and args.connection_config is not None
+                                else None
+                            ),
+                            graph_candidate_k=args.graph_candidate_k,
+                            rrf_k=args.rrf_k,
                         )
                         run = pipeline.retrieve(question)
                         raw_results = key_results_from_modular(

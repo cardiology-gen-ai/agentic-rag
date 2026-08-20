@@ -21,6 +21,13 @@ from agentic_rag.kg.candidate_generators import (
     MentionsCandidateGenerator,
     RescueConceptGraphExpansionCandidateGenerator,
     SeededMentionsCandidateGenerator,
+    SimilarityWeightedSeededMentionsCandidateGenerator,
+    HybridBestChannelCandidateGenerator,
+)
+from agentic_rag.kg.connection_artifact_retrieval import (
+    ConnectionArtifactCandidateGenerator,
+    SemanticWeightedConnectionCandidateGenerator,
+    PoolPreservingSemanticConnectionCandidateGenerator,
 )
 from agentic_rag.kg.concept_seeders import (
     ConceptSeed,
@@ -51,6 +58,8 @@ ModularKGMode = Literal[
     "mentions_only",
     "mentions_lexical_seeded",
     "mentions_embedding_seeded",
+    "mentions_embedding_seeded_similarity_weighted",
+    "mentions_lexical_semantic_best_channel",
     "mentions_descendants",
     "mentions_same_as",
     "mentions_umls_safe",
@@ -67,6 +76,18 @@ ModularKGMode = Literal[
     "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
     "mentions_same_as_rescue",
     "mentions_umls_safe_rescue",
+    "mentions_direct_balanced",
+    "mentions_bridge_sa_top5",
+    "mentions_direct_bridge_sa_top3",
+    "mentions_direct_bridge_sa_top5",
+    "mentions_direct_bridge_sa_top10",
+    "semantic_weighted_direct_balanced",
+    "semantic_weighted_bridge_sa_top5",
+    "semantic_weighted_direct_bridge_sa_top3",
+    "semantic_weighted_direct_bridge_sa_top5",
+    "semantic_weighted_direct_bridge_sa_top10",
+    "semantic_weighted_pool_union_direct_bridge_sa_top3",
+    "semantic_weighted_pool_rrf_direct_bridge_sa_top3",
 ]
 ModularKGStatus = Literal[
     "success",
@@ -330,6 +351,9 @@ def build_modular_kg_pipeline(
     isa_connections_path: str | None = None,
     isa_max_depth: int = 1,
     nonhier_artifact_path: str | None = None,
+    connection_config_path: str | None = None,
+    graph_candidate_k: int | None = None,
+    rrf_k: int = 60,
 ) -> ModularKGRetrievalPipeline:
     """Build one named ablation configuration.
 
@@ -389,6 +413,65 @@ def build_modular_kg_pipeline(
             tools,
             seeder,
             exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+
+    elif normalized_mode == "mentions_embedding_seeded_similarity_weighted":
+        seeder = concept_seeder
+        if seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    "mode='mentions_embedding_seeded_similarity_weighted'"
+                )
+            seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                cache_path=concept_embedding_cache,
+            )
+        semantic_base = SeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        generator = SimilarityWeightedSeededMentionsCandidateGenerator(
+            semantic_base
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_lexical_semantic_best_channel":
+        seeder = concept_seeder
+        if seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    "mode='mentions_lexical_semantic_best_channel'"
+                )
+            seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                cache_path=concept_embedding_cache,
+            )
+        lexical_generator = MentionsCandidateGenerator(
+            tools,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        semantic_generator = SeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        generator = HybridBestChannelCandidateGenerator(
+            lexical_generator,
+            semantic_generator,
         )
         expander = NoOpExpander()
         reranker = NoOpReranker()
@@ -519,6 +602,102 @@ def build_modular_kg_pipeline(
         expander = NoOpExpander()
         reranker = NoOpReranker()
 
+    elif normalized_mode in {
+        "mentions_direct_balanced",
+        "mentions_bridge_sa_top5",
+        "mentions_direct_bridge_sa_top3",
+        "mentions_direct_bridge_sa_top5",
+        "mentions_direct_bridge_sa_top10",
+    }:
+        if client is None:
+            raise ValueError(
+                f"client is required for mode={normalized_mode!r}"
+            )
+        if not connection_config_path:
+            raise ValueError(
+                "connection_config_path is required for frozen "
+                f"connection mode={normalized_mode!r}"
+            )
+        generator = ConnectionArtifactCandidateGenerator(
+            client,
+            config_path=connection_config_path,
+            mode_name=normalized_mode,
+            ranking_mode="concept_match",
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+
+    elif normalized_mode in {
+        "semantic_weighted_pool_union_direct_bridge_sa_top3",
+        "semantic_weighted_pool_rrf_direct_bridge_sa_top3",
+    }:
+        if client is None:
+            raise ValueError(f"client is required for mode={normalized_mode!r}")
+        if not connection_config_path:
+            raise ValueError("connection_config_path is required for pool-preserving fusion")
+        seeder = concept_seeder
+        if seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError("concept_embedding_model is required for pool-preserving fusion")
+            seeder = EmbeddingConceptSeeder(
+                tools, embedding_model=concept_embedding_model, concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity, cache_path=concept_embedding_cache,
+            )
+        fusion_policy = (
+            "rrf" if normalized_mode == "semantic_weighted_pool_rrf_direct_bridge_sa_top3"
+            else "semantic_score"
+        )
+        generator = PoolPreservingSemanticConnectionCandidateGenerator(
+            tools, client, seeder, config_path=connection_config_path, mode_name=normalized_mode,
+            graph_candidate_k=(graph_candidate_k or candidate_k), fusion_policy=fusion_policy,
+            rrf_k=rrf_k, exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode in {
+        "semantic_weighted_direct_balanced",
+        "semantic_weighted_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top3",
+        "semantic_weighted_direct_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top10",
+    }:
+        if client is None:
+            raise ValueError(
+                f"client is required for mode={normalized_mode!r}"
+            )
+        if not connection_config_path:
+            raise ValueError(
+                "connection_config_path is required for semantic-weighted "
+                f"connection mode={normalized_mode!r}"
+            )
+        seeder = concept_seeder
+        if seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    f"mode={normalized_mode!r}"
+                )
+            seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                cache_path=concept_embedding_cache,
+            )
+        generator = SemanticWeightedConnectionCandidateGenerator(
+            tools,
+            client,
+            seeder,
+            config_path=connection_config_path,
+            mode_name=normalized_mode,
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
     elif normalized_mode == "mentions_same_as":
         if client is None:
             raise ValueError(
@@ -642,6 +821,8 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_only",
         "mentions_lexical_seeded",
         "mentions_embedding_seeded",
+        "mentions_embedding_seeded_similarity_weighted",
+        "mentions_lexical_semantic_best_channel",
         "mentions_descendants",
         "mentions_same_as",
         "mentions_umls_safe",
@@ -658,6 +839,18 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_nonhier_artifact_safe_strict_direct_first_rescue",
         "mentions_same_as_rescue",
         "mentions_umls_safe_rescue",
+        "mentions_direct_balanced",
+        "mentions_bridge_sa_top5",
+        "mentions_direct_bridge_sa_top3",
+        "mentions_direct_bridge_sa_top5",
+        "mentions_direct_bridge_sa_top10",
+        "semantic_weighted_direct_balanced",
+        "semantic_weighted_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top3",
+        "semantic_weighted_direct_bridge_sa_top5",
+        "semantic_weighted_direct_bridge_sa_top10",
+        "semantic_weighted_pool_union_direct_bridge_sa_top3",
+        "semantic_weighted_pool_rrf_direct_bridge_sa_top3",
     }
     if normalized not in allowed:
         raise ValueError(f"Unsupported modular KG mode: {value!r}")

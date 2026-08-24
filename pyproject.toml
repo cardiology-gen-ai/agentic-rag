@@ -43,6 +43,7 @@ dependencies = [
     "rank-bm25==0.2.2",
     "neo4j>=5.20.0",
     "python-dotenv>=1.0.1",
+    "lingua-language-detector==2.2.0",
     "openai>=1.0.0",
     "cardiologygenai-coordo @ git+https://github.com/cardiology-gen-ai/cardiology-gen-ai.git@main"
 ]

@@ -1,0 +1,1048 @@
+{
+  "metadata": {
+    "schema_version": "3.1",
+    "dataset_name": "CM_CO_evaluation_30_v1",
+    "total_questions": 30,
+    "language": "en",
+    "creation_date": "2026-08-22",
+    "purpose": "Controlled two-guideline retrieval benchmark for comparing vector-based and knowledge-graph-based retrieval over Cardiomyopathies_2023 and Cardio-oncology_2022.",
+    "allowed_document_ids": [
+      "Cardiomyopathies_2023",
+      "Cardio-oncology_2022"
+    ],
+    "document_distribution": {
+      "Cardiomyopathies_2023_only": 10,
+      "Cardio-oncology_2022_only": 10,
+      "cross_document": 10
+    },
+    "evaluation_group_counts": {
+      "single_section": 8,
+      "multi_section": 8,
+      "reasoning_multi_hop": 6,
+      "cross_document": 8
+    },
+    "evidence_scope_counts": {
+      "single_section": 8,
+      "multi_section_single_document": 12,
+      "cross_document": 10
+    },
+    "reasoning_type_counts": {
+      "direct_retrieval": 24,
+      "reasoning_multi_hop": 6
+    },
+    "question_style_policy": "Questions are written as realistic clinical doubts or short clinical scenarios. They do not name the source section to retrieve.",
+    "section_annotation_policy": "Gold annotations use the smallest set of guideline sections required to support the requested answer. Broad parent sections are not added when a more specific child section is sufficient.",
+    "cardiomyopathies_novelty_policy": "Cardiomyopathies-only items were designed to avoid the topics and question formulations used in the prior CM_evaluation_30_v6 benchmark; they are not paraphrases of the original HCM threshold, routine CMR, ARVC Holter, AF anticoagulation, routine follow-up, cascade-testing, amyloidosis, sports, pregnancy, advanced-HF, Fabry, inflammatory NDLVC, or graph-hop cases.",
+    "cross_document_policy": "Cross-document items require complementary evidence from both allowed guidelines. No source or gold tag points to Chronic Coronary Syndromes or Myocardial Revascularization.",
+    "graph_policy": "The set contains reasoning multi-hop questions but no graph_hop_path_verified items. Graph-conditioned questions are intentionally deferred until a multi-document KG exists and paths can be verified.",
+    "canonical_resolution_note": "Printed section IDs and current section-view titles were checked. If the evaluator consumes retrieval_unit_id rather than printed section IDs, resolve these annotations against the exact post-ETL corpus used for the experiment before freezing the benchmark."
+  },
+  "questions": [
+    {
+      "id": "CMCO_CM_SS_01",
+      "question": "A competitive athlete has prominent left-ventricular trabeculation on imaging, but normal chamber size and systolic function and no other evidence of myocardial disease. Should I label this as left-ventricular non-compaction cardiomyopathy, or can it represent a non-pathological phenotype?",
+      "complexity": "intermediate",
+      "expected_format": "interpretation of isolated left-ventricular hypertrabeculation",
+      "gold_answer": "Prominent trabeculation can be a familial trait but can also be acquired or transient, including in athletes. The guideline does not generally classify isolated LV non-compaction as a cardiomyopathy and prefers the term left-ventricular hypertrabeculation, especially when the finding is transient or adult-onset. It should be interpreted in the context of ventricular function, other structural abnormalities, symptoms, and family history.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "3.3.1. Left ventricular hypertrabeculation (left ventricular non-compaction)"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_SS_02",
+      "question": "An asymptomatic 52-year-old whose father has a cardiomyopathy is scheduled for elective non-cardiac surgery. He has never had a cardiac evaluation. Is any specific cardiovascular screening recommended before surgery?",
+      "complexity": "basic",
+      "expected_format": "pre-operative screening recommendation",
+      "gold_answer": "For a patient younger than 65 years with a first-degree relative with cardiomyopathy, ECG and transthoracic echocardiography are recommended before non-cardiac surgery even in the absence of symptoms.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "8.3. Recommendations for non-cardiac surgery"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_SS_03",
+      "question": "A patient with stable cardiomyopathy works in a physically demanding occupation and is planning a long-haul flight. What practical issues should I discuss rather than focusing only on medications and imaging?",
+      "complexity": "intermediate",
+      "expected_format": "practical work and travel counselling",
+      "gold_answer": "Counselling should be individualized around occupational physical demands and any profession-specific restrictions, as well as travel-related issues such as symptoms, device status, medication planning, and insurance. Most clinically stable patients with mild disease can travel by air, but advice should reflect phenotype, symptoms, arrhythmic risk, and implanted devices.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "10. Living with cardiomyopathy: advice for patients"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_SS_04",
+      "question": "A woman from a family with hypertrophic cardiomyopathy asks whether being female makes the disease less likely or simply changes how and when it tends to present. What should I tell her?",
+      "complexity": "intermediate",
+      "expected_format": "sex-specific phenotype and outcome summary",
+      "gold_answer": "Autosomal-dominant inheritance does not imply a lower genetic prevalence in women, but phenotypic expression may occur later. Women with HCM are often diagnosed later and may present with more symptoms, more LV outflow obstruction, and a greater burden of advanced heart failure. Sex alone should not be used to dismiss risk or delay evaluation.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "11. Sex differences in cardiomyopathies"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_MS_01",
+      "question": "Two patients have genetically susceptible cardiomyopathy phenotypes: one has DCM with substantial alcohol exposure, while the other has HCM with obesity and hypertension. How can these acquired factors modify disease expression, and how should modifiable cardiovascular risk factors be handled?",
+      "complexity": "advanced",
+      "expected_format": "phenotype-specific modifier and risk-factor management summary",
+      "gold_answer": "Cardiomyopathy expression reflects interaction between genetic susceptibility and acquired modifiers. Toxic exposure such as alcohol can favour or worsen a dilated phenotype, whereas hypertension, obesity, and metabolic risk factors can increase hypertrophy, symptoms, atrial fibrillation, diastolic dysfunction, and provocable LV outflow gradients in HCM. Identification and treatment of modifiable risk factors and concomitant disease are an integral part of cardiomyopathy management.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "12.1. Cardiovascular risk factors",
+            "12.2. Dilated cardiomyopathy",
+            "12.3. Hypertrophic cardiomyopathy"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 3,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_MS_02",
+      "question": "An adolescent with an inherited cardiomyopathy is moving from paediatric to adult care and still needs input from genetics, rhythm specialists, and local cardiology. How should specialist and local services be organized so that care is not fragmented during transition?",
+      "complexity": "advanced",
+      "expected_format": "multidisciplinary and shared-care transition plan",
+      "gold_answer": "Care should be organized through a multidisciplinary cardiomyopathy team with access to the relevant subspecialties and coordinated with general adult or paediatric cardiology. Complex diagnostic and treatment decisions belong in specialist cardiomyopathy services, while local cardiologists retain an important role in ongoing care. Transition from paediatric to adult services should be planned and coordinated rather than occurring as an abrupt hand-off.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "5.1. Multidisciplinary cardiomyopathy teams",
+            "5.2. Co-ordination between different levels of care"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_MS_03",
+      "question": "A child presents with a new cardiomyopathy together with muscle weakness and possible metabolic features. Which first-line laboratory tests should be obtained, and when should the work-up expand to metabolic or systemic investigations?",
+      "complexity": "advanced",
+      "expected_format": "tiered paediatric laboratory work-up",
+      "gold_answer": "First-level laboratory testing should assess possible aetiology, disease severity, extracardiac manifestations, and secondary organ dysfunction. In children, especially with early onset or neuromuscular, metabolic, or syndromic red flags, the investigation should expand to age- and phenotype-directed metabolic and systemic testing rather than relying on the standard adult work-up alone.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "6.6. Laboratory tests",
+            "6.9. Diagnostic approach to paediatric patients"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_MS_04",
+      "question": "A young patient with an inherited cardiomyopathy has had several appropriate ICD shocks and has become afraid to travel, work, or be alone. Beyond treating the arrhythmia, what support and practical counselling should be offered?",
+      "complexity": "advanced",
+      "expected_format": "psychological support and practical self-management plan",
+      "gold_answer": "Repeated shocks and fear of sudden death can cause major psychological distress. Psychological support should be available within the multidisciplinary pathway and clinicians should have a low threshold for referral. Counselling should also address practical concerns such as work, travel, daily activity, device-related limitations, medication, and communication with relatives and carers.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "6.12. Psychological support in cardiomyopathy patients and family members",
+            "10. Living with cardiomyopathy: advice for patients"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CM_MH_01",
+      "question": "An infant with marked ventricular hypertrophy also has short stature, characteristic facial features, developmental concerns, and pulmonary valve disease. How should these extracardiac clues change the diagnostic approach, and what cardiac risk and management issues become important if a RASopathy is confirmed?",
+      "complexity": "advanced",
+      "expected_format": "syndromic diagnosis, risk assessment, and management pathway",
+      "gold_answer": "The combination of early hypertrophic cardiomyopathy and characteristic extracardiac features should prompt evaluation for a RASopathy rather than treating the hypertrophy as isolated sarcomeric HCM. Syndrome-directed clinical and genetic evaluation is required. Cardiac course and sudden-death risk should then be assessed in the context of RASopathy-associated HCM, with attention to severity of hypertrophy, rhythm and QT findings, age, obstruction, and other congenital lesions, followed by specialist phenotype-appropriate management.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "7.6.2.2. Diagnosis, clinical work-up, and differential diagnosis",
+            "7.6.2.3. Clinical course, management, and sudden death risk stratification",
+            "7.6.2.4. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "reasoning_multi_hop",
+        "document_count": 1,
+        "gold_section_count": 3,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views",
+        "hop_chain": "early HCM plus extracardiac congenital features -> suspect RASopathy -> syndrome-directed diagnostic work-up -> RASopathy-specific cardiac risk assessment -> specialist management"
+      }
+    },
+    {
+      "id": "CMCO_CM_MH_02",
+      "question": "A young adult with progressive gait ataxia, peripheral neuropathy, scoliosis and diabetes is found to have concentric left-ventricular hypertrophy. What unifying diagnosis should be considered, how is it confirmed, and what cardiac problems need longitudinal assessment?",
+      "complexity": "advanced",
+      "expected_format": "syndromic diagnosis and cardiac follow-up pathway",
+      "gold_answer": "The neurological phenotype plus diabetes and hypertrophic cardiac involvement should raise suspicion for Friedreich ataxia. Confirmation requires the appropriate genetic diagnosis. Cardiac assessment should characterize the hypertrophic phenotype and follow for progression toward systolic dysfunction or heart failure and for rhythm complications, with management integrated with the multisystem disease.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "7.6.3.2. Diagnosis, clinical work-up, and differential diagnosis",
+            "7.6.3.3. Clinical course, management, and risk stratification",
+            "7.6.3.4. Management"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "reasoning_multi_hop",
+        "document_count": 1,
+        "gold_section_count": 3,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views",
+        "hop_chain": "progressive ataxia plus systemic features plus LV hypertrophy -> suspect Friedreich ataxia -> genetic confirmation -> characterize cardiac phenotype -> longitudinal risk and management"
+      }
+    },
+    {
+      "id": "CMCO_CO_SS_01",
+      "question": "A patient with several coronary risk factors is about to start a fluoropyrimidine. What cardiovascular assessment should I complete before treatment, and when should I consider looking specifically for underlying coronary disease?",
+      "complexity": "intermediate",
+      "expected_format": "baseline fluoropyrimidine cardiovascular assessment",
+      "gold_answer": "Baseline assessment should include cardiovascular risk evaluation with blood pressure, ECG, lipid and glycaemic assessment and an appropriate risk score. Baseline echocardiography is recommended when there is previous symptomatic cardiovascular disease, and screening for coronary disease may be considered in patients at high or very high CAD risk before fluoropyrimidine treatment.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "5.5.3. Fluoropyrimidines"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_SS_02",
+      "question": "A patient with active cancer and thrombocytopenia has recently undergone PCI. How should the need for antiplatelet therapy be balanced against bleeding risk, and do platelet counts influence the choice of treatment?",
+      "complexity": "advanced",
+      "expected_format": "cancer-specific antiplatelet strategy after PCI",
+      "gold_answer": "DAPT should not be withheld without a good reason, but duration and intensity should be minimized and triple therapy avoided whenever possible. Cancer-specific platelet thresholds and bleeding risk should guide therapy; clopidogrel is favoured over more potent P2Y12 inhibitors at lower platelet counts, and radial PCI is preferred when feasible to reduce bleeding.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "6.7.2. Antiplatelet therapy"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_SS_03",
+      "question": "A patient with metastatic cancer has a malignant pericardial effusion that has recurred after drainage. What options should be considered to reduce the chance of another recurrence?",
+      "complexity": "intermediate",
+      "expected_format": "management of recurrent malignant pericardial effusion",
+      "gold_answer": "Management should address haemodynamic compromise and the malignant cause. A surgical pericardial window should be considered when a percutaneous approach is not feasible or for recurrent malignant effusions, and intrapericardial cytostatic or sclerosing therapy may be considered in selected cases to prevent recurrence.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "6.10.2. Pericardial effusion"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_SS_04",
+      "question": "During treatment with a QT-prolonging anticancer drug, a patient's QTcF rises first to 490 ms and later to just over 500 ms. How should monitoring and treatment change as the QT interval lengthens?",
+      "complexity": "advanced",
+      "expected_format": "QTc monitoring and treatment-adjustment algorithm",
+      "gold_answer": "Reversible causes and concomitant QT-prolonging drugs should be corrected throughout. QTcF values above 480 ms require closer ECG surveillance, while values at or above 500 ms carry substantially greater torsades risk and generally require withholding or interrupting the culprit treatment while reversible factors are corrected. Restarting should be individualized, often at reduced dose and after multidisciplinary discussion, with intensified ECG follow-up.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "6.4.2. Long corrected QT interval and ventricular arrhythmias"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "single_section",
+        "evidence_scope": "single_section",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 1,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_MS_01",
+      "question": "A patient receiving a VEGF inhibitor develops a marked rise in blood pressure. How should blood pressure be monitored during treatment, and how should new treatment-related hypertension be managed without unnecessarily compromising cancer therapy?",
+      "complexity": "advanced",
+      "expected_format": "VEGF-inhibitor blood-pressure monitoring and management plan",
+      "gold_answer": "VEGF-inhibitor therapy requires active blood-pressure surveillance, particularly early after treatment initiation. New hypertension should be treated promptly and according to its severity and cardiovascular context. Cancer treatment should not be interrupted unnecessarily; severe or uncontrolled hypertension requires coordinated management and, when needed, temporary treatment modification with multidisciplinary input.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "5.5.4. Vascular endothelial growth factor inhibitors",
+            "6.5. Arterial hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_MS_02",
+      "question": "A patient with chronic myeloid leukaemia is being considered for nilotinib or ponatinib and already has vascular risk factors. What baseline cardiovascular surveillance is important, and what should be done if symptomatic peripheral arterial disease develops during treatment?",
+      "complexity": "advanced",
+      "expected_format": "BCR-ABL inhibitor vascular surveillance and PAD management",
+      "gold_answer": "Patients receiving BCR-ABL inhibitors with vascular toxicity require careful baseline and longitudinal cardiovascular risk assessment with aggressive control of modifiable risk factors. New symptomatic peripheral arterial disease should trigger vascular evaluation and guideline-based PAD management, while the anticancer regimen is reconsidered with haematology and cardio-oncology according to severity and alternatives.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "5.5.5. Multitargeted kinase inhibitors targeting BCR-ABL",
+            "6.8. Peripheral artery disease"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_MS_03",
+      "question": "A patient has completed cardiotoxic anticancer therapy and is asymptomatic, but the end-of-treatment assessment shows an abnormal cardiac biomarker. How should first-year cardiovascular surveillance be planned, and which features place a survivor in a group needing closer follow-up?",
+      "complexity": "advanced",
+      "expected_format": "risk-stratified first-year surveillance plan",
+      "gold_answer": "The end-of-treatment result should be interpreted together with baseline cardiovascular toxicity risk, treatment exposure, symptoms, biomarkers and cardiac imaging. An abnormal biomarker is a reason not to regard the patient as simply low risk. First-year surveillance should therefore be risk-stratified, with closer cardiovascular follow-up in patients with high baseline risk, abnormal end-of-treatment findings, or cancer therapy-related cardiovascular toxicity.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "7.1. Cardiovascular evaluation during the first year after cardiotoxic anticancer therapy",
+            "7.2. Which cancer survivors require cardiovascular surveillance in the first year after cancer treatment?"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_MS_04",
+      "question": "Before starting a potentially cardiotoxic cancer regimen, what should a practical baseline cardiovascular assessment include if I want to establish both the patient's toxicity risk and useful reference measurements for later surveillance?",
+      "complexity": "advanced",
+      "expected_format": "baseline cardio-oncology assessment",
+      "gold_answer": "Baseline assessment should combine formal cardiovascular toxicity risk stratification with ECG, clinically appropriate cardiac biomarkers, and cardiac imaging. ECG is recommended before cancer therapy, biomarkers should be measured at baseline when they will be followed during treatment, and echocardiography is the first-line modality for baseline cardiac function; high- and very-high-risk or otherwise abnormal patients should receive specialist cardio-oncology/cardiology evaluation.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "4.1. General approach to cardiovascular toxicity risk in patients with cancer",
+            "4.3. Electrocardiogram",
+            "4.4. Cardiac serum biomarkers",
+            "4.5. Cardiovascular imaging"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "multi_section",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 1,
+        "gold_section_count": 4,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_CO_MH_01",
+      "question": "Two weeks after starting an immune checkpoint inhibitor, a patient develops dyspnoea, a troponin rise, and a new conduction abnormality. What diagnosis should be assumed until excluded, which tests are needed urgently, and when should immunosuppression be started?",
+      "complexity": "advanced",
+      "expected_format": "urgent diagnostic and treatment pathway",
+      "gold_answer": "ICI-associated myocarditis should be treated as the leading dangerous diagnosis until excluded. The ICI should be withheld and urgent evaluation should include ECG and serial biomarkers, echocardiography and usually CMR, while competing diagnoses such as acute coronary syndrome are excluded. If myocarditis is considered likely or the patient is unstable, high-dose corticosteroid treatment should not be delayed while the diagnostic work-up is completed.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "5.5.9. Immune checkpoint inhibitors",
+            "6.1.3. Immune checkpoint inhibitor-associated myocarditis and non-inflammatory heart failure"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "reasoning_multi_hop",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views",
+        "hop_chain": "recent ICI exposure -> myocarditis red flags -> urgent ECG/biomarker/imaging evaluation and exclusion of alternatives -> early immunosuppression"
+      }
+    },
+    {
+      "id": "CMCO_CO_MH_02",
+      "question": "A patient with multiple myeloma receiving carfilzomib develops heart-failure symptoms, increased ventricular wall thickness, and unexpectedly low ECG voltages. How should I distinguish treatment-related cardiac toxicity from cardiac light-chain amyloidosis, and what targeted work-up is needed if AL cardiac amyloidosis is suspected?",
+      "complexity": "advanced",
+      "expected_format": "differential diagnosis and targeted AL-amyloidosis work-up",
+      "gold_answer": "Carfilzomib can cause cardiovascular toxicity, but the combination of increased wall thickness and low voltage in a patient with plasma-cell disease should also raise suspicion for AL cardiac amyloidosis. The work-up should therefore evaluate treatment-related dysfunction while specifically assessing for light-chain disease with haematologic testing and cardiac imaging/tissue characterization as appropriate, followed by joint cardio-oncology and haematology management.",
+      "sources": [
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "5.5.7. Multiple myeloma therapies",
+            "9.4. Amyloid light-chain cardiac amyloidosis"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "single_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "evidence_scope": "multi_section_single_document",
+        "reasoning_type": "reasoning_multi_hop",
+        "document_count": 1,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views",
+        "hop_chain": "myeloma therapy plus HF -> treatment toxicity is plausible -> thick walls plus low voltage suggest AL amyloidosis -> targeted AL work-up -> multidisciplinary treatment"
+      }
+    },
+    {
+      "id": "CMCO_XD_01",
+      "question": "A patient with a known inherited cardiomyopathy is about to start a potentially cardiotoxic cancer regimen. How should the cardiomyopathy service and cardio-oncology team divide and coordinate care, and how should baseline cardiovascular toxicity risk influence the treatment plan?",
+      "complexity": "advanced",
+      "expected_format": "cross-specialty pre-treatment care plan",
+      "gold_answer": "The patient should remain within a shared-care cardiomyopathy pathway while cardio-oncology performs treatment-specific cardiovascular toxicity assessment. Pre-existing cardiomyopathy makes specialist involvement particularly important. Baseline risk stratification should inform surveillance intensity and multidisciplinary discussion of the risk-benefit balance, rather than leading automatically to cancellation of effective cancer therapy.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "5.2. Co-ordination between different levels of care"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "2.2. Role of cardio-oncology services",
+            "4.1. General approach to cardiovascular toxicity risk in patients with cancer"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 3,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XD_02",
+      "question": "A patient with cardiomyopathy is scheduled for major cancer surgery. What additional pre-operative cardiovascular assessment is needed because of the cardiomyopathy, and how should that be integrated with the cardiovascular risk evaluation performed before cancer surgery?",
+      "complexity": "advanced",
+      "expected_format": "integrated cardiomyopathy and cancer-surgery pre-operative assessment",
+      "gold_answer": "The pre-operative plan should combine standard cancer-surgery cardiovascular risk evaluation with cardiomyopathy-specific assessment. ECG monitoring is required, and patients with known or suspected heart failure undergoing intermediate- or high-risk surgery should have recent LV assessment by echocardiography and natriuretic peptides; HCM assessment should include LV outflow obstruction. High-risk genotypes, severe obstruction, or major arrhythmic/HF risk warrant specialist cardiomyopathy review before elective surgery.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "8.3. Recommendations for non-cardiac surgery"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "4.7. Cardiovascular risk evaluation before cancer surgery"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XD_03",
+      "question": "A patient with established DCM starts a VEGF inhibitor and develops severe hypertension. How should the underlying cardiomyopathy and its susceptibility to acquired stressors change the way I manage the new hypertension and decisions about continuing cancer treatment?",
+      "complexity": "advanced",
+      "expected_format": "integrated DCM and VEGF-inhibitor hypertension management",
+      "gold_answer": "The DCM should be treated as a vulnerable myocardial substrate in which acquired or treatment-related stressors can worsen expression and clinical status, and modifiable cardiovascular risk factors should be treated actively. VEGF-inhibitor hypertension requires prompt blood-pressure control and close monitoring. Decisions about temporary interruption or continuation of cancer therapy should depend on hypertension severity, cardiac status, and multidisciplinary assessment rather than on the DCM diagnosis alone.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "12.1. Cardiovascular risk factors",
+            "12.2. Dilated cardiomyopathy"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "5.5.4. Vascular endothelial growth factor inhibitors",
+            "6.5. Arterial hypertension"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 4,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XD_04",
+      "question": "A woman with HCM, obesity and hypertension is starting endocrine therapy for hormone-receptor-positive breast cancer. Which cardiovascular risks from the cardiomyopathy and the cancer treatment overlap, and what should be actively monitored or modified?",
+      "complexity": "advanced",
+      "expected_format": "combined HCM and endocrine-therapy cardiovascular risk plan",
+      "gold_answer": "Hypertension and obesity can worsen HCM phenotypic expression, symptoms, diastolic dysfunction, atrial fibrillation and provocable obstruction, so these factors should be managed actively. Endocrine therapy also requires baseline cardiovascular risk assessment and ongoing risk-factor surveillance according to overall risk. The two conditions therefore reinforce the need for systematic control of blood pressure, weight, metabolic and lipid risk rather than treating them as separate problems.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "12.3. Hypertrophic cardiomyopathy"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "5.5.11. Endocrine therapies for breast cancer"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XD_05",
+      "question": "A patient receiving cancer treatment presents with acute chest pain, mild troponin elevation, and apical ballooning. How should Takotsubo syndrome be conceptualized in relation to cardiomyopathy, and what investigations are required in the cancer setting before accepting that diagnosis?",
+      "complexity": "advanced",
+      "expected_format": "Takotsubo classification and exclusion pathway",
+      "gold_answer": "Takotsubo is a transient stress-related myocardial dysfunction and the cardiomyopathy guideline does not recommend classifying it as a cardiomyopathy. In a patient with cancer, acute coronary syndrome must be excluded with invasive coronary angiography or CCTA, and CMR is recommended to exclude myocarditis and myocardial infarction. Acute management should also avoid QT-prolonging drugs when possible.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "3.3.2. Takotsubo syndrome"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "6.1.6. Takotsubo syndrome and cancer"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XD_06",
+      "question": "A cancer survivor with a cardiomyopathy wants to return to a physically demanding job but still reports exertional limitation and also plans to fly long-haul for work. When is cardiopulmonary exercise testing useful, and what practical occupational and travel issues should be discussed?",
+      "complexity": "advanced",
+      "expected_format": "functional assessment plus work and travel counselling",
+      "gold_answer": "In a cancer survivor with persistent exertional limitation, CPET can objectively characterize reduced exercise capacity and help distinguish cardiovascular from non-cardiovascular causes, supporting rehabilitation and return-to-activity planning. Cardiomyopathy counselling should then address the specific physical demands and regulatory constraints of the occupation and individualized travel issues; clinical stability, symptoms, arrhythmic risk, implanted devices, medication access and insurance all matter.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "10. Living with cardiomyopathy: advice for patients"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "7.4. Cardiopulmonary exercise testing and fitness during the end-of-therapy assessment"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XD_07",
+      "question": "A patient with inherited cardiomyopathy undergoing cancer treatment has become highly anxious about sudden death and treatment toxicity and is struggling to understand which symptoms should prompt urgent review. What psychological and communication support should the cardiovascular teams provide?",
+      "complexity": "advanced",
+      "expected_format": "psychological support and cardio-oncology self-management plan",
+      "gold_answer": "Inherited cardiomyopathy care should include access to psychological support and a low threshold for referral when fear of sudden death, devices, or family risk causes distress. Cardio-oncology care should provide clear information about cardiovascular risks, expected surveillance, modifiable risk factors and symptoms that require prompt medical contact. Consistent communication between teams helps avoid conflicting advice and supports self-management.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "6.12. Psychological support in cardiomyopathy patients and family members"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "10. Patient information, communication, and self-management"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XD_08",
+      "question": "An adult survivor of childhood cancer treated with anthracyclines develops a cardiomyopathy phenotype and also reports several relatives with heart failure. How should long-term survivor surveillance be combined with the possibility of an inherited predisposition rather than assuming the cardiomyopathy is purely treatment-induced?",
+      "complexity": "advanced",
+      "expected_format": "late cardiotoxicity surveillance plus inherited-susceptibility assessment",
+      "gold_answer": "Adults exposed to cardiotoxic therapy in childhood require long-term risk-factor and cardiac surveillance according to treatment exposure and risk category. A family history of cardiomyopathy should not be dismissed as incidental: cardiomyopathy-associated genetic variants can increase susceptibility to cancer therapy-induced cardiomyopathy, consistent with a second-hit model. The patient therefore needs both survivorship surveillance and an inherited-cardiomyopathy assessment.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "4.1. Special populations"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "8.1.1. Adult survivors of childhood and adolescent cancer"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "cross_document",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "direct_retrieval",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views"
+      }
+    },
+    {
+      "id": "CMCO_XMH_01",
+      "question": "During anthracycline treatment, a patient develops a new dilated cardiomyopathy. The patient's father had unexplained DCM in his forties. How should the family history change the interpretation of the cardiac injury, and how should the current cancer therapy-related dysfunction be managed?",
+      "complexity": "advanced",
+      "expected_format": "genetic-susceptibility interpretation plus CTRCD management",
+      "gold_answer": "Anthracycline exposure can unmask cardiomyopathy in genetically susceptible individuals, and a strong family history should raise concern for an inherited predisposition rather than a purely acquired toxicity. The patient should be evaluated for an underlying cardiomyopathy while the new CTRCD is managed according to severity with guideline-directed heart-failure therapy and appropriate interruption, discontinuation, or multidisciplinary reconsideration of anthracycline treatment.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "4.1. Special populations"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "6.1.1. Anthracycline chemotherapy-related cardiac dysfunction"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "reasoning_multi_hop",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views",
+        "hop_chain": "anthracycline exposure plus new DCM -> family history suggests inherited susceptibility/second hit -> evaluate underlying cardiomyopathy -> grade CTRCD severity -> HF therapy and cancer-treatment decision"
+      }
+    },
+    {
+      "id": "CMCO_XMH_02",
+      "question": "A known carrier of a pathogenic cardiomyopathy variant developed mild-to-moderate asymptomatic cardiac dysfunction during cancer treatment but has now fully recovered on heart-failure therapy. Is recovery enough to justify stopping cardiovascular medication, or does the inherited background change that decision?",
+      "complexity": "advanced",
+      "expected_format": "post-CTRCD medication-withdrawal risk assessment",
+      "gold_answer": "Full recovery does not by itself mean cardiovascular therapy should be stopped. Cardio-oncology guidance allows a trial of medication withdrawal only in selected lower-risk patients after multidisciplinary review and with repeat cardiac imaging and biomarkers. A family history of cardiomyopathy or known cardiomyopathy-gene carrier status is specifically a factor arguing against a simple low-risk classification and should make the team more cautious about withdrawal.",
+      "sources": [
+        {
+          "document_id": "Cardiomyopathies_2023",
+          "filename": "Cardiomyopathies_2023.md",
+          "guideline_name": "2023 ESC Guidelines for the management of cardiomyopathies",
+          "sections": [
+            "4.1. Special populations"
+          ]
+        },
+        {
+          "document_id": "Cardio-oncology_2022",
+          "filename": "Cardio-oncology_2022.md",
+          "guideline_name": "2022 ESC Guidelines on cardio-oncology",
+          "sections": [
+            "7.3. Management of cancer therapy-related cardiac dysfunction at the end-of-therapy assessment"
+          ]
+        }
+      ],
+      "metadata": {
+        "question_type": "cross_document",
+        "evaluation_group": "reasoning_multi_hop",
+        "evidence_scope": "cross_document",
+        "reasoning_type": "reasoning_multi_hop",
+        "document_count": 2,
+        "gold_section_count": 2,
+        "retrieval_only": true,
+        "graph_conditioned": false,
+        "revision_version": "two_doc_v1",
+        "audit_status": "manual_guideline_section_audited",
+        "canonical_id_status": "printed_section_ids_verified_against_current_section_views",
+        "hop_chain": "full CTRCD recovery -> assess whether withdrawal is otherwise reasonable -> inherited cardiomyopathy background increases recurrence-risk concern -> MDT decision -> if withdrawal is attempted, repeat TTE and biomarkers"
+      }
+    }
+  ]
+}

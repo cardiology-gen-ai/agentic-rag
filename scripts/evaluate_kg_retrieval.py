@@ -41,6 +41,11 @@ from agentic_rag.evaluation.kg_batch import (
     load_retrieval_dataset,
     section_keys_from_results,
 )
+from agentic_rag.kg.experiment_scope import (
+    normalize_document_scope,
+    validate_result_document_scope,
+    validate_selected_gold_document_scope,
+)
 from agentic_rag.kg.client import Neo4jKGClient
 from agentic_rag.kg.concept_seeders import EmbeddingConceptSeeder
 from agentic_rag.kg.pipeline import build_modular_kg_pipeline
@@ -142,6 +147,16 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--start-after", default=None)
+    parser.add_argument(
+        "--document-id",
+        action="append",
+        dest="document_ids",
+        help=(
+            "Restrict KG retrieval to this Document.doc_id. Repeat the option "
+            "for a controlled multi-document corpus. If omitted, legacy "
+            "all-document behaviour is preserved."
+        ),
+    )
     parser.add_argument("--candidate-k", type=int, default=15)
     parser.add_argument("--graph-candidate-k", type=int, default=None)
     parser.add_argument("--top-k", type=int, default=10)
@@ -684,6 +699,12 @@ def main() -> None:
         start_after=args.start_after,
         limit=args.limit,
     )
+    document_ids = normalize_document_scope(args.document_ids)
+    validate_selected_gold_document_scope(
+        indexed_questions,
+        selected_ids,
+        document_ids,
+    )
     modes = list(dict.fromkeys(args.modes or ALL_MODES))
     if any(
         mode in modes
@@ -976,7 +997,7 @@ def main() -> None:
                 args.advanced_same_section_anchor_rescue
             ),
             "exclude_summary_sections": not args.include_summary_sections,
-            "document_filtering": None,
+            "document_filtering": (document_ids or None),
             "gold_annotations_used_for_retrieval": False,
             "mentions_plan_reused_across_modular_modes": True,
             "mentions_plans_file": (
@@ -1048,6 +1069,7 @@ def main() -> None:
                 same_section_anchor_rescue=(
                     args.advanced_same_section_anchor_rescue
                 ),
+                document_ids=(document_ids or None),
             )
 
         embedding_seeder = None
@@ -1058,7 +1080,7 @@ def main() -> None:
                 concepts_per_term=args.concepts_per_term,
                 cache_path=args.concept_embedding_cache,
             )
-            embedding_seeder.prepare()
+            embedding_seeder.prepare(document_ids=(document_ids or None))
             manifest["configuration"].update(
                 {
                     "concept_catalogue_size": (
@@ -1139,6 +1161,7 @@ def main() -> None:
                             client=client,
                             candidate_k=args.candidate_k,
                             final_k=args.top_k,
+                            document_ids=(document_ids or None),
                             exclude_summary_sections=(
                                 not args.include_summary_sections
                             ),
@@ -1217,6 +1240,23 @@ def main() -> None:
                         ]
                         expanded_results = None
                         final_results = list(run.results)
+
+                    validate_result_document_scope(
+                        raw_results,
+                        document_ids,
+                        stage=f"{mode}:raw_candidates",
+                    )
+                    if expanded_results is not None:
+                        validate_result_document_scope(
+                            expanded_results,
+                            document_ids,
+                            stage=f"{mode}:expanded_candidates",
+                        )
+                    validate_result_document_scope(
+                        final_results,
+                        document_ids,
+                        stage=f"{mode}:final_results",
+                    )
 
                     record = build_query_record(
                         question_id=question_id,

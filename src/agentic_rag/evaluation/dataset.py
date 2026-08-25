@@ -20,6 +20,7 @@ _ALLOWED_GROUPS = frozenset(
         "single_section",
         "multi_section",
         "reasoning_multi_hop",
+        "cross_document",
         "graph_hop_path_verified",
         # Backward-compatible legacy aggregate labels:
         "standard",

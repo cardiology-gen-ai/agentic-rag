@@ -96,8 +96,18 @@ def validate_bm25_documents(
     *,
     expected_count: int | None = None,
     expected_source_type: str | None = None,
+    expected_document_counts: Mapping[str, int] | None = None,
 ) -> dict[str, Any]:
-    """Validate metadata required by the shared evidence normalizer."""
+    """Validate a BM25 corpus using document-scoped retrieval identities.
+
+    ``record_id`` is only locally unique inside a guideline. Multi-document
+    corpora therefore use ``(doc_id, record_id)`` as the required identity.
+    When ``retrieval_unit_key`` is present, its global uniqueness is checked
+    as an additional storage-level invariant.
+
+    ``record_id_count`` is retained for backward-compatible manifests; in a
+    valid multi-document corpus it can be smaller than ``document_count``.
+    """
 
     if not documents:
         raise ValueError("Cannot build BM25Plus over an empty document list")
@@ -109,6 +119,9 @@ def validate_bm25_documents(
         )
 
     record_ids: set[str] = set()
+    scoped_identities: set[tuple[str, str]] = set()
+    retrieval_unit_keys: set[str] = set()
+    document_counts: dict[str, int] = {}
     source_types: set[str] = set()
     empty_text_count = 0
 
@@ -125,14 +138,37 @@ def validate_bm25_documents(
 
         metadata = document.metadata
         record_id = _required_metadata_string(metadata, "record_id")
-        if record_id in record_ids:
-            raise ValueError(f"Duplicate record_id in corpus: {record_id!r}")
         record_ids.add(record_id)
 
-        if not _first_non_empty_string(metadata, ("doc_id", "document_id")):
+        doc_id = _first_non_empty_string(
+            metadata,
+            ("doc_id", "document_id"),
+        )
+        if not doc_id:
             raise ValueError(
                 f"Document {record_id!r} has no doc_id/document_id"
             )
+
+        scoped_identity = (doc_id, record_id)
+        if scoped_identity in scoped_identities:
+            raise ValueError(
+                "Duplicate document-scoped retrieval identity in corpus: "
+                f"{scoped_identity!r}"
+            )
+        scoped_identities.add(scoped_identity)
+        document_counts[doc_id] = document_counts.get(doc_id, 0) + 1
+
+        retrieval_unit_key = _first_non_empty_string(
+            metadata,
+            ("retrieval_unit_key",),
+        )
+        if retrieval_unit_key:
+            if retrieval_unit_key in retrieval_unit_keys:
+                raise ValueError(
+                    "Duplicate retrieval_unit_key in corpus: "
+                    f"{retrieval_unit_key!r}"
+                )
+            retrieval_unit_keys.add(retrieval_unit_key)
 
         source_type = _required_metadata_string(
             metadata,
@@ -174,6 +210,18 @@ def validate_bm25_documents(
             f"{expected_source_type!r}, found {sorted(source_types)!r}"
         )
 
+    if expected_document_counts is not None:
+        expected_docs = {
+            str(doc_id): int(count)
+            for doc_id, count in expected_document_counts.items()
+        }
+        if document_counts != expected_docs:
+            raise ValueError(
+                "Per-document count mismatch: expected "
+                f"{dict(sorted(expected_docs.items()))!r}, found "
+                f"{dict(sorted(document_counts.items()))!r}"
+            )
+
     token_counts = [
         len(BM25Vectorstore.tokenize(str(document.page_content or "")))
         for document in documents
@@ -184,6 +232,9 @@ def validate_bm25_documents(
     return {
         "document_count": len(documents),
         "record_id_count": len(record_ids),
+        "document_scoped_identity_count": len(scoped_identities),
+        "retrieval_unit_key_count": len(retrieval_unit_keys),
+        "documents": dict(sorted(document_counts.items())),
         "source_types": sorted(source_types),
         "empty_text_count": empty_text_count,
         "min_token_count": min(token_counts),

@@ -5,6 +5,11 @@ from agentic_rag.evaluation.dataset import (
     load_evaluation_questions,
     parse_section_id,
 )
+from agentic_rag.evaluation.document_metrics import (
+    DocumentCoverageMetrics,
+    DocumentCutoffMetrics,
+    compute_document_coverage_metrics,
+)
 from agentic_rag.evaluation.evidence import (
     EvidenceNormalizationResult,
     EvidenceSection,
@@ -25,6 +30,8 @@ from agentic_rag.evaluation.trace import (
 __all__ = [
     "CoverageMetrics",
     "CutoffMetrics",
+    "DocumentCoverageMetrics",
+    "DocumentCutoffMetrics",
     "EvaluationQuestion",
     "EvidenceNormalizationResult",
     "EvidenceSection",
@@ -32,6 +39,7 @@ __all__ = [
     "TraceTextMode",
     "build_retrieval_trace",
     "compute_coverage_metrics",
+    "compute_document_coverage_metrics",
     "coverage_at_cutoff",
     "load_evaluation_questions",
     "normalize_retrieved_documents",

@@ -175,6 +175,7 @@ def reciprocal_rank_fuse_components(
         key=lambda item: (
             -float(item["score"]),
             int(item["best_rank"]),
+            str(item["document_id"]),
             str(item["retrieval_unit_id"]),
         ),
     )[:top_k]
@@ -284,30 +285,42 @@ def _build_fused_document(
 
 def _documents_by_record_id(
     documents: Sequence[Document],
-) -> dict[str, Document]:
-    output: dict[str, Document] = {}
+) -> dict[tuple[str, str], Document]:
+    output: dict[tuple[str, str], Document] = {}
     for document in documents:
-        record_id = document.metadata.get("record_id")
+        metadata = document.metadata
+        record_id = metadata.get("record_id")
         if not isinstance(record_id, str) or not record_id.strip():
             raise ValueError("Every component document must have record_id")
-        if record_id in output:
+
+        document_id = metadata.get("doc_id", metadata.get("document_id"))
+        if not isinstance(document_id, str) or not document_id.strip():
             raise ValueError(
-                f"Duplicate record_id in component ranking: {record_id!r}"
+                "Every component document must have doc_id/document_id"
             )
-        output[record_id] = document
+
+        identity = (document_id.strip(), record_id.strip())
+        if identity in output:
+            raise ValueError(
+                "Duplicate record_id in component ranking for the same "
+                f"document: {identity!r}"
+            )
+        output[identity] = document
     return output
 
 
 def _representative_document(
     evidence: RetrievedEvidence,
-    record_map: Mapping[str, Document],
+    record_map: Mapping[tuple[str, str], Document],
 ) -> Document:
     for record_id in evidence.source_record_ids:
-        if record_id in record_map:
-            return record_map[record_id]
+        identity = (evidence.document_id, record_id)
+        if identity in record_map:
+            return record_map[identity]
     raise ValueError(
-        "No component document found for evidence source records: "
-        f"{evidence.source_record_ids!r}"
+        "No component document found for document-scoped evidence source "
+        f"records: document_id={evidence.document_id!r}, "
+        f"record_ids={evidence.source_record_ids!r}"
     )
 
 

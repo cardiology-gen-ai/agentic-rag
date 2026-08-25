@@ -139,19 +139,38 @@ def _copy_document_with_dense_provenance(
 def _candidate_identity(document: Document) -> str:
     metadata = document.metadata
 
-    for key in ("retrieval_unit_id", "record_id", "chunk_id", "id"):
+    doc_id = None
+    for key in ("doc_id", "document_id"):
         value = metadata.get(key)
         if isinstance(value, str) and value.strip():
-            return value.strip()
+            doc_id = value.strip()
+            break
+    local_id = None
+    for key in (
+        "retrieval_unit_key",
+        "retrieval_unit_id",
+        "record_id",
+        "chunk_id",
+        "id",
+    ):
+        value = metadata.get(key)
+        if isinstance(value, str) and value.strip():
+            local_id = value.strip()
+            break
 
-    document_id = getattr(document, "id", None)
-    if document_id is not None and str(document_id).strip():
-        return str(document_id).strip()
+    if local_id is None:
+        document_id = getattr(document, "id", None)
+        if document_id is not None and str(document_id).strip():
+            local_id = str(document_id).strip()
 
-    raise ValueError(
-        "Dense candidate has no stable evidence identity. Expected one of "
-        "retrieval_unit_id, record_id, chunk_id, metadata id, or Document.id"
-    )
+    if local_id is None:
+        raise ValueError(
+            "Dense candidate has no stable local identity. Expected one of "
+            "retrieval_unit_key, retrieval_unit_id, record_id, chunk_id, "
+            "metadata id, or Document.id"
+        )
+
+    return f"{doc_id}::{local_id}" if doc_id is not None else local_id
 
 
 def _duplicates(values: Sequence[str]) -> list[str]:

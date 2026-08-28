@@ -286,6 +286,15 @@ def assert_same_membership(
 
 
 def provenance_files(plan: RetrievalEvalPlan) -> dict[str, Any]:
+    needs_bm25 = any(
+        method in {
+            "bm25_plus",
+            "dense_bm25plus_rerank",
+            "hybrid_rrf",
+        }
+        for method in plan.methods
+    )
+
     result: dict[str, Any] = {
         "retrieval_plan": {
             "path": str(plan.path),
@@ -295,11 +304,14 @@ def provenance_files(plan: RetrievalEvalPlan) -> dict[str, Any]:
             "path": str(plan.data_etl_config),
             "sha256": sha256_file(plan.data_etl_config),
         },
-        "bm25_build_plan": {
+    }
+
+    if needs_bm25:
+        result["bm25_build_plan"] = {
             "path": str(plan.bm25_build_plan),
             "sha256": sha256_file(plan.bm25_build_plan),
-        },
-    }
+        }
+
     if plan.artifact_freeze is not None:
         result["artifact_freeze"] = {
             "path": str(plan.artifact_freeze),
@@ -307,15 +319,18 @@ def provenance_files(plan: RetrievalEvalPlan) -> dict[str, Any]:
         }
 
     representations: dict[str, Any] = {}
-    dense_config = json.loads(plan.data_etl_config.read_text(encoding="utf-8"))
+    dense_config = json.loads(
+        plan.data_etl_config.read_text(encoding="utf-8")
+    )
+
     for rep in plan.representations:
         dense_indexing = dense_config[rep.dense_app_id]["indexing"]
         dense_folder = (
             plan.data_etl_config.parent / dense_indexing["folder"]
         ).resolve()
         dense_manifest = dense_folder / "build_manifest.json"
-        bm25_manifest = rep.bm25_spec.manifest_path
-        representations[rep.name] = {
+
+        rep_provenance: dict[str, Any] = {
             "dense_app_id": rep.dense_app_id,
             "dense_build_manifest": (
                 {
@@ -325,15 +340,23 @@ def provenance_files(plan: RetrievalEvalPlan) -> dict[str, Any]:
                 if dense_manifest.is_file()
                 else None
             ),
-            "bm25_representation": rep.bm25_representation,
-            "bm25_manifest": {
-                "path": str(bm25_manifest),
-                "sha256": sha256_file(bm25_manifest),
-            },
             "expected_count": rep.expected_count,
             "expected_documents": rep.expected_documents,
             "source_type": rep.source_type,
         }
+
+        if needs_bm25:
+            bm25_manifest = rep.bm25_spec.manifest_path
+            rep_provenance["bm25_representation"] = (
+                rep.bm25_representation
+            )
+            rep_provenance["bm25_manifest"] = {
+                "path": str(bm25_manifest),
+                "sha256": sha256_file(bm25_manifest),
+            }
+
+        representations[rep.name] = rep_provenance
+
     result["representations"] = representations
     return result
 

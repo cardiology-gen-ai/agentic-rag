@@ -117,26 +117,26 @@ def _serialize_raw_candidates(
     preview_chars: int,
 ) -> tuple[
     list[dict[str, Any]],
-    dict[str, dict[str, Any]],
+    dict[tuple[str, str], dict[str, Any]],
 ]:
     serialized: list[dict[str, Any]] = []
-    raw_by_record_id: dict[str, dict[str, Any]] = {}
+    raw_by_record_id: dict[tuple[str, str], dict[str, Any]] = {}
 
     for raw_rank, document in enumerate(raw_documents, start=1):
         metadata = _metadata(document)
         record_id = _required_string(metadata, "record_id")
-
-        if record_id in raw_by_record_id:
-            raise ValueError(
-                "Duplicate record_id in raw retrieval results: "
-                f"{record_id!r}"
-            )
-
         document_id = _required_one_of(
             metadata,
             ("doc_id", "document_id"),
             label="document identifier",
         )
+        record_key = (document_id, record_id)
+
+        if record_key in raw_by_record_id:
+            raise ValueError(
+                "Duplicate document-scoped record identity in raw retrieval "
+                f"results: {record_key!r}"
+            )
         source_section_ids = _string_list(
             metadata.get("source_section_ids")
         )
@@ -226,7 +226,7 @@ def _serialize_raw_candidates(
         }
 
         serialized.append(item)
-        raw_by_record_id[record_id] = item
+        raw_by_record_id[record_key] = item
 
     return serialized, raw_by_record_id
 
@@ -235,7 +235,7 @@ def _serialize_normalized_evidence(
     normalized: EvidenceNormalizationResult,
     *,
     gold: frozenset[EvidenceSection],
-    raw_by_record_id: Mapping[str, Mapping[str, Any]],
+    raw_by_record_id: Mapping[tuple[str, str], Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
     output: list[dict[str, Any]] = []
 
@@ -246,7 +246,7 @@ def _serialize_normalized_evidence(
         missing_records = [
             record_id
             for record_id in evidence.source_record_ids
-            if record_id not in raw_by_record_id
+            if (evidence.document_id, record_id) not in raw_by_record_id
         ]
         if missing_records:
             raise ValueError(
@@ -255,7 +255,11 @@ def _serialize_normalized_evidence(
             )
 
         contributor_raw_ranks = sorted(
-            int(raw_by_record_id[record_id]["raw_rank"])
+            int(
+                raw_by_record_id[(evidence.document_id, record_id)][
+                    "raw_rank"
+                ]
+            )
             for record_id in evidence.source_record_ids
         )
         covered_gold = evidence.covered_sections & gold

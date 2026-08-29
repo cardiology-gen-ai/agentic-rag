@@ -47,6 +47,10 @@ from agentic_rag.kg.isa_artifact import (
     ISASafeRerankCandidateGenerator,
 )
 from agentic_rag.kg.nonhier_artifact import NonHierArtifactCandidateGenerator
+from agentic_rag.kg.query_normalization import (
+    RouterTermNormalizationMode,
+    normalize_mentions_plan,
+)
 from agentic_rag.kg.rerankers import (
     CandidateRerankerProtocol,
     NoOpReranker,
@@ -134,6 +138,7 @@ class ModularKGRetrievalRun(BaseModel):
     retrieval_unit: Literal["section_node"] = "section_node"
     unit_scope: Literal["all_levels"] = "all_levels"
     document_filtering: list[str] | None = None
+    router_term_normalization: RouterTermNormalizationMode = "none"
 
     latency_ms: float = Field(ge=0)
     error: str | None = None
@@ -166,6 +171,7 @@ class ModularKGRetrievalPipeline:
         candidate_k: int = 15,
         final_k: int = 10,
         document_ids: Sequence[str] | str | None = None,
+        router_term_normalization: RouterTermNormalizationMode = "none",
     ) -> None:
         self.router = router
         self.candidate_generator = candidate_generator
@@ -175,6 +181,11 @@ class ModularKGRetrievalPipeline:
         self.candidate_k = _validate_top_k(candidate_k, "candidate_k")
         self.final_k = _validate_top_k(final_k, "final_k")
         self.document_ids = _normalize_optional_values(document_ids)
+        if router_term_normalization not in {"none", "safe_v1"}:
+            raise ValueError(
+                "router_term_normalization must be one of: none, safe_v1"
+            )
+        self.router_term_normalization = router_term_normalization
 
     @property
     def ranking_mode(self) -> KGRankingMode:
@@ -195,10 +206,14 @@ class ModularKGRetrievalPipeline:
         started = time.perf_counter()
 
         try:
-            plan = self.router.route(
+            raw_plan = self.router.route(
                 normalized_question,
                 config=router_config,
             )
+            plan = normalize_mentions_plan(
+                raw_plan,
+                mode=self.router_term_normalization,
+            ).plan
         except Exception as exc:
             return self._run(
                 question=normalized_question,
@@ -324,6 +339,7 @@ class ModularKGRetrievalPipeline:
             expander_name=self.expander.name,
             reranker_name=self.reranker.name,
             document_filtering=(self.document_ids or None),
+            router_term_normalization=self.router_term_normalization,
             latency_ms=(time.perf_counter() - started) * 1000.0,
             error=error,
             failed_stage=failed_stage,
@@ -346,6 +362,8 @@ def build_modular_kg_pipeline(
     concepts_per_term: int = 3,
     concept_embedding_model: str | None = None,
     concept_embedding_cache: str | None = None,
+    query_term_embedding_cache: str | None = None,
+    query_term_embedding_cache_read_only: bool = False,
     concept_embedding_min_similarity: float | None = None,
     concept_seeder: ConceptSeederProtocol | None = None,
     isa_connections_path: str | None = None,
@@ -354,6 +372,7 @@ def build_modular_kg_pipeline(
     connection_config_path: str | None = None,
     graph_candidate_k: int | None = None,
     rrf_k: int = 60,
+    router_term_normalization: RouterTermNormalizationMode = "none",
 ) -> ModularKGRetrievalPipeline:
     """Build one named ablation configuration.
 
@@ -408,6 +427,8 @@ def build_modular_kg_pipeline(
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
                 cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
             )
         generator = SeededMentionsCandidateGenerator(
             tools,
@@ -432,6 +453,8 @@ def build_modular_kg_pipeline(
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
                 cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
             )
         semantic_base = SeededMentionsCandidateGenerator(
             tools,
@@ -458,6 +481,8 @@ def build_modular_kg_pipeline(
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
                 cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
             )
         lexical_generator = MentionsCandidateGenerator(
             tools,
@@ -642,8 +667,13 @@ def build_modular_kg_pipeline(
             if concept_embedding_model is None:
                 raise ValueError("concept_embedding_model is required for pool-preserving fusion")
             seeder = EmbeddingConceptSeeder(
-                tools, embedding_model=concept_embedding_model, concepts_per_term=concepts_per_term,
-                min_similarity=concept_embedding_min_similarity, cache_path=concept_embedding_cache,
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
             )
         fusion_policy = (
             "rrf" if normalized_mode == "semantic_weighted_pool_rrf_direct_bridge_sa_top3"
@@ -686,6 +716,8 @@ def build_modular_kg_pipeline(
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
                 cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
             )
         generator = SemanticWeightedConnectionCandidateGenerator(
             tools,
@@ -812,6 +844,7 @@ def build_modular_kg_pipeline(
         candidate_k=candidate_k,
         final_k=final_k,
         document_ids=document_ids,
+        router_term_normalization=router_term_normalization,
     )
 
 

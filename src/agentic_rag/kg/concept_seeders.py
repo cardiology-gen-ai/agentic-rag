@@ -158,7 +158,7 @@ class LexicalConceptSeeder:
 
         output: dict[str, list[ConceptSeed]] = {}
         for term in normalized_terms:
-            matches: list[tuple[int, str, ConceptSeed]] = []
+            matches: list[tuple[int, str, str, ConceptSeed]] = []
             for concept in catalogue:
                 match = _lexical_match(term, concept)
                 if match is None:
@@ -175,13 +175,13 @@ class LexicalConceptSeeder:
                     seed_rank=1,
                 )
                 matches.append(
-                    (category, concept.concept_name.casefold(), seed)
+                    (category, concept.concept_name.casefold(), concept.concept_name, seed)
                 )
 
-            matches.sort(key=lambda item: (item[0], item[1]))
+            matches.sort(key=lambda item: (item[0], item[1], item[2]))
             ranked = [
                 seed.model_copy(update={"seed_rank": rank})
-                for rank, (_, _, seed) in enumerate(
+                for rank, (_, _, _, seed) in enumerate(
                     _deduplicate_seed_candidates(matches),
                     start=1,
                 )
@@ -278,6 +278,8 @@ class EmbeddingConceptSeeder:
         concepts_per_term: int = 3,
         min_similarity: float | None = None,
         cache_path: str | Path | None = None,
+        query_cache_path: str | Path | None = None,
+        query_cache_read_only: bool = False,
         encoder: Any | None = None,
         embedding_dimensions: int | None = None,
         embedding_batch_size: int = 128,
@@ -305,6 +307,12 @@ class EmbeddingConceptSeeder:
         self.cache_path = (
             Path(cache_path).expanduser() if cache_path is not None else None
         )
+        self.query_cache_path = (
+            Path(query_cache_path).expanduser()
+            if query_cache_path is not None
+            else None
+        )
+        self.query_cache_read_only = bool(query_cache_read_only)
         self._encoder = encoder
         self._openai_client = openai_client
         self._concepts: list[ConceptCatalogueRecord] = []
@@ -318,6 +326,8 @@ class EmbeddingConceptSeeder:
         self.model_load_seconds = 0.0
         self.loaded_from_cache = False
         self.resolved_cache_file: str | None = None
+        self.query_embedding_cache_hits = 0
+        self.query_embedding_cache_misses = 0
 
     def prepare(
         self,
@@ -404,7 +414,7 @@ class EmbeddingConceptSeeder:
 
         output: dict[str, list[ConceptSeed]] = {}
         for term in normalized_terms:
-            query_vector = self._encode_texts([term])
+            query_vector = self._encode_query_term(term)
             query_vector = _normalize_matrix(query_vector)[0]
             similarities = self._concept_matrix @ query_vector
             ranked_indexes = sorted(
@@ -412,6 +422,7 @@ class EmbeddingConceptSeeder:
                 key=lambda index: (
                     -float(similarities[index]),
                     self._concepts[index].concept_name.casefold(),
+                    self._concepts[index].concept_name,
                 ),
             )
 
@@ -474,6 +485,70 @@ class EmbeddingConceptSeeder:
             matrix = matrix.reshape(1, -1)
         return matrix
 
+    def _encode_query_term(self, term: str) -> np.ndarray:
+        """Encode one query term with an optional persistent exact-text cache."""
+
+        cache_file = self._query_cache_file(term)
+        metadata = self._query_cache_metadata(term)
+
+        if cache_file is not None and cache_file.is_file():
+            try:
+                with np.load(cache_file, allow_pickle=False) as data:
+                    cached_metadata = json.loads(str(data["metadata"].item()))
+                    vector = np.asarray(data["embedding"], dtype=np.float32)
+                if cached_metadata == metadata:
+                    if vector.ndim == 1:
+                        vector = vector.reshape(1, -1)
+                    if vector.ndim != 2 or vector.shape[0] != 1:
+                        raise ValueError("invalid cached query embedding shape")
+                    self.query_embedding_cache_hits += 1
+                    return vector
+            except (KeyError, ValueError, json.JSONDecodeError):
+                if self.query_cache_read_only:
+                    raise RuntimeError(
+                        f"Invalid frozen query-term embedding cache entry: {cache_file}"
+                    )
+
+        if self.query_cache_read_only and cache_file is not None:
+            raise FileNotFoundError(
+                "Frozen query-term embedding cache miss for "
+                f"{term!r}: {cache_file}"
+            )
+
+        self.query_embedding_cache_misses += 1
+        vector = self._encode_texts([term])
+
+        if cache_file is not None:
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            np.savez_compressed(
+                cache_file,
+                embedding=np.asarray(vector, dtype=np.float32),
+                metadata=np.array(json.dumps(metadata, sort_keys=True)),
+            )
+
+        return vector
+
+    def _query_cache_metadata(self, term: str) -> dict[str, Any]:
+        return {
+            "schema_version": "query_term_embedding_cache_v1",
+            "embedding_provider": self.embedding_provider,
+            "embedding_model": self.embedding_model,
+            "embedding_dimensions": self.embedding_dimensions,
+            "term": str(term),
+        }
+
+    def _query_cache_file(self, term: str) -> Path | None:
+        if self.query_cache_path is None:
+            return None
+        encoded = json.dumps(
+            self._query_cache_metadata(term),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        key = hashlib.sha256(encoded).hexdigest()
+        return self.query_cache_path / f"{key}.npz"
+
     def _load_cached_matrix(
         self,
         *,
@@ -503,7 +578,11 @@ class EmbeddingConceptSeeder:
             return None
 
         self.resolved_cache_file = str(cache_file)
-        return _normalize_matrix(matrix)
+        # The cache stores the already L2-normalized float32 matrix written by
+        # _save_cached_matrix(). Re-normalizing it on load changes some rows by
+        # a few float32 ULPs and breaks exact build-vs-load reproducibility of
+        # ConceptSeed.similarity. Return the persisted representation verbatim.
+        return matrix
 
     def _save_cached_matrix(
         self,
@@ -556,7 +635,7 @@ def flatten_seed_groups(
 
     for seeds in seed_groups.values():
         for seed in seeds:
-            key = (seed.query_term.casefold(), seed.concept_name.casefold())
+            key = (seed.query_term.casefold(), seed.concept_name)
             if key in seen:
                 continue
             seen.add(key)
@@ -585,13 +664,15 @@ def _catalogue_records(
             "umls_cui": row.get("umls_cui"),
         }
         record = ConceptCatalogueRecord.model_validate(payload)
-        key = record.concept_name.casefold()
+        key = record.concept_name
         if key in seen:
             continue
         seen.add(key)
         records.append(record)
 
-    records.sort(key=lambda item: item.concept_name.casefold())
+    records.sort(
+        key=lambda item: (item.concept_name.casefold(), item.concept_name)
+    )
     return records
 
 
@@ -615,13 +696,13 @@ def _lexical_match(
 
 
 def _deduplicate_seed_candidates(
-    matches: Sequence[tuple[int, str, ConceptSeed]],
-) -> list[tuple[int, str, ConceptSeed]]:
-    output: list[tuple[int, str, ConceptSeed]] = []
+    matches: Sequence[tuple[int, str, str, ConceptSeed]],
+) -> list[tuple[int, str, str, ConceptSeed]]:
+    output: list[tuple[int, str, str, ConceptSeed]] = []
     seen: set[tuple[str, str]] = set()
     for match in matches:
-        seed = match[2]
-        key = (seed.query_term.casefold(), seed.concept_name.casefold())
+        seed = match[3]
+        key = (seed.query_term.casefold(), seed.concept_name)
         if key in seen:
             continue
         seen.add(key)
@@ -663,7 +744,7 @@ def _catalogue_hash(
         }
         for concept in sorted(
             concepts,
-            key=lambda item: item.concept_name.casefold(),
+            key=lambda item: (item.concept_name.casefold(), item.concept_name),
         )
     ]
     encoded = json.dumps(

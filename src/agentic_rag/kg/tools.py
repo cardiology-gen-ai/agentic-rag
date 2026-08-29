@@ -1055,7 +1055,7 @@ def _normalize_concept_seeds(
             if isinstance(seed, ConceptSeed)
             else ConceptSeed.model_validate(seed)
         )
-        key = (item.query_term.casefold(), item.concept_name.casefold())
+        key = (item.query_term.casefold(), item.concept_name)
         if key in seen:
             continue
         seen.add(key)

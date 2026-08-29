@@ -133,6 +133,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model", default="gpt-4.1-mini")
     parser.add_argument(
+        "--router-term-normalization",
+        choices=("none", "safe_v1"),
+        default="none",
+        help=(
+            "Deterministic post-router term normalization. safe_v1 performs "
+            "representation-level cleanup only; no semantic rewriting."
+        ),
+    )
+    parser.add_argument(
         "--mode",
         action="append",
         choices=ALL_MODES,
@@ -166,6 +175,23 @@ def parse_args() -> argparse.Namespace:
         "--concept-embedding-cache",
         type=Path,
         default=None,
+    )
+    parser.add_argument(
+        "--query-term-embedding-cache",
+        type=Path,
+        default=None,
+        help=(
+            "Persistent exact-text cache for router/query-term embeddings. "
+            "Use a dedicated directory and freeze it for reproducible runs."
+        ),
+    )
+    parser.add_argument(
+        "--query-term-embedding-cache-read-only",
+        action="store_true",
+        help=(
+            "Require every query-term embedding to exist in the persistent "
+            "cache; cache misses fail instead of calling the embedding API."
+        ),
     )
     parser.add_argument(
         "--mentions-plans-file",
@@ -898,6 +924,7 @@ def main() -> None:
                 if args.concept_embedding_cache is not None
                 else None
             ),
+            "router_term_normalization": args.router_term_normalization,
             "concept_catalogue_size": None,
             "concept_catalogue_build_load_seconds": None,
             "concept_embedding_model_load_seconds": None,
@@ -1079,6 +1106,10 @@ def main() -> None:
                 embedding_model=args.concept_embedding_model,
                 concepts_per_term=args.concepts_per_term,
                 cache_path=args.concept_embedding_cache,
+                query_cache_path=args.query_term_embedding_cache,
+                query_cache_read_only=(
+                    args.query_term_embedding_cache_read_only
+                ),
             )
             embedding_seeder.prepare(document_ids=(document_ids or None))
             manifest["configuration"].update(
@@ -1097,6 +1128,14 @@ def main() -> None:
                     ),
                     "concept_embedding_cache_file": (
                         embedding_seeder.resolved_cache_file
+                    ),
+                    "query_term_embedding_cache": (
+                        str(args.query_term_embedding_cache)
+                        if args.query_term_embedding_cache is not None
+                        else None
+                    ),
+                    "query_term_embedding_cache_read_only": (
+                        args.query_term_embedding_cache_read_only
                     ),
                 }
             )
@@ -1177,6 +1216,14 @@ def main() -> None:
                                 if args.concept_embedding_cache is not None
                                 else None
                             ),
+                            query_term_embedding_cache=(
+                                str(args.query_term_embedding_cache)
+                                if args.query_term_embedding_cache is not None
+                                else None
+                            ),
+                            query_term_embedding_cache_read_only=(
+                                args.query_term_embedding_cache_read_only
+                            ),
                             concept_seeder=(
                                 embedding_seeder
                                 if mode in embedding_seed_modes
@@ -1217,6 +1264,9 @@ def main() -> None:
                             ),
                             graph_candidate_k=args.graph_candidate_k,
                             rrf_k=args.rrf_k,
+                            router_term_normalization=(
+                                args.router_term_normalization
+                            ),
                         )
                         run = pipeline.retrieve(question)
                         raw_results = key_results_from_modular(
@@ -1322,6 +1372,18 @@ def main() -> None:
     for row in current_rows:
         status = str(row.get("status") or "unknown")
         status_counts[status] = status_counts.get(status, 0) + 1
+
+    if embedding_seeder is not None:
+        manifest["configuration"].update(
+            {
+                "query_term_embedding_cache_hits": (
+                    embedding_seeder.query_embedding_cache_hits
+                ),
+                "query_term_embedding_cache_misses": (
+                    embedding_seeder.query_embedding_cache_misses
+                ),
+            }
+        )
 
     summary = {
         "run_id": run_id,

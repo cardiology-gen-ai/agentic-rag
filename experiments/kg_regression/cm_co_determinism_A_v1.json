@@ -1,0 +1,26 @@
+{
+  "schema_version": "kg_connection_ablation_v1",
+  "experiment": {
+    "name": "cm_co_determinism_v1",
+    "dataset": "tests/data/CM_CO_evaluation_30_v1.json",
+    "coverage_artifact": "artifacts/kg_retrieval/cm_co_gold_validation_v1/kg_gold_validation_20260824T141924Z/gold_resolution_enriched.json",
+    "mentions_plans_file": "artifacts/kg_retrieval/cm_co_umls_fixed_budget_v1/frozen_inputs/mentions_plans_cm_co_v1.jsonl",
+    "output_root": "artifacts/kg_retrieval/determinism_v1/cm_co",
+    "candidate_k": 50,
+    "top_k": 20,
+    "concept_embedding_model": "text-embedding-3-small",
+    "concepts_per_term": 3,
+    "concept_embedding_cache": "artifacts/kg_retrieval/baseline_v2/frozen_inputs/cm_co_concept_embedding_cache_openai3small_v1",
+    "document_ids": [
+      "Cardiomyopathies_2023",
+      "Cardio-oncology_2022"
+    ],
+    "modes": [
+      "mentions_embedding_seeded_similarity_weighted"
+    ],
+    "router_term_normalization": "none",
+    "query_term_embedding_cache": "artifacts/kg_retrieval/baseline_v2/frozen_inputs/cm_co_query_term_embeddings_openai3small_v1",
+    "run_id": "cm_co_semantic_k50_determinism_A_v1",
+    "query_term_embedding_cache_read_only": false
+  }
+}

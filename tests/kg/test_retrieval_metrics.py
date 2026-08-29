@@ -142,3 +142,56 @@ def test_empty_gold_and_invalid_cutoffs_raise() -> None:
 
     with pytest.raises(ValueError, match=">= 1"):
         compute_coverage_metrics(ranking, {section("A")}, cutoffs=(0,))
+
+def test_same_section_id_in_wrong_document_is_not_relevant() -> None:
+    """Section identity must be scoped by document_id in multi-document retrieval."""
+    gold = {section("7.2", document_id="doc-A")}
+    ranking = [
+        evidence(
+            "wrong-doc-unit",
+            {"7.2"},
+            rank=1,
+            document_id="doc-B",
+        )
+    ]
+
+    metrics = compute_coverage_metrics(ranking, gold, cutoffs=(1,))
+
+    assert metrics.at(1).hit == 0.0
+    assert metrics.at(1).precision == 0.0
+    assert metrics.at(1).recall == 0.0
+    assert metrics.at(1).complete_recall == 0.0
+    assert metrics.at(1).reciprocal_rank == 0.0
+    assert metrics.first_relevant_rank is None
+
+
+def test_cross_document_gold_requires_evidence_from_both_documents() -> None:
+    """Complete recall must require every document-scoped gold section."""
+    gold = {
+        section("7.2", document_id="doc-A"),
+        section("4.1", document_id="doc-B"),
+    }
+    ranking = [
+        evidence(
+            "doc-a-unit",
+            {"7.2"},
+            rank=1,
+            document_id="doc-A",
+        ),
+        evidence(
+            "doc-b-unit",
+            {"4.1"},
+            rank=2,
+            document_id="doc-B",
+        ),
+    ]
+
+    metrics = compute_coverage_metrics(ranking, gold, cutoffs=(1, 2))
+
+    assert metrics.at(1).hit == 1.0
+    assert metrics.at(1).recall == 0.5
+    assert metrics.at(1).complete_recall == 0.0
+
+    assert metrics.at(2).hit == 1.0
+    assert metrics.at(2).recall == 1.0
+    assert metrics.at(2).complete_recall == 1.0

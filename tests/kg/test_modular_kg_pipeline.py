@@ -716,3 +716,26 @@ def test_mentions_generator_can_be_used_independently():
     assert candidates[0].section_uid == result.section_uid
     assert candidates[0].source == "mentions"
     assert candidates[0].direct is True
+
+
+def test_pipeline_applies_safe_router_term_normalization_before_generation():
+    tools = FakeTools([])
+    pipeline = build_modular_kg_pipeline(
+        "mentions_only",
+        router=FakeRouter(
+            KGMentionsPlan(
+                terms=["pulmonary valve disease」「RASopathy"],
+                require_all=False,
+            )
+        ),
+        tools=tools,
+        router_term_normalization="safe_v1",
+    )
+
+    run = pipeline.retrieve("Question")
+
+    assert run.status == "no_results"
+    assert run.plan is not None
+    assert run.plan.terms == ["pulmonary valve disease", "RASopathy"]
+    assert run.router_term_normalization == "safe_v1"
+    assert tools.calls[0][1] == ["pulmonary valve disease", "RASopathy"]

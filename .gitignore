@@ -25,3 +25,5 @@ tests/unit/
 *.tar.gz 
 old_artifacts/
 configs/kg_retrieval/
+configs/retrieval/
+experiments/kg_regression/

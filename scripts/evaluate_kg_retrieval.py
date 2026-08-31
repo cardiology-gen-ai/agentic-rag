@@ -48,6 +48,7 @@ from agentic_rag.kg.experiment_scope import (
 )
 from agentic_rag.kg.client import Neo4jKGClient
 from agentic_rag.kg.concept_seeders import EmbeddingConceptSeeder
+from agentic_rag.kg.context_seed_selection import FrozenContextScoreConceptSeeder
 from agentic_rag.kg.pipeline import build_modular_kg_pipeline
 from agentic_rag.kg.retriever import KGParameterizedRetriever
 from agentic_rag.kg.router import KGMentionsRouter, KGStructuredRouter
@@ -62,6 +63,10 @@ MODULAR_MODES = (
     "mentions_lexical_seeded",
     "mentions_embedding_seeded",
     "mentions_embedding_seeded_similarity_weighted",
+    "mentions_embedding_seeded_semantic_preselected_similarity_weighted",
+    "mentions_embedding_seeded_preselection_rrf_similarity_weighted",
+    "mentions_embedding_exact_safe_seeded_similarity_weighted",
+    "mentions_embedding_exact_safe_same_cui_seeded_similarity_weighted",
     "mentions_lexical_semantic_best_channel",
     "mentions_descendants",
     "mentions_same_as",
@@ -172,6 +177,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--concept-embedding-model", default=None)
     parser.add_argument("--concepts-per-term", type=int, default=3)
     parser.add_argument(
+        "--concept-embedding-min-similarity",
+        type=float,
+        default=None,
+        help=(
+            "Keep only semantic Concept seeds at or above this cosine "
+            "similarity. Disabled by default."
+        ),
+    )
+    parser.add_argument(
+        "--concept-embedding-rank1-fallback",
+        action="store_true",
+        help=(
+            "When a similarity threshold removes every Concept for a router "
+            "term, retain the single highest-similarity Concept. Disabled by "
+            "default."
+        ),
+    )
+    parser.add_argument(
         "--concept-embedding-cache",
         type=Path,
         default=None,
@@ -192,6 +215,40 @@ def parse_args() -> argparse.Namespace:
             "Require every query-term embedding to exist in the persistent "
             "cache; cache misses fail instead of calling the embedding API."
         ),
+    )
+    parser.add_argument(
+        "--context-concept-scores",
+        type=Path,
+        default=None,
+        help=(
+            "Frozen concept_scores_q0_q1_q2.csv artifact used for context-aware "
+            "Concept identity selection. Q0 cosine remains the downstream seed weight."
+        ),
+    )
+    parser.add_argument(
+        "--context-seed-selection-policy",
+        choices=("q0_top3", "q2_top3", "q0_q2_top3_union", "q2_topk"),
+        default=None,
+        help=(
+            "Select Concept identities from the frozen Q0/Q2 top-10 diagnostic. "
+            "Requires --context-concept-scores and is supported only with the "
+            "semantic similarity-weighted MENTIONS mode in v1."
+        ),
+    )
+    parser.add_argument(
+        "--context-seed-neighbourhood-m",
+        type=int,
+        default=None,
+        help=(
+            "Optional Q0 neighbourhood size used by q2_topk sensitivity runs. "
+            "The frozen score artifact must contain at least this many Q0 neighbours."
+        ),
+    )
+    parser.add_argument(
+        "--context-seed-top-k",
+        type=int,
+        default=3,
+        help="Number of Q2-selected seeds for q2_topk sensitivity runs.",
     )
     parser.add_argument(
         "--mentions-plans-file",
@@ -244,6 +301,15 @@ def parse_args() -> argparse.Namespace:
         help=(
             "JSON configuration for frozen DIRECT/BRIDGE connection ablation "
             "modes."
+        ),
+    )
+    parser.add_argument(
+        "--save-connection-channel-trace",
+        action="store_true",
+        help=(
+            "Diagnostic-only: persist local channel, graph channel, pre-global "
+            "fusion union, fused global pool, resolved UMLS seed rows and "
+            "connection expansions for supported pool-preserving connection modes."
         ),
     )
     parser.add_argument("--descendants-per-seed", type=int, default=5)
@@ -811,10 +877,20 @@ def main() -> None:
             args.connection_config,
             "Connection ablation configuration",
         )
+    if args.save_connection_channel_trace:
+        if len(modes) != 1 or modes[0] != "semantic_weighted_pool_rrf_direct_bridge_sa_top3":
+            raise ValueError(
+                "--save-connection-channel-trace currently requires exactly "
+                "semantic_weighted_pool_rrf_direct_bridge_sa_top3"
+            )
 
     embedding_seed_modes = {
         "mentions_embedding_seeded",
         "mentions_embedding_seeded_similarity_weighted",
+        "mentions_embedding_seeded_semantic_preselected_similarity_weighted",
+        "mentions_embedding_seeded_preselection_rrf_similarity_weighted",
+        "mentions_embedding_exact_safe_seeded_similarity_weighted",
+        "mentions_embedding_exact_safe_same_cui_seeded_similarity_weighted",
         "mentions_lexical_semantic_best_channel",
         "semantic_weighted_direct_balanced",
         "semantic_weighted_bridge_sa_top5",
@@ -831,6 +907,26 @@ def main() -> None:
         raise ValueError(
             "--concept-embedding-model is required when "
             "mentions_embedding_seeded is selected"
+        )
+
+    if (args.context_concept_scores is None) != (args.context_seed_selection_policy is None):
+        raise ValueError(
+            "--context-concept-scores and --context-seed-selection-policy must be supplied together"
+        )
+    if args.context_concept_scores is not None:
+        allowed_context_modes = {
+            "mentions_embedding_seeded_similarity_weighted",
+            "mentions_embedding_seeded_semantic_preselected_similarity_weighted",
+            "mentions_embedding_seeded_preselection_rrf_similarity_weighted",
+            "semantic_weighted_pool_rrf_direct_bridge_sa_top3",
+        }
+        if len(modes) != 1 or modes[0] not in allowed_context_modes:
+            raise ValueError(
+                "context seed selection v1 requires exactly one supported "
+                "embedding-seeded similarity-weighted mode"
+            )
+        args.context_concept_scores = resolve_file(
+            args.context_concept_scores, "Context Concept score artifact"
         )
 
     output_root = args.output_root.expanduser().resolve()
@@ -873,6 +969,7 @@ def main() -> None:
 
     plans_path = output_dir / "mentions_plans.jsonl"
     queries_path = output_dir / "queries.jsonl"
+    connection_channel_trace_path = output_dir / "connection_channel_trace.jsonl"
     manifest_path = output_dir / "manifest.json"
 
     existing_plan_rows = load_jsonl(plans_path) if args.resume else []
@@ -919,9 +1016,27 @@ def main() -> None:
             "top_k": args.top_k,
             "concept_embedding_model": args.concept_embedding_model,
             "concepts_per_term": args.concepts_per_term,
+            "concept_embedding_min_similarity": args.concept_embedding_min_similarity,
+            "concept_embedding_rank1_fallback": args.concept_embedding_rank1_fallback,
             "concept_embedding_cache": (
                 str(args.concept_embedding_cache)
                 if args.concept_embedding_cache is not None
+                else None
+            ),
+            "context_concept_scores": (
+                str(args.context_concept_scores)
+                if args.context_concept_scores is not None
+                else None
+            ),
+            "context_concept_scores_sha256": (
+                hashlib.sha256(args.context_concept_scores.read_bytes()).hexdigest()
+                if args.context_concept_scores is not None
+                else None
+            ),
+            "context_seed_selection_policy": args.context_seed_selection_policy,
+            "context_seed_selection_semantics": (
+                "Q2 changes Concept membership only; emitted seeds retain original Q0 rank and cosine"
+                if args.context_concept_scores is not None
                 else None
             ),
             "router_term_normalization": args.router_term_normalization,
@@ -1100,18 +1215,33 @@ def main() -> None:
             )
 
         embedding_seeder = None
+        context_selection_seeder = None
         if any(mode in modes for mode in embedding_seed_modes):
-            embedding_seeder = EmbeddingConceptSeeder(
+            base_embedding_seeder = EmbeddingConceptSeeder(
                 tools,
                 embedding_model=args.concept_embedding_model,
                 concepts_per_term=args.concepts_per_term,
+                min_similarity=args.concept_embedding_min_similarity,
+                keep_best_below_min_similarity=args.concept_embedding_rank1_fallback,
                 cache_path=args.concept_embedding_cache,
                 query_cache_path=args.query_term_embedding_cache,
                 query_cache_read_only=(
                     args.query_term_embedding_cache_read_only
                 ),
             )
-            embedding_seeder.prepare(document_ids=(document_ids or None))
+            base_embedding_seeder.prepare(document_ids=(document_ids or None))
+            if args.context_concept_scores is not None:
+                context_selection_seeder = FrozenContextScoreConceptSeeder(
+                    base_embedding_seeder,
+                    score_csv=args.context_concept_scores,
+                    policy=args.context_seed_selection_policy,
+                    top_k=args.context_seed_top_k,
+                    neighbourhood_m=args.context_seed_neighbourhood_m,
+                )
+                context_selection_seeder.prepare(document_ids=(document_ids or None))
+                embedding_seeder = context_selection_seeder
+            else:
+                embedding_seeder = base_embedding_seeder
             manifest["configuration"].update(
                 {
                     "concept_catalogue_size": (
@@ -1145,6 +1275,8 @@ def main() -> None:
             question_record = indexed_questions[question_id]
             question = str(question_record["question"]).strip()
             gold_sections = gold_section_keys(question_record)
+            if context_selection_seeder is not None:
+                context_selection_seeder.set_question_id(question_id)
 
             needs_modular = any(
                 mode in MODULAR_MODES
@@ -1224,6 +1356,12 @@ def main() -> None:
                             query_term_embedding_cache_read_only=(
                                 args.query_term_embedding_cache_read_only
                             ),
+                            concept_embedding_min_similarity=(
+                                args.concept_embedding_min_similarity
+                            ),
+                            concept_embedding_rank1_fallback=(
+                                args.concept_embedding_rank1_fallback
+                            ),
                             concept_seeder=(
                                 embedding_seeder
                                 if mode in embedding_seed_modes
@@ -1276,6 +1414,28 @@ def main() -> None:
                             run, "expanded_candidates"
                         )
                         final_results = key_results_from_modular(run, "results")
+                        if args.save_connection_channel_trace:
+                            trace_payload = getattr(
+                                pipeline.candidate_generator,
+                                "last_channel_trace",
+                                None,
+                            )
+                            if not isinstance(trace_payload, Mapping):
+                                raise RuntimeError(
+                                    "Connection channel trace requested but the "
+                                    "candidate generator did not expose a trace"
+                                )
+                            append_jsonl(
+                                connection_channel_trace_path,
+                                {
+                                    "question_id": question_id,
+                                    "question": question,
+                                    "gold_sections": [
+                                        item.to_dict() for item in gold_sections
+                                    ],
+                                    "trace": trace_payload,
+                                },
+                            )
                     else:
                         if advanced_retriever is None:
                             raise RuntimeError(
@@ -1395,6 +1555,11 @@ def main() -> None:
         "failure_count": failure_count,
         "mentions_plans_generated_count": generated_plan_count,
         "concept_seed_diagnostics_file": str(concept_seed_diagnostics_path),
+        "connection_channel_trace_file": (
+            str(connection_channel_trace_path)
+            if args.save_connection_channel_trace
+            else None
+        ),
         "elapsed_seconds": time.perf_counter() - started,
         "configuration": manifest["configuration"],
         "aggregates": aggregates,
@@ -1408,6 +1573,11 @@ def main() -> None:
     manifest["summary_file"] = str(output_dir / "summary.json")
     manifest["concept_seed_diagnostics_file"] = str(
         concept_seed_diagnostics_path
+    )
+    manifest["connection_channel_trace_file"] = (
+        str(connection_channel_trace_path)
+        if args.save_connection_channel_trace
+        else None
     )
     manifest["group_aggregates_file"] = str(
         group_aggregate_path

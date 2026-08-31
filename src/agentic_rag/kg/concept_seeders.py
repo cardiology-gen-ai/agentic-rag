@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
+import unicodedata
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Literal, Protocol
@@ -277,6 +279,7 @@ class EmbeddingConceptSeeder:
         embedding_model: str,
         concepts_per_term: int = 3,
         min_similarity: float | None = None,
+        keep_best_below_min_similarity: bool = False,
         cache_path: str | Path | None = None,
         query_cache_path: str | Path | None = None,
         query_cache_read_only: bool = False,
@@ -303,6 +306,9 @@ class EmbeddingConceptSeeder:
         )
         self.min_similarity = _validate_min_similarity(
             min_similarity
+        )
+        self.keep_best_below_min_similarity = bool(
+            keep_best_below_min_similarity
         )
         self.cache_path = (
             Path(cache_path).expanduser() if cache_path is not None else None
@@ -400,6 +406,12 @@ class EmbeddingConceptSeeder:
         )
         self.catalogue_build_load_seconds = time.perf_counter() - started
 
+    @property
+    def catalogue_records(self) -> tuple[ConceptCatalogueRecord, ...]:
+        """Return the prepared exact-identity Concept catalogue read-only."""
+
+        return tuple(self._concepts)
+
     def seed_concepts(
         self,
         terms: Sequence[str] | str,
@@ -434,6 +446,12 @@ class EmbeddingConceptSeeder:
                     or float(similarities[index]) >= self.min_similarity
                 )
             ]
+            if (
+                self.keep_best_below_min_similarity
+                and not eligible_indexes
+                and ranked_indexes
+            ):
+                eligible_indexes = [ranked_indexes[0]]
             seeds: list[ConceptSeed] = []
             for seed_rank, index in enumerate(
                 eligible_indexes[: self.concepts_per_term],
@@ -623,6 +641,230 @@ class EmbeddingConceptSeeder:
                 / f"{self.cache_path.stem}-{cache_key}.npz"
             )
         return self.cache_path / f"{cache_key}.npz"
+
+
+_EXACT_SAFE_WS_RE = re.compile(r"\s+")
+
+
+def normalize_exact_safe_surface(value: str) -> str:
+    """Canonicalize representation only; do not perform semantic rewriting."""
+
+    text = unicodedata.normalize("NFKC", str(value))
+    return _EXACT_SAFE_WS_RE.sub(" ", text).strip()
+
+
+def resolve_exact_safe_seed(
+    term: str,
+    catalogue: Sequence[ConceptCatalogueRecord],
+) -> ConceptSeed | None:
+    """Resolve at most one safe exact local Concept for a query term.
+
+    Policy:
+    1. prefer one exact-case surface match;
+    2. otherwise accept a case-insensitive surface match only when unique;
+    3. skip ambiguous casefold collisions.
+
+    Only ``Concept.name`` is considered. No aliases, normalized names, UMLS,
+    stemming, substring matching, acronym expansion, or fuzzy matching are
+    used by this ablation.
+    """
+
+    query_surface = normalize_exact_safe_surface(term)
+    if not query_surface:
+        return None
+
+    exact_matches: list[ConceptCatalogueRecord] = []
+    folded_matches: list[ConceptCatalogueRecord] = []
+    query_folded = query_surface.casefold()
+
+    for concept in catalogue:
+        value = concept.name or concept.concept_name
+        surface = normalize_exact_safe_surface(value)
+        if surface == query_surface:
+            exact_matches.append(concept)
+        if surface.casefold() == query_folded:
+            folded_matches.append(concept)
+
+    if len(exact_matches) == 1:
+        concept = exact_matches[0]
+        match_type = "exact_safe_exact_case"
+    elif len(exact_matches) > 1:
+        # Exact Concept identity should already be unique, but fail closed if
+        # an inconsistent catalogue ever violates that invariant.
+        return None
+    elif len(folded_matches) == 1:
+        concept = folded_matches[0]
+        match_type = "exact_safe_unique_casefold"
+    else:
+        return None
+
+    return ConceptSeed(
+        query_term=term,
+        concept_name=concept.concept_name,
+        canonical_type=concept.canonical_type,
+        umls_cui=concept.umls_cui,
+        method="lexical",
+        match_type=match_type,
+        seed_rank=1,
+        similarity=None,
+        matched_value=concept.name or concept.concept_name,
+    )
+
+
+class ExactSafeAugmentedConceptSeeder:
+    """Add one collision-safe exact Concept seed to semantic top-k seeds.
+
+    The semantic seeds remain unchanged. An exact seed is appended only when
+    its exact Concept identity is not already present among the semantic
+    seeds for that query term. This prevents the exact channel from erasing
+    the stored semantic similarity of a duplicate semantic seed.
+    """
+
+    name = "embedding_plus_exact_safe_concept_seeder"
+
+    def __init__(self, semantic_seeder: EmbeddingConceptSeeder) -> None:
+        self.semantic_seeder = semantic_seeder
+        # This is an upper bound: semantic top-k plus at most one exact seed.
+        self.concepts_per_term = semantic_seeder.concepts_per_term + 1
+
+    @property
+    def catalogue_records(self) -> tuple[ConceptCatalogueRecord, ...]:
+        return self.semantic_seeder.catalogue_records
+
+    def seed_concepts(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> dict[str, list[ConceptSeed]]:
+        normalized_terms = _normalize_terms(terms)
+        semantic_groups = self.semantic_seeder.seed_concepts(
+            normalized_terms,
+            document_ids=document_ids,
+        )
+        catalogue = self.semantic_seeder.catalogue_records
+
+        output: dict[str, list[ConceptSeed]] = {}
+        for term in normalized_terms:
+            semantic = list(semantic_groups.get(term, ()))
+            existing = {seed.concept_name for seed in semantic}
+            exact_seed = resolve_exact_safe_seed(term, catalogue)
+            if exact_seed is not None and exact_seed.concept_name not in existing:
+                semantic.append(exact_seed)
+            output[term] = semantic
+        return output
+
+
+class SameCUIAugmentedConceptSeeder:
+    """Expand local Concept seeds through exact shared UMLS CUI identity.
+
+    This is a local equivalence closure, not UMLS relational expansion.  For
+    each base seed with a non-empty ``umls_cui``, every other *local* Concept
+    in the same document-scoped catalogue with exactly the same CUI is added
+    for the same query term.  The closure seed inherits the parent seed rank
+    and semantic similarity because it represents the same normalized UMLS
+    concept, while ``match_type`` records the provenance explicitly.
+
+    No external UMLS nodes, DIRECT/BRIDGE relations, aliases, fuzzy matching,
+    or cross-CUI traversal are used.
+    """
+
+    name = "same_cui_augmented_concept_seeder"
+
+    def __init__(self, base_seeder: ConceptSeederProtocol) -> None:
+        self.base_seeder = base_seeder
+        self.concepts_per_term = int(getattr(base_seeder, "concepts_per_term", 0))
+
+    @property
+    def catalogue_records(self) -> tuple[ConceptCatalogueRecord, ...]:
+        records = getattr(self.base_seeder, "catalogue_records", None)
+        if records is None:
+            semantic = getattr(self.base_seeder, "semantic_seeder", None)
+            records = getattr(semantic, "catalogue_records", None)
+        if records is None:
+            raise TypeError(
+                "same-CUI augmentation requires a seeder exposing "
+                "catalogue_records"
+            )
+        return tuple(records)
+
+    def seed_concepts(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> dict[str, list[ConceptSeed]]:
+        normalized_terms = _normalize_terms(terms)
+        base_groups = self.base_seeder.seed_concepts(
+            normalized_terms,
+            document_ids=document_ids,
+        )
+        catalogue = self.catalogue_records
+
+        by_cui: dict[str, list[ConceptCatalogueRecord]] = {}
+        for concept in catalogue:
+            cui = str(concept.umls_cui or "").strip()
+            if not cui:
+                continue
+            by_cui.setdefault(cui, []).append(concept)
+        for concepts in by_cui.values():
+            concepts.sort(
+                key=lambda item: (item.concept_name.casefold(), item.concept_name)
+            )
+
+        # EmbeddingConceptSeeder historically serializes semantic seeds with
+        # ``umls_cui=None`` even though the prepared catalogue record contains
+        # the normalized CUI.  Resolve missing seed metadata through the exact
+        # Concept identity rather than changing the frozen baseline seeder.
+        # Exact-name lookup is intentional: biomedical case can distinguish
+        # different Concepts (for example ``DMD`` vs ``dmd``).
+        by_exact_name = {concept.concept_name: concept for concept in catalogue}
+
+        output: dict[str, list[ConceptSeed]] = {}
+        for term in normalized_terms:
+            base = list(base_groups.get(term, ()))
+            existing = {seed.concept_name for seed in base}
+            additions: list[ConceptSeed] = []
+
+            # Deterministic parent order ensures stable provenance when more
+            # than one base seed points to the same CUI.
+            parents = sorted(
+                base,
+                key=lambda seed: (
+                    seed.seed_rank,
+                    seed.concept_name.casefold(),
+                    seed.concept_name,
+                ),
+            )
+            for parent in parents:
+                cui = str(parent.umls_cui or "").strip()
+                if not cui:
+                    source_record = by_exact_name.get(parent.concept_name)
+                    if source_record is not None:
+                        cui = str(source_record.umls_cui or "").strip()
+                if not cui:
+                    continue
+                for sibling in by_cui.get(cui, ()):
+                    if sibling.concept_name in existing:
+                        continue
+                    additions.append(
+                        ConceptSeed(
+                            query_term=parent.query_term,
+                            concept_name=sibling.concept_name,
+                            canonical_type=sibling.canonical_type,
+                            umls_cui=cui,
+                            method=parent.method,
+                            match_type="same_cui_local_closure",
+                            seed_rank=parent.seed_rank,
+                            similarity=parent.similarity,
+                            matched_value=parent.concept_name,
+                        )
+                    )
+                    existing.add(sibling.concept_name)
+
+            output[term] = base + additions
+
+        return output
 
 
 def flatten_seed_groups(

@@ -418,6 +418,7 @@ class KGSectionSearchProtocol(Protocol):
         top_k: int = 10,
         require_all: bool = False,
         exclude_summary_sections: bool = True,
+        preselection_policy: str = "current",
     ) -> list[KGSectionResult]: ...
 
 
@@ -506,11 +507,18 @@ class SeededMentionsCandidateGenerator:
         seeder: ConceptSeederProtocol,
         *,
         exclude_summary_sections: bool = True,
+        preselection_policy: str = "current",
     ) -> None:
         self.tools = tools
         self.seeder = seeder
         self.ranking_mode: KGRankingMode = "concept_match"
         self.exclude_summary_sections = bool(exclude_summary_sections)
+        normalized_preselection = str(preselection_policy).strip().lower()
+        if normalized_preselection not in {"current", "semantic_before_cutoff"}:
+            raise ValueError(
+                "preselection_policy must be 'current' or 'semantic_before_cutoff'"
+            )
+        self.preselection_policy = normalized_preselection
 
     def generate(
         self,
@@ -554,6 +562,7 @@ class SeededMentionsCandidateGenerator:
             top_k=validated_top_k,
             require_all=bool(require_all),
             exclude_summary_sections=self.exclude_summary_sections,
+            preselection_policy=self.preselection_policy,
         )
         candidates = _wrap_seeded_results(
             results,
@@ -606,6 +615,171 @@ def _candidate_with_seed_channel_score(
             "metadata": metadata,
         }
     )
+
+
+class RankFusionSeededMentionsCandidateGenerator:
+    """Fuse CURRENT and semantic preselection ranks before the fixed-K cutoff.
+
+    Both channels use the same frozen Concept seeds and local MENTIONS traversal.
+    CURRENT prioritizes multi-term coverage/seed ranks, while the semantic channel
+    prioritizes the existing summed seed cosine score.  The top ``channel_k``
+    candidates from each channel are fused with unweighted reciprocal-rank fusion
+    and only then truncated to the requested candidate budget.
+
+    This introduces no learned/tuned coefficient beyond the RRF constant already
+    used elsewhere in the project.  Missing candidates contribute zero in that
+    channel, i.e. this is explicitly a fusion of two live top-N channel lists.
+    """
+
+    name = "seeded_mentions_preselection_rrf"
+
+    def __init__(
+        self,
+        tools: KGSectionSearchProtocol,
+        seeder: ConceptSeederProtocol,
+        *,
+        exclude_summary_sections: bool = True,
+        channel_k: int = 100,
+        rrf_constant: int = 60,
+    ) -> None:
+        self.tools = tools
+        self.seeder = seeder
+        self.ranking_mode: KGRankingMode = "concept_match"
+        self.exclude_summary_sections = bool(exclude_summary_sections)
+        self.channel_k = int(channel_k)
+        self.rrf_constant = int(rrf_constant)
+        if self.channel_k < 1 or self.channel_k > 100:
+            raise ValueError("channel_k must be between 1 and 100")
+        if self.rrf_constant < 1:
+            raise ValueError("rrf_constant must be positive")
+
+    def generate(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> list[KGCandidate]:
+        candidates, _ = self.generate_with_seeds(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+        return candidates
+
+    def generate_with_seeds(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> tuple[list[KGCandidate], list[ConceptSeed]]:
+        normalized_terms = _normalize_terms(terms)
+        validated_top_k = _validate_top_k(top_k)
+        channel_k = max(validated_top_k, self.channel_k)
+
+        seed_groups = self.seeder.seed_concepts(
+            normalized_terms,
+            document_ids=document_ids,
+        )
+        seeds = flatten_seed_groups(seed_groups)
+        if not seeds:
+            return [], []
+
+        common = dict(
+            query_terms=normalized_terms,
+            document_ids=document_ids,
+            top_k=channel_k,
+            require_all=bool(require_all),
+            exclude_summary_sections=self.exclude_summary_sections,
+        )
+        current_results = self.tools.search_sections_by_concept_seeds(
+            seeds,
+            preselection_policy="current",
+            **common,
+        )
+        semantic_results = self.tools.search_sections_by_concept_seeds(
+            seeds,
+            preselection_policy="semantic_before_cutoff",
+            **common,
+        )
+
+        methods = _ordered_unique(seed.method for seed in seeds)
+        current = _wrap_seeded_results(
+            current_results, seeding_methods=methods, seed_count=len(seeds)
+        )
+        semantic = _wrap_seeded_results(
+            semantic_results, seeding_methods=methods, seed_count=len(seeds)
+        )
+        current_by_uid = {c.section_uid: c for c in current}
+        semantic_by_uid = {c.section_uid: c for c in semantic}
+        current_rank = {c.section_uid: int(c.source_rank) for c in current}
+        semantic_rank = {c.section_uid: int(c.source_rank) for c in semantic}
+
+        fused: list[tuple[KGCandidate, float, int, int, int]] = []
+        missing_rank = 10**9
+        for uid in sorted(set(current_by_uid) | set(semantic_by_uid)):
+            c_rank = current_rank.get(uid)
+            s_rank = semantic_rank.get(uid)
+            score = 0.0
+            if c_rank is not None:
+                score += 1.0 / (self.rrf_constant + c_rank)
+            if s_rank is not None:
+                score += 1.0 / (self.rrf_constant + s_rank)
+            base = current_by_uid.get(uid) or semantic_by_uid[uid]
+            fused.append(
+                (
+                    base,
+                    score,
+                    min(c_rank or missing_rank, s_rank or missing_rank),
+                    c_rank or missing_rank,
+                    s_rank or missing_rank,
+                )
+            )
+
+        fused.sort(
+            key=lambda item: (
+                -item[1],
+                item[2],
+                item[3],
+                item[4],
+                item[0].section_uid,
+            )
+        )
+
+        output: list[KGCandidate] = []
+        for rank, (candidate, score, _best, c_rank, s_rank) in enumerate(
+            fused[:validated_top_k], start=1
+        ):
+            metadata = dict(candidate.metadata)
+            metadata.update(
+                {
+                    "preselection_policy": "current_semantic_rrf",
+                    "preselection_rrf_score": float(score),
+                    "preselection_rrf_constant": self.rrf_constant,
+                    "preselection_rrf_channel_k": channel_k,
+                    "current_preselection_rank": (
+                        None if c_rank == missing_rank else c_rank
+                    ),
+                    "semantic_preselection_rank": (
+                        None if s_rank == missing_rank else s_rank
+                    ),
+                    "fused_preselection_rank": rank,
+                }
+            )
+            output.append(
+                candidate.model_copy(
+                    update={
+                        "source_rank": rank,
+                        "seed_rank": rank,
+                        "metadata": metadata,
+                    }
+                )
+            )
+        return output, list(seeds)
 
 
 class SimilarityWeightedSeededMentionsCandidateGenerator:

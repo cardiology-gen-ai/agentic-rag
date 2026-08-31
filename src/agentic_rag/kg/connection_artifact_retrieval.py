@@ -22,6 +22,7 @@ from agentic_rag.kg.candidate_generators import (
     KGCandidate,
     KGSectionSearchProtocol,
     SeededMentionsCandidateGenerator,
+    RankFusionSeededMentionsCandidateGenerator,
     _CONCEPT_GRAPH_DIRECT_WEIGHT,
     _CONCEPT_GRAPH_EVIDENCE_RETURN,
     _CONCEPT_GRAPH_EXACT_WEIGHT,
@@ -193,6 +194,32 @@ class FrozenConnectionAblationConfig:
                 str(source).strip() for source in sources
             ):
                 raise ValueError(f"{name}.direct.sources must be a non-empty list")
+
+        local_cfg = payload.get("local_channel")
+        if local_cfg is not None:
+            if not isinstance(local_cfg, dict):
+                raise ValueError(f"{name}.local_channel must be an object or null")
+            policy = str(local_cfg.get("policy") or "current").strip()
+            if policy not in {"current", "preselection_rrf"}:
+                raise ValueError(
+                    f"{name}.local_channel.policy must be current or preselection_rrf"
+                )
+            if policy == "preselection_rrf":
+                try:
+                    channel_k = int(local_cfg.get("channel_k", 100))
+                    rrf_constant = int(local_cfg.get("rrf_constant", 60))
+                except (TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"{name}.local_channel channel_k/rrf_constant must be integers"
+                    ) from exc
+                if channel_k < 1 or channel_k > 100:
+                    raise ValueError(
+                        f"{name}.local_channel.channel_k must be between 1 and 100"
+                    )
+                if rrf_constant < 1:
+                    raise ValueError(
+                        f"{name}.local_channel.rrf_constant must be >= 1"
+                    )
 
         if bridge_cfg is not None:
             if not isinstance(bridge_cfg, dict):
@@ -766,6 +793,58 @@ def _merge_semantic_connection_candidates(
     return output
 
 
+def _normalize_local_channel_config(mode_config: Mapping[str, Any]) -> dict[str, Any]:
+    raw = mode_config.get("local_channel")
+    if raw is None:
+        return {"policy": "current"}
+    if not isinstance(raw, Mapping):
+        raise ValueError("connection local_channel must be an object")
+    policy = str(raw.get("policy") or "current").strip()
+    if policy == "current":
+        return {"policy": "current"}
+    if policy != "preselection_rrf":
+        raise ValueError(
+            "connection local_channel.policy must be current or preselection_rrf"
+        )
+    channel_k = int(raw.get("channel_k", 100))
+    rrf_constant = int(raw.get("rrf_constant", 60))
+    if channel_k < 1 or channel_k > 100:
+        raise ValueError("connection local_channel.channel_k must be between 1 and 100")
+    if rrf_constant < 1:
+        raise ValueError("connection local_channel.rrf_constant must be >= 1")
+    return {
+        "policy": "preselection_rrf",
+        "channel_k": channel_k,
+        "rrf_constant": rrf_constant,
+    }
+
+
+def _build_connection_local_generator(
+    tools: KGSectionSearchProtocol,
+    seeder: ConceptSeederProtocol,
+    *,
+    mode_config: Mapping[str, Any],
+    exclude_summary_sections: bool,
+):
+    cfg = _normalize_local_channel_config(mode_config)
+    if cfg["policy"] == "preselection_rrf":
+        return RankFusionSeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+            channel_k=int(cfg["channel_k"]),
+            rrf_constant=int(cfg["rrf_constant"]),
+        ), cfg
+    return (
+        SeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+        ),
+        cfg,
+    )
+
+
 class SemanticWeightedConnectionCandidateGenerator:
     """Semantic Concept seeding + MENTIONS + frozen DIRECT/BRIDGE expansion.
 
@@ -792,11 +871,6 @@ class SemanticWeightedConnectionCandidateGenerator:
         self.client = client
         self.seeder = seeder
         self.exclude_summary_sections = bool(exclude_summary_sections)
-        self.local_generator = SeededMentionsCandidateGenerator(
-            tools,
-            seeder,
-            exclude_summary_sections=exclude_summary_sections,
-        )
 
         # Reuse the already validated artifact/config loader and adjacencies.
         self.connection = ConnectionArtifactCandidateGenerator(
@@ -806,7 +880,14 @@ class SemanticWeightedConnectionCandidateGenerator:
             ranking_mode="weighted_match",
             exclude_summary_sections=exclude_summary_sections,
         )
+        self.local_generator, self.local_channel_config = _build_connection_local_generator(
+            tools,
+            seeder,
+            mode_config=self.connection.mode_config,
+            exclude_summary_sections=exclude_summary_sections,
+        )
         self.ranking_mode: KGRankingMode = "weighted_match"
+        self.last_channel_trace: dict[str, Any] | None = None
 
     def generate(
         self,
@@ -919,9 +1000,22 @@ class SemanticWeightedConnectionCandidateGenerator:
             "connection_external_cuis_materialized": False,
             "gold_used_for_retrieval": False,
             "local_channel_k": validated_local_top_k,
+            "local_channel_policy": self.local_channel_config["policy"],
+            "local_channel_config": dict(self.local_channel_config),
             "graph_channel_k": validated_graph_top_k,
             "local_channel_candidate_count": len(local_candidates),
             "graph_channel_candidate_count": len(graph_candidates),
+        }
+        # Diagnostic-only ephemeral trace.  It is intentionally not copied into
+        # every candidate metadata payload; callers may explicitly persist it.
+        self.last_channel_trace = {
+            "schema_version": "umls_connection_channels_v1",
+            "query_terms": list(normalized_terms),
+            "seed_rows": [dict(row) for row in seed_rows],
+            "connection_expansions": [dict(row) for row in expansions],
+            "local_channel": [_candidate_channel_trace_row(c) for c in local_candidates],
+            "graph_channel": [_candidate_channel_trace_row(c) for c in graph_candidates],
+            "channel_metadata": dict(metadata),
         }
         return list(local_candidates), list(graph_candidates), list(seeds), metadata
 
@@ -950,6 +1044,31 @@ class SemanticWeightedConnectionCandidateGenerator:
         return output, list(seeds)
 
 
+
+
+def _candidate_channel_trace_row(candidate: KGCandidate) -> dict[str, Any]:
+    """Compact candidate serialization for explicit channel diagnostics."""
+    section = candidate.section
+    return {
+        "section_uid": candidate.section_uid,
+        "document_id": candidate.document_id,
+        "printed_section_id": candidate.printed_section_id,
+        "title": candidate.title,
+        "represented_section_ids": list(section.represented_section_ids),
+        "source": candidate.source,
+        "source_rank": int(candidate.source_rank),
+        "seed_uid": candidate.seed_uid,
+        "seed_rank": candidate.seed_rank,
+        "direct": bool(candidate.direct),
+        "graph_distance": candidate.graph_distance,
+        "score": section.score,
+        "matched_concepts": list(section.matched_concepts),
+        "matched_terms": list(section.matched_terms),
+        "match_diagnostics": [
+            item.model_dump(mode="json") for item in section.match_diagnostics
+        ],
+        "metadata": dict(candidate.metadata),
+    }
 
 def _rank_rrf_pool(
     local_candidates: Sequence[KGCandidate],
@@ -1016,6 +1135,12 @@ class PoolPreservingSemanticConnectionCandidateGenerator:
             exclude_summary_sections=exclude_summary_sections,
         )
         self.graph_candidate_k = _validate_top_k(graph_candidate_k)
+        config_payload = json.loads(Path(config_path).read_text(encoding="utf-8"))
+        experiment_cfg = config_payload.get("experiment") or {}
+        raw_global_k = experiment_cfg.get("global_candidate_k")
+        self.global_candidate_k = (
+            None if raw_global_k is None else _validate_top_k(int(raw_global_k))
+        )
         if fusion_policy not in {"semantic_score", "rrf"}:
             raise ValueError("fusion_policy must be 'semantic_score' or 'rrf'")
         self.fusion_policy = fusion_policy
@@ -1023,6 +1148,7 @@ class PoolPreservingSemanticConnectionCandidateGenerator:
         if self.rrf_k < 1:
             raise ValueError("rrf_k must be >= 1")
         self.ranking_mode: KGRankingMode = "weighted_match"
+        self.last_channel_trace: dict[str, Any] | None = None
 
     def generate(self, terms, *, top_k: int, require_all: bool = False, document_ids=None):
         candidates, _ = self.generate_with_seeds(
@@ -1039,8 +1165,13 @@ class PoolPreservingSemanticConnectionCandidateGenerator:
         shared = {
             **metadata,
             "generator": self.name,
-            "candidate_pool_policy": "separate_channels_then_union",
+            "candidate_pool_policy": (
+                "separate_channels_then_fuse_fixed_global_budget"
+                if self.global_candidate_k is not None
+                else "separate_channels_then_union"
+            ),
             "global_candidate_truncation_before_union": False,
+            "global_candidate_k": self.global_candidate_k,
             "pool_fusion_policy": self.fusion_policy,
         }
         if self.fusion_policy == "semantic_score":
@@ -1050,5 +1181,35 @@ class PoolPreservingSemanticConnectionCandidateGenerator:
         else:
             output = _rank_rrf_pool(local, graph, rrf_k=self.rrf_k, metadata=shared)
         union_n = len(output)
-        output = [c.model_copy(update={"metadata": {**c.metadata, "union_candidate_count": union_n}}) for c in output]
+        pre_global_output = list(output)
+        if self.global_candidate_k is not None:
+            output = output[: self.global_candidate_k]
+        retained_n = len(output)
+        output = [
+            c.model_copy(
+                update={
+                    "metadata": {
+                        **c.metadata,
+                        "union_candidate_count": union_n,
+                        "post_fusion_candidate_count": retained_n,
+                        "global_candidate_k": self.global_candidate_k,
+                        "global_candidate_truncation_applied": self.global_candidate_k is not None,
+                    }
+                }
+            )
+            for c in output
+        ]
+        core_trace = self.core.last_channel_trace or {}
+        self.last_channel_trace = {
+            **core_trace,
+            "pool_fusion_policy": self.fusion_policy,
+            "rrf_k": self.rrf_k,
+            "global_candidate_k": self.global_candidate_k,
+            "union_candidate_count": union_n,
+            "post_fusion_candidate_count": retained_n,
+            "fused_union_pre_global_k": [
+                _candidate_channel_trace_row(c) for c in pre_global_output
+            ],
+            "fused_global_k": [_candidate_channel_trace_row(c) for c in output],
+        }
         return output, list(seeds)

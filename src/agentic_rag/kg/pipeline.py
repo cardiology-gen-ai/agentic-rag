@@ -21,6 +21,7 @@ from agentic_rag.kg.candidate_generators import (
     MentionsCandidateGenerator,
     RescueConceptGraphExpansionCandidateGenerator,
     SeededMentionsCandidateGenerator,
+    RankFusionSeededMentionsCandidateGenerator,
     SimilarityWeightedSeededMentionsCandidateGenerator,
     HybridBestChannelCandidateGenerator,
 )
@@ -33,6 +34,8 @@ from agentic_rag.kg.concept_seeders import (
     ConceptSeed,
     ConceptSeederProtocol,
     EmbeddingConceptSeeder,
+    ExactSafeAugmentedConceptSeeder,
+    SameCUIAugmentedConceptSeeder,
     LexicalConceptSeeder,
 )
 from agentic_rag.kg.expanders import (
@@ -63,6 +66,10 @@ ModularKGMode = Literal[
     "mentions_lexical_seeded",
     "mentions_embedding_seeded",
     "mentions_embedding_seeded_similarity_weighted",
+    "mentions_embedding_seeded_semantic_preselected_similarity_weighted",
+    "mentions_embedding_seeded_preselection_rrf_similarity_weighted",
+    "mentions_embedding_exact_safe_seeded_similarity_weighted",
+    "mentions_embedding_exact_safe_same_cui_seeded_similarity_weighted",
     "mentions_lexical_semantic_best_channel",
     "mentions_descendants",
     "mentions_same_as",
@@ -365,6 +372,7 @@ def build_modular_kg_pipeline(
     query_term_embedding_cache: str | None = None,
     query_term_embedding_cache_read_only: bool = False,
     concept_embedding_min_similarity: float | None = None,
+    concept_embedding_rank1_fallback: bool = False,
     concept_seeder: ConceptSeederProtocol | None = None,
     isa_connections_path: str | None = None,
     isa_max_depth: int = 1,
@@ -426,6 +434,7 @@ def build_modular_kg_pipeline(
                 embedding_model=concept_embedding_model,
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
                 cache_path=concept_embedding_cache,
                 query_cache_path=query_term_embedding_cache,
                 query_cache_read_only=query_term_embedding_cache_read_only,
@@ -452,6 +461,7 @@ def build_modular_kg_pipeline(
                 embedding_model=concept_embedding_model,
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
                 cache_path=concept_embedding_cache,
                 query_cache_path=query_term_embedding_cache,
                 query_cache_read_only=query_term_embedding_cache_read_only,
@@ -459,6 +469,134 @@ def build_modular_kg_pipeline(
         semantic_base = SeededMentionsCandidateGenerator(
             tools,
             seeder,
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        generator = SimilarityWeightedSeededMentionsCandidateGenerator(
+            semantic_base
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_embedding_seeded_preselection_rrf_similarity_weighted":
+        seeder = concept_seeder
+        if seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    "mode='mentions_embedding_seeded_preselection_rrf_similarity_weighted'"
+                )
+            seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
+                cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
+            )
+        fused_base = RankFusionSeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+            channel_k=100,
+            rrf_constant=60,
+        )
+        generator = SimilarityWeightedSeededMentionsCandidateGenerator(fused_base)
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_embedding_seeded_semantic_preselected_similarity_weighted":
+        seeder = concept_seeder
+        if seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    "mode='mentions_embedding_seeded_semantic_preselected_similarity_weighted'"
+                )
+            seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
+                cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
+            )
+        semantic_base = SeededMentionsCandidateGenerator(
+            tools,
+            seeder,
+            exclude_summary_sections=exclude_summary_sections,
+            preselection_policy="semantic_before_cutoff",
+        )
+        generator = SimilarityWeightedSeededMentionsCandidateGenerator(semantic_base)
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_embedding_exact_safe_seeded_similarity_weighted":
+        semantic_seeder = concept_seeder
+        if semantic_seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    "mode='mentions_embedding_exact_safe_seeded_similarity_weighted'"
+                )
+            semantic_seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
+                cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
+            )
+        if not isinstance(semantic_seeder, EmbeddingConceptSeeder):
+            raise TypeError(
+                "exact-safe augmentation requires an EmbeddingConceptSeeder "
+                "as the semantic base"
+            )
+        augmented_seeder = ExactSafeAugmentedConceptSeeder(semantic_seeder)
+        semantic_base = SeededMentionsCandidateGenerator(
+            tools,
+            augmented_seeder,
+            exclude_summary_sections=exclude_summary_sections,
+        )
+        generator = SimilarityWeightedSeededMentionsCandidateGenerator(
+            semantic_base
+        )
+        expander = NoOpExpander()
+        reranker = NoOpReranker()
+
+    elif normalized_mode == "mentions_embedding_exact_safe_same_cui_seeded_similarity_weighted":
+        semantic_seeder = concept_seeder
+        if semantic_seeder is None:
+            if concept_embedding_model is None:
+                raise ValueError(
+                    "concept_embedding_model is required for "
+                    "mode='mentions_embedding_exact_safe_same_cui_seeded_similarity_weighted'"
+                )
+            semantic_seeder = EmbeddingConceptSeeder(
+                tools,
+                embedding_model=concept_embedding_model,
+                concepts_per_term=concepts_per_term,
+                min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
+                cache_path=concept_embedding_cache,
+                query_cache_path=query_term_embedding_cache,
+                query_cache_read_only=query_term_embedding_cache_read_only,
+            )
+        if not isinstance(semantic_seeder, EmbeddingConceptSeeder):
+            raise TypeError(
+                "same-CUI S2 augmentation requires an EmbeddingConceptSeeder "
+                "as the semantic base"
+            )
+        exact_safe = ExactSafeAugmentedConceptSeeder(semantic_seeder)
+        same_cui = SameCUIAugmentedConceptSeeder(exact_safe)
+        semantic_base = SeededMentionsCandidateGenerator(
+            tools,
+            same_cui,
             exclude_summary_sections=exclude_summary_sections,
         )
         generator = SimilarityWeightedSeededMentionsCandidateGenerator(
@@ -480,6 +618,7 @@ def build_modular_kg_pipeline(
                 embedding_model=concept_embedding_model,
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
                 cache_path=concept_embedding_cache,
                 query_cache_path=query_term_embedding_cache,
                 query_cache_read_only=query_term_embedding_cache_read_only,
@@ -671,6 +810,7 @@ def build_modular_kg_pipeline(
                 embedding_model=concept_embedding_model,
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
                 cache_path=concept_embedding_cache,
                 query_cache_path=query_term_embedding_cache,
                 query_cache_read_only=query_term_embedding_cache_read_only,
@@ -715,6 +855,7 @@ def build_modular_kg_pipeline(
                 embedding_model=concept_embedding_model,
                 concepts_per_term=concepts_per_term,
                 min_similarity=concept_embedding_min_similarity,
+                keep_best_below_min_similarity=concept_embedding_rank1_fallback,
                 cache_path=concept_embedding_cache,
                 query_cache_path=query_term_embedding_cache,
                 query_cache_read_only=query_term_embedding_cache_read_only,
@@ -855,6 +996,10 @@ def _validate_mode(value: str) -> ModularKGMode:
         "mentions_lexical_seeded",
         "mentions_embedding_seeded",
         "mentions_embedding_seeded_similarity_weighted",
+        "mentions_embedding_seeded_semantic_preselected_similarity_weighted",
+        "mentions_embedding_seeded_preselection_rrf_similarity_weighted",
+        "mentions_embedding_exact_safe_seeded_similarity_weighted",
+        "mentions_embedding_exact_safe_same_cui_seeded_similarity_weighted",
         "mentions_lexical_semantic_best_channel",
         "mentions_descendants",
         "mentions_same_as",

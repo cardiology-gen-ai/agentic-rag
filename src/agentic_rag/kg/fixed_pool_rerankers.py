@@ -39,6 +39,44 @@ def load_specificity_csv(path: Path) -> dict[str, float]:
     return values
 
 
+
+def validate_specificity_subset(
+    specificity: Mapping[str, float],
+    concept_universe: Mapping[str, Any] | Sequence[str],
+) -> dict[str, Any]:
+    """Validate the corpus-specificity domain against a frozen Concept universe.
+
+    Specificity is exported only for Concepts that MENTION at least one
+    retrieval Section.  A frozen embedding catalogue may therefore contain
+    additional Concepts that are not assigned an IDF value.  This is valid as
+    long as specificity introduces no Concept outside the frozen catalogue.
+
+    The actual reranker remains strict: :func:`specificity_features` raises if
+    a best-evidence Concept used by a candidate lacks specificity.  Hence this
+    universe check allows catalogue-only Concepts without silently assigning
+    them an arbitrary score.
+    """
+
+    concept_names = (
+        set(str(name) for name in concept_universe.keys())
+        if isinstance(concept_universe, Mapping)
+        else set(str(name) for name in concept_universe)
+    )
+    specificity_names = set(str(name) for name in specificity.keys())
+    extra = sorted(specificity_names - concept_names, key=lambda x: (x.casefold(), x))
+    if extra:
+        raise RuntimeError(
+            "Specificity contains Concepts outside the frozen embedding universe: "
+            + repr(extra[:20])
+        )
+    excluded = sorted(concept_names - specificity_names, key=lambda x: (x.casefold(), x))
+    return {
+        "specificity_concept_count": len(specificity_names),
+        "concept_universe_count": len(concept_names),
+        "specificity_excluded_concept_count": len(excluded),
+        "specificity_excluded_concept_examples": excluded[:20],
+    }
+
 def specificity_features(
     candidate: KGCandidate,
     specificity: Mapping[str, float],

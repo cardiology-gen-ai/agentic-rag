@@ -589,6 +589,7 @@ WITH
     query_term_key,
     head(collect(query_term)) AS query_term,
     min(seed_rank) AS best_seed_rank_for_term,
+    max(CASE WHEN similarity IS NULL THEN 0.0 ELSE toFloat(similarity) END) AS best_similarity_for_term,
     collect(DISTINCT c.name) AS concepts_for_term,
     collect(DISTINCT {
         query_term: query_term,
@@ -611,6 +612,7 @@ WITH
     count(DISTINCT query_term_key) AS matched_term_count,
     collect(DISTINCT query_term_key) AS matched_term_keys,
     collect(best_seed_rank_for_term) AS best_seed_ranks,
+    collect(best_similarity_for_term) AS best_seed_similarities,
     collect(query_term) AS matched_terms,
     collect(concepts_for_term) AS concept_groups,
     collect(diagnostics_for_term) AS diagnostic_groups
@@ -627,6 +629,11 @@ WITH
         seed_rank IN best_seed_ranks |
         total + seed_rank
     ) AS seed_rank_sum,
+    reduce(
+        total = 0.0,
+        seed_similarity IN best_seed_similarities |
+        total + seed_similarity
+    ) AS semantic_similarity_sum,
     reduce(
         best = 2147483647,
         seed_rank IN best_seed_ranks |
@@ -652,6 +659,7 @@ WITH
     s,
     matched_term_count,
     seed_rank_sum,
+    semantic_similarity_sum,
     best_seed_rank,
     reduce(
         unique_terms = [],
@@ -674,7 +682,9 @@ WITH
     match_diagnostics
 
 ORDER BY
-    matched_term_count DESC,
+    CASE WHEN $preselection_policy = 'semantic_before_cutoff' THEN semantic_similarity_sum ELSE null END DESC,
+    CASE WHEN $preselection_policy = 'semantic_before_cutoff' THEN matched_term_count ELSE null END DESC,
+    CASE WHEN $preselection_policy = 'current' THEN matched_term_count ELSE null END DESC,
     seed_rank_sum ASC,
     best_seed_rank ASC,
     s.uid ASC
@@ -918,6 +928,7 @@ class KGSectionTools:
         top_k: int = 10,
         require_all: bool = False,
         exclude_summary_sections: bool = True,
+        preselection_policy: str = "current",
     ) -> list[KGSectionResult]:
         """Retrieve Sections from explicit Concept.name seeds only."""
 
@@ -944,6 +955,9 @@ class KGSectionTools:
             required=False,
         )
         validated_top_k = _validate_top_k(top_k)
+        validated_preselection_policy = _validate_preselection_policy(
+            preselection_policy
+        )
 
         rows = self.client.run_read(
             _SEARCH_SECTIONS_BY_CONCEPT_SEEDS,
@@ -958,6 +972,7 @@ class KGSectionTools:
                 "document_ids": normalized_document_ids,
                 "require_all": bool(require_all),
                 "top_k": validated_top_k,
+                "preselection_policy": validated_preselection_policy,
                 "exclude_summary_sections": bool(
                     exclude_summary_sections
                 ),
@@ -1085,6 +1100,15 @@ def _validate_hierarchy_depth(max_depth: int) -> int:
             f"max_depth must not exceed {_MAX_HIERARCHY_DEPTH}"
         )
 
+    return normalized
+
+
+def _validate_preselection_policy(value: str) -> str:
+    normalized = str(value).strip().lower()
+    if normalized not in {"current", "semantic_before_cutoff"}:
+        raise ValueError(
+            "preselection_policy must be 'current' or 'semantic_before_cutoff'"
+        )
     return normalized
 
 

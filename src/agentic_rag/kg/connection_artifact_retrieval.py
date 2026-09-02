@@ -15,7 +15,7 @@ import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 from agentic_rag.kg.candidate_generators import (
     GraphReadClientProtocol,
@@ -59,6 +59,13 @@ _SUPPORTED_CONNECTION_SOURCES = {
     "direct_local_artifact",
     "ontology_bridge_artifact",
 }
+_CONTEXTUAL_BRIDGE_POLICIES = {
+    "contextual_target",
+    "tier_first_contextual_rrf",
+}
+_DEFAULT_CONTEXTUAL_RRF_K = 60
+
+BridgeContextualScorer = Callable[[str, Sequence[str]], Sequence[float]]
 
 _CONNECTION_SEED_QUERY = (
     _CONCEPT_GRAPH_SEED_MATCH
@@ -245,9 +252,41 @@ class FrozenConnectionAblationConfig:
             ranking_policy = str(
                 bridge_cfg.get("ranking_policy") or "tier_first"
             ).strip()
-            if ranking_policy not in {"tier_first", "score_only"}:
+            if ranking_policy not in {
+                "tier_first",
+                "score_only",
+                "contextual_target",
+                "tier_first_contextual_rrf",
+            }:
                 raise ValueError(
-                    f"{name}.bridge.ranking_policy must be tier_first or score_only"
+                    f"{name}.bridge.ranking_policy must be one of: "
+                    "tier_first, score_only, contextual_target, "
+                    "tier_first_contextual_rrf"
+                )
+            try:
+                contextual_rrf_k = int(
+                    bridge_cfg.get(
+                        "contextual_rrf_k",
+                        _DEFAULT_CONTEXTUAL_RRF_K,
+                    )
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"{name}.bridge.contextual_rrf_k must be an integer"
+                ) from exc
+            if contextual_rrf_k < 1:
+                raise ValueError(
+                    f"{name}.bridge.contextual_rrf_k must be >= 1"
+                )
+            contextual_cache = bridge_cfg.get(
+                "contextual_embedding_cache_path"
+            )
+            if contextual_cache is not None and not str(
+                contextual_cache
+            ).strip():
+                raise ValueError(
+                    f"{name}.bridge.contextual_embedding_cache_path "
+                    "must be non-empty when provided"
                 )
 
     def mode(self, name: str) -> dict[str, Any]:
@@ -309,8 +348,40 @@ def _build_bridge_expansions(
     ],
     *,
     top_n: int,
+    ranking_policy: str = "tier_first",
+    question_context: str | None = None,
+    contextual_scorer: BridgeContextualScorer | None = None,
+    contextual_rrf_k: int = _DEFAULT_CONTEXTUAL_RRF_K,
+    ranking_trace: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Apply an independent top-N quota within each bridge source."""
+    """Apply an independent top-N quota within each bridge source.
+
+    ``tier_first`` and ``score_only`` preserve the frozen artifact ordering
+    exactly.  Contextual policies only re-rank neighbours that are already
+    eligible under the configured frozen source/profile; they do not widen
+    relation eligibility or change ``top_n``.
+    """
+    normalized_policy = str(ranking_policy or "tier_first").strip()
+    if normalized_policy not in {
+        "tier_first",
+        "score_only",
+        *_CONTEXTUAL_BRIDGE_POLICIES,
+    }:
+        raise ValueError(f"Unsupported bridge ranking_policy: {ranking_policy!r}")
+    if int(contextual_rrf_k) < 1:
+        raise ValueError("contextual_rrf_k must be >= 1")
+    if normalized_policy in _CONTEXTUAL_BRIDGE_POLICIES:
+        if not str(question_context or "").strip():
+            raise ValueError(
+                f"bridge ranking_policy={normalized_policy!r} requires "
+                "question_context"
+            )
+        if contextual_scorer is None:
+            raise ValueError(
+                f"bridge ranking_policy={normalized_policy!r} requires "
+                "a contextual_scorer"
+            )
+
     output: list[dict[str, Any]] = []
     seen: set[tuple[str, str, str, str]] = set()
     for source, adjacency in source_adjacencies.items():
@@ -320,7 +391,147 @@ def _build_bridge_expansions(
             if not query_term or not seed_cui:
                 continue
 
-            for neighbor in adjacency.get(seed_cui, ())[:top_n]:
+            neighbours = list(adjacency.get(seed_cui, ()))
+            if not neighbours:
+                continue
+
+            ranked_rows: list[dict[str, Any]] = [
+                {
+                    "neighbor": neighbor,
+                    "current_rank": current_rank,
+                    "contextual_score": None,
+                    "contextual_rank": None,
+                    "contextual_rrf_score": None,
+                    "final_rank": current_rank,
+                }
+                for current_rank, neighbor in enumerate(neighbours, start=1)
+            ]
+
+            if normalized_policy in _CONTEXTUAL_BRIDGE_POLICIES:
+                assert contextual_scorer is not None
+                context_query = (
+                    f"{query_term}. Clinical context: "
+                    f"{str(question_context).strip()}"
+                )
+                labels = [
+                    str(
+                        neighbor.neighbor_preferred_name
+                        or neighbor.neighbor_cui
+                    ).strip()
+                    for neighbor in neighbours
+                ]
+                context_scores = [
+                    float(value)
+                    for value in contextual_scorer(context_query, labels)
+                ]
+                if len(context_scores) != len(ranked_rows):
+                    raise RuntimeError(
+                        "contextual_scorer returned an unexpected number "
+                        "of scores"
+                    )
+                for row, score in zip(
+                    ranked_rows,
+                    context_scores,
+                    strict=True,
+                ):
+                    row["contextual_score"] = score
+
+                contextual_order = sorted(
+                    range(len(ranked_rows)),
+                    key=lambda index: (
+                        -float(ranked_rows[index]["contextual_score"]),
+                        int(ranked_rows[index]["current_rank"]),
+                        str(
+                            ranked_rows[index]["neighbor"].neighbor_cui
+                        ),
+                        str(
+                            ranked_rows[index]["neighbor"].bridge_id
+                        ),
+                    ),
+                )
+                for contextual_rank, index in enumerate(
+                    contextual_order,
+                    start=1,
+                ):
+                    ranked_rows[index]["contextual_rank"] = contextual_rank
+
+                if normalized_policy == "contextual_target":
+                    ranked_rows.sort(
+                        key=lambda row: (
+                            int(row["contextual_rank"]),
+                            int(row["current_rank"]),
+                            str(row["neighbor"].neighbor_cui),
+                            str(row["neighbor"].bridge_id),
+                        )
+                    )
+                else:
+                    for row in ranked_rows:
+                        row["contextual_rrf_score"] = (
+                            1.0
+                            / (
+                                int(contextual_rrf_k)
+                                + int(row["current_rank"])
+                            )
+                            + 1.0
+                            / (
+                                int(contextual_rrf_k)
+                                + int(row["contextual_rank"])
+                            )
+                        )
+                    ranked_rows.sort(
+                        key=lambda row: (
+                            -float(row["contextual_rrf_score"]),
+                            int(row["current_rank"]),
+                            int(row["contextual_rank"]),
+                            str(row["neighbor"].neighbor_cui),
+                            str(row["neighbor"].bridge_id),
+                        )
+                    )
+
+                for final_rank, row in enumerate(ranked_rows, start=1):
+                    row["final_rank"] = final_rank
+
+            if ranking_trace is not None:
+                selected_bridge_ids = {
+                    str(row["neighbor"].bridge_id)
+                    for row in ranked_rows[:top_n]
+                }
+                for row in ranked_rows:
+                    neighbor = row["neighbor"]
+                    ranking_trace.append(
+                        {
+                            "query_term": query_term,
+                            "seed_cui": seed_cui,
+                            "seed_concept_name": seed.get(
+                                "seed_concept_name"
+                            ),
+                            "source": source,
+                            "tier": neighbor.tier,
+                            "relation_type": "ontology_bridge",
+                            "target_cui": neighbor.neighbor_cui,
+                            "target_preferred_name": (
+                                neighbor.neighbor_preferred_name
+                            ),
+                            "artifact_edge_id": neighbor.bridge_id,
+                            "artifact_score": float(neighbor.score),
+                            "ranking_policy": normalized_policy,
+                            "current_rank": int(row["current_rank"]),
+                            "contextual_score": row["contextual_score"],
+                            "contextual_rank": row["contextual_rank"],
+                            "contextual_rrf_score": row[
+                                "contextual_rrf_score"
+                            ],
+                            "final_rank": int(row["final_rank"]),
+                            "selected": (
+                                str(neighbor.bridge_id)
+                                in selected_bridge_ids
+                            ),
+                            "top_n": int(top_n),
+                        }
+                    )
+
+            for row in ranked_rows[:top_n]:
+                neighbor = row["neighbor"]
                 key = (
                     query_term.casefold(),
                     seed_cui,
@@ -330,26 +541,69 @@ def _build_bridge_expansions(
                 if key in seen:
                     continue
                 seen.add(key)
-                output.append(
-                    {
-                        "query_term": query_term,
-                        "seed_cui": seed_cui,
-                        "seed_concept_name": seed.get("seed_concept_name"),
-                        "target_cui": neighbor.neighbor_cui,
-                        "match_type": seed.get("match_type"),
-                        "matched_value": seed.get("matched_value"),
-                        "lexical_weight": seed.get("lexical_weight"),
-                        "evidence_source": "ontology_bridge_artifact",
-                        "relation_type": "ontology_bridge",
-                        "traversal_policy": (
-                            f"source_aware_{source}_top{top_n}_depth1"
-                        ),
-                        "artifact_edge_id": neighbor.bridge_id,
-                        "semantic_status": "valid",
-                        "expansion_mode": "expand",
-                    }
-                )
+                expansion = {
+                    "query_term": query_term,
+                    "seed_cui": seed_cui,
+                    "seed_concept_name": seed.get("seed_concept_name"),
+                    "target_cui": neighbor.neighbor_cui,
+                    "match_type": seed.get("match_type"),
+                    "matched_value": seed.get("matched_value"),
+                    "lexical_weight": seed.get("lexical_weight"),
+                    "evidence_source": "ontology_bridge_artifact",
+                    "relation_type": "ontology_bridge",
+                    "traversal_policy": (
+                        f"source_aware_{source}_top{top_n}_depth1"
+                    ),
+                    "artifact_edge_id": neighbor.bridge_id,
+                    "semantic_status": "valid",
+                    "expansion_mode": "expand",
+                }
+                # Preserve the frozen T0 expansion payload byte-for-byte at
+                # the field level.  Contextual provenance is added only for
+                # explicitly contextual experiment arms.
+                if normalized_policy in _CONTEXTUAL_BRIDGE_POLICIES:
+                    expansion.update(
+                        {
+                            "target_preferred_name": (
+                                neighbor.neighbor_preferred_name
+                            ),
+                            "relation_ranking_policy": normalized_policy,
+                            "relation_current_rank": int(
+                                row["current_rank"]
+                            ),
+                            "relation_contextual_score": row[
+                                "contextual_score"
+                            ],
+                            "relation_contextual_rank": int(
+                                row["contextual_rank"]
+                            ),
+                            "relation_contextual_rrf_score": row[
+                                "contextual_rrf_score"
+                            ],
+                            "relation_final_rank": int(row["final_rank"]),
+                        }
+                    )
+                output.append(expansion)
     return output
+
+
+def _resolve_contextual_similarity_provider(seeder: Any) -> Any | None:
+    """Find an embedding seeder behind lightweight seeder wrappers."""
+
+    queue = [seeder]
+    seen: set[int] = set()
+    while queue:
+        current = queue.pop(0)
+        if current is None or id(current) in seen:
+            continue
+        seen.add(id(current))
+        if callable(getattr(current, "cosine_similarities", None)):
+            return current
+        for attribute in ("semantic_seeder", "base_seeder"):
+            nested = getattr(current, attribute, None)
+            if nested is not None:
+                queue.append(nested)
+    return None
 
 
 def _enrich_rows_with_expansion_metadata(
@@ -440,6 +694,10 @@ class ConnectionArtifactCandidateGenerator:
             str, dict[str, tuple[BridgeNeighbor, ...]]
         ] = {}
         self.bridge_top_n: int | None = None
+        self.bridge_ranking_policy = "tier_first"
+        self.bridge_contextual_rrf_k = _DEFAULT_CONTEXTUAL_RRF_K
+        self.bridge_contextual_embedding_cache_path: Path | None = None
+        self.bridge_contextual_embedding_cache_read_only = False
         if bridge_cfg is not None:
             self.bridge_artifact = FrozenOntologyBridgeArtifact(
                 self.config.bridge_artifact_dir
@@ -447,12 +705,37 @@ class ConnectionArtifactCandidateGenerator:
             ranking_policy = str(
                 bridge_cfg.get("ranking_policy") or "tier_first"
             )
+            self.bridge_ranking_policy = ranking_policy
+            self.bridge_contextual_rrf_k = int(
+                bridge_cfg.get(
+                    "contextual_rrf_k",
+                    _DEFAULT_CONTEXTUAL_RRF_K,
+                )
+            )
+            raw_contextual_cache = bridge_cfg.get(
+                "contextual_embedding_cache_path"
+            )
+            if raw_contextual_cache is not None:
+                self.bridge_contextual_embedding_cache_path = Path(
+                    str(raw_contextual_cache)
+                ).expanduser().resolve()
+            self.bridge_contextual_embedding_cache_read_only = bool(
+                bridge_cfg.get(
+                    "contextual_embedding_cache_read_only",
+                    False,
+                )
+            )
             self.bridge_top_n = int(bridge_cfg["top_n"])
+            artifact_ranking_policy = (
+                "tier_first"
+                if ranking_policy in _CONTEXTUAL_BRIDGE_POLICIES
+                else ranking_policy
+            )
             self.bridge_source_adjacencies = {
                 str(source): self.bridge_artifact.build_adjacency(
                     profile=str(profile),
                     sources=[str(source)],
-                    ranking_policy=ranking_policy,
+                    ranking_policy=artifact_ranking_policy,
                 )
                 for source, profile in bridge_cfg["source_profiles"].items()
             }
@@ -496,6 +779,8 @@ class ConnectionArtifactCandidateGenerator:
                     seed_rows,
                     self.bridge_source_adjacencies,
                     top_n=self.bridge_top_n,
+                    ranking_policy=self.bridge_ranking_policy,
+                    contextual_rrf_k=self.bridge_contextual_rrf_k,
                 )
             )
 
@@ -913,6 +1198,7 @@ class SemanticWeightedConnectionCandidateGenerator:
         graph_top_k: int,
         require_all: bool = False,
         document_ids: Sequence[str] | str | None = None,
+        question_context: str | None = None,
     ) -> tuple[list[KGCandidate], list[KGCandidate], list[ConceptSeed], dict[str, Any]]:
         """Generate local and graph channels independently before fusion."""
         normalized_terms = _normalize_terms(terms)
@@ -941,6 +1227,7 @@ class SemanticWeightedConnectionCandidateGenerator:
             cui_by_concept_name=cui_by_concept_name,
         )
         expansions: list[dict[str, Any]] = []
+        bridge_ranking_trace: list[dict[str, Any]] = []
 
         if self.connection.direct_artifact is not None:
             expansions.extend(
@@ -952,11 +1239,56 @@ class SemanticWeightedConnectionCandidateGenerator:
 
         if self.connection.bridge_artifact is not None:
             assert self.connection.bridge_top_n is not None
+            contextual_scorer: BridgeContextualScorer | None = None
+            if (
+                self.connection.bridge_ranking_policy
+                in _CONTEXTUAL_BRIDGE_POLICIES
+            ):
+                provider = _resolve_contextual_similarity_provider(
+                    self.seeder
+                )
+                if provider is None:
+                    raise TypeError(
+                        "Contextual bridge ranking requires an embedding "
+                        "seeder exposing cosine_similarities()"
+                    )
+                def contextual_scorer(
+                    query_text: str,
+                    labels: Sequence[str],
+                    *,
+                    _provider=provider,
+                ) -> Sequence[float]:
+                    return _provider.cosine_similarities(
+                        query_text,
+                        labels,
+                        cache_path=(
+                            self.connection
+                            .bridge_contextual_embedding_cache_path
+                        ),
+                        cache_read_only=(
+                            self.connection
+                            .bridge_contextual_embedding_cache_read_only
+                        ),
+                    )
             expansions.extend(
                 _build_bridge_expansions(
                     seed_rows,
                     self.connection.bridge_source_adjacencies,
                     top_n=self.connection.bridge_top_n,
+                    ranking_policy=self.connection.bridge_ranking_policy,
+                    question_context=question_context,
+                    contextual_scorer=contextual_scorer,
+                    contextual_rrf_k=(
+                        self.connection.bridge_contextual_rrf_k
+                    ),
+                    ranking_trace=(
+                        bridge_ranking_trace
+                        if (
+                            self.connection.bridge_ranking_policy
+                            in _CONTEXTUAL_BRIDGE_POLICIES
+                        )
+                        else None
+                    ),
                 )
             )
 
@@ -1006,6 +1338,29 @@ class SemanticWeightedConnectionCandidateGenerator:
             "local_channel_candidate_count": len(local_candidates),
             "graph_channel_candidate_count": len(graph_candidates),
         }
+        if (
+            self.connection.bridge_ranking_policy
+            in _CONTEXTUAL_BRIDGE_POLICIES
+        ):
+            metadata["bridge_ranking_policy"] = (
+                self.connection.bridge_ranking_policy
+            )
+            metadata["bridge_contextual_embedding_cache_path"] = (
+                str(
+                    self.connection
+                    .bridge_contextual_embedding_cache_path
+                )
+                if (
+                    self.connection
+                    .bridge_contextual_embedding_cache_path
+                    is not None
+                )
+                else None
+            )
+            metadata["bridge_contextual_embedding_cache_read_only"] = (
+                self.connection
+                .bridge_contextual_embedding_cache_read_only
+            )
         # Diagnostic-only ephemeral trace.  It is intentionally not copied into
         # every candidate metadata payload; callers may explicitly persist it.
         self.last_channel_trace = {
@@ -1017,6 +1372,10 @@ class SemanticWeightedConnectionCandidateGenerator:
             "graph_channel": [_candidate_channel_trace_row(c) for c in graph_candidates],
             "channel_metadata": dict(metadata),
         }
+        if bridge_ranking_trace:
+            self.last_channel_trace["bridge_ranking_trace"] = [
+                dict(row) for row in bridge_ranking_trace
+            ]
         return list(local_candidates), list(graph_candidates), list(seeds), metadata
 
     def generate_with_seeds(
@@ -1027,6 +1386,40 @@ class SemanticWeightedConnectionCandidateGenerator:
         require_all: bool = False,
         document_ids: Sequence[str] | str | None = None,
     ) -> tuple[list[KGCandidate], list[ConceptSeed]]:
+        return self._generate_with_optional_context(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+            question_context=None,
+        )
+
+    def generate_with_question_context(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        question_context: str,
+        require_all: bool = False,
+        document_ids: Sequence[str] | str | None = None,
+    ) -> tuple[list[KGCandidate], list[ConceptSeed]]:
+        return self._generate_with_optional_context(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+            question_context=question_context,
+        )
+
+    def _generate_with_optional_context(
+        self,
+        terms: Sequence[str] | str,
+        *,
+        top_k: int,
+        require_all: bool,
+        document_ids: Sequence[str] | str | None,
+        question_context: str | None,
+    ) -> tuple[list[KGCandidate], list[ConceptSeed]]:
         validated_top_k = _validate_top_k(top_k)
         local_candidates, graph_candidates, seeds, metadata = self._generate_channels_with_seeds(
             terms,
@@ -1034,6 +1427,7 @@ class SemanticWeightedConnectionCandidateGenerator:
             graph_top_k=validated_top_k,
             require_all=require_all,
             document_ids=document_ids,
+            question_context=question_context,
         )
         output = _merge_semantic_connection_candidates(
             local_candidates,
@@ -1157,10 +1551,45 @@ class PoolPreservingSemanticConnectionCandidateGenerator:
         return candidates
 
     def generate_with_seeds(self, terms, *, top_k: int, require_all: bool = False, document_ids=None):
+        return self._generate_with_optional_context(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+            question_context=None,
+        )
+
+    def generate_with_question_context(
+        self,
+        terms,
+        *,
+        top_k: int,
+        question_context: str,
+        require_all: bool = False,
+        document_ids=None,
+    ):
+        return self._generate_with_optional_context(
+            terms,
+            top_k=top_k,
+            require_all=require_all,
+            document_ids=document_ids,
+            question_context=question_context,
+        )
+
+    def _generate_with_optional_context(
+        self,
+        terms,
+        *,
+        top_k: int,
+        require_all: bool,
+        document_ids,
+        question_context: str | None,
+    ):
         local_k = _validate_top_k(top_k)
         local, graph, seeds, metadata = self.core._generate_channels_with_seeds(
             terms, local_top_k=local_k, graph_top_k=self.graph_candidate_k,
             require_all=require_all, document_ids=document_ids,
+            question_context=question_context,
         )
         shared = {
             **metadata,

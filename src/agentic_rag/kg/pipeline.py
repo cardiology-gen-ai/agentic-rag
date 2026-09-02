@@ -242,6 +242,7 @@ class ModularKGRetrievalPipeline:
                 top_k=self.candidate_k,
                 require_all=plan.require_all,
                 document_ids=self.document_ids,
+                question_context=normalized_question,
             )
         except Exception as exc:
             return self._run(
@@ -1082,7 +1083,23 @@ def _generate_candidates_with_seeds(
     top_k: int,
     require_all: bool,
     document_ids: Sequence[str],
+    question_context: str | None = None,
 ) -> tuple[list[KGCandidate], list[ConceptSeed]]:
+    generate_with_question_context = getattr(
+        generator,
+        "generate_with_question_context",
+        None,
+    )
+    if callable(generate_with_question_context):
+        candidates, seeds = generate_with_question_context(
+            terms,
+            top_k=top_k,
+            question_context=str(question_context or ""),
+            require_all=require_all,
+            document_ids=document_ids,
+        )
+        return list(candidates), list(seeds)
+
     generate_with_seeds = getattr(generator, "generate_with_seeds", None)
     if callable(generate_with_seeds):
         candidates, seeds = generate_with_seeds(

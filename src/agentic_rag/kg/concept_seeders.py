@@ -521,6 +521,8 @@ class EmbeddingConceptSeeder:
                         raise ValueError("invalid cached query embedding shape")
                     self.query_embedding_cache_hits += 1
                     return vector
+
+
             except (KeyError, ValueError, json.JSONDecodeError):
                 if self.query_cache_read_only:
                     raise RuntimeError(
@@ -545,6 +547,166 @@ class EmbeddingConceptSeeder:
             )
 
         return vector
+
+    def cosine_similarities(
+        self,
+        query_text: str,
+        candidate_texts: Sequence[str],
+        *,
+        cache_path: str | Path | None = None,
+        cache_read_only: bool = False,
+    ) -> list[float]:
+        """Score arbitrary texts with the frozen Concept-embedding backend.
+
+        Contextual target-ranking embeddings may use a dedicated exact-text
+        cache.  This cache is deliberately independent from the frozen
+        query-term cache used by local Concept seeding.
+        """
+
+        normalized_query = str(query_text).strip()
+        normalized_candidates = [
+            str(text).strip()
+            for text in candidate_texts
+        ]
+
+        if not normalized_query:
+            raise ValueError("query_text must be non-empty")
+        if any(not text for text in normalized_candidates):
+            raise ValueError(
+                "candidate_texts must contain only non-empty strings"
+            )
+        if not normalized_candidates:
+            return []
+
+        contextual_cache_path = (
+            Path(cache_path).expanduser()
+            if cache_path is not None
+            else None
+        )
+        contextual_cache_read_only = bool(cache_read_only)
+
+        # Fail closed if a contextual experiment is accidentally configured
+        # to use the frozen Q2 query-term cache directory.
+        if (
+            contextual_cache_path is not None
+            and self.query_cache_path is not None
+            and contextual_cache_path.resolve()
+            == self.query_cache_path.resolve()
+        ):
+            raise ValueError(
+                "Contextual embedding cache must be separate from the "
+                "frozen query-term embedding cache"
+            )
+
+        if (
+            contextual_cache_read_only
+            and contextual_cache_path is None
+        ):
+            raise ValueError(
+                "cache_read_only=True requires cache_path"
+            )
+
+        def encode_contextual_text(text: str) -> np.ndarray:
+            metadata = {
+                **self._query_cache_metadata(text),
+                "cache_role": "contextual_target_ranking_v1",
+            }
+
+            cache_file: Path | None = None
+
+            if contextual_cache_path is not None:
+                encoded = json.dumps(
+                    metadata,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+                key = hashlib.sha256(encoded).hexdigest()
+                cache_file = contextual_cache_path / f"{key}.npz"
+
+            if cache_file is not None and cache_file.is_file():
+                try:
+                    with np.load(
+                        cache_file,
+                        allow_pickle=False,
+                    ) as data:
+                        cached_metadata = json.loads(
+                            str(data["metadata"].item())
+                        )
+                        vector = np.asarray(
+                            data["embedding"],
+                            dtype=np.float32,
+                        )
+
+                    if cached_metadata != metadata:
+                        raise ValueError(
+                            "contextual cache metadata mismatch"
+                        )
+
+                    if vector.ndim == 1:
+                        vector = vector.reshape(1, -1)
+
+                    if vector.ndim != 2 or vector.shape[0] != 1:
+                        raise ValueError(
+                            "invalid cached contextual embedding shape"
+                        )
+
+                    return vector
+
+                except (
+                    KeyError,
+                    ValueError,
+                    json.JSONDecodeError,
+                ) as exc:
+                    if contextual_cache_read_only:
+                        raise RuntimeError(
+                            "Invalid frozen contextual embedding cache "
+                            f"entry: {cache_file}"
+                        ) from exc
+
+            if contextual_cache_read_only:
+                raise FileNotFoundError(
+                    "Frozen contextual embedding cache miss for "
+                    f"{text!r}: {cache_file}"
+                )
+
+            vector = self._encode_texts([text])
+
+            if cache_file is not None:
+                cache_file.parent.mkdir(
+                    parents=True,
+                    exist_ok=True,
+                )
+                np.savez_compressed(
+                    cache_file,
+                    embedding=np.asarray(
+                        vector,
+                        dtype=np.float32,
+                    ),
+                    metadata=np.array(
+                        json.dumps(metadata, sort_keys=True)
+                    ),
+                )
+
+            return vector
+
+        query_vector = _normalize_matrix(
+            encode_contextual_text(normalized_query)
+        )[0]
+
+        candidate_matrix = np.concatenate(
+            [
+                encode_contextual_text(text)
+                for text in normalized_candidates
+            ],
+            axis=0,
+        )
+        candidate_matrix = _normalize_matrix(candidate_matrix)
+
+        return [
+            float(value)
+            for value in candidate_matrix @ query_vector
+        ]
 
     def _query_cache_metadata(self, term: str) -> dict[str, Any]:
         return {

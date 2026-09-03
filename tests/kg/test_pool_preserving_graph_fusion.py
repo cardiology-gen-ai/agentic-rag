@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from agentic_rag.kg.candidate_generators import KGCandidate
 from agentic_rag.kg.connection_artifact_retrieval import _merge_semantic_connection_candidates, _rank_rrf_pool
+from agentic_rag.kg.pipeline import _generate_candidates_with_seeds
 from agentic_rag.kg.models import KGMatchDiagnostic, KGRetrievalScores, KGSectionResult, KGSeededMatchDiagnostic
 
 def _candidate(uid, diagnostics, *, rank, source="mentions"):
@@ -27,3 +28,36 @@ def test_rrf_rewards_cross_channel_overlap_without_dropping_unique_candidates():
 def test_rrf_single_channel_order_is_deterministic():
     out=_rank_rrf_pool([_local("A",1,.9),_local("B",2,.8)],[],rrf_k=60,metadata={})
     assert [c.section_uid for c in out]==["A","B"]
+
+
+def test_pipeline_passes_question_context_only_to_opt_in_generator():
+    class ContextAwareGenerator:
+        def __init__(self):
+            self.question_context = None
+
+        def generate_with_question_context(
+            self,
+            terms,
+            *,
+            top_k,
+            question_context,
+            require_all,
+            document_ids,
+        ):
+            self.question_context = question_context
+            return [], []
+
+    generator = ContextAwareGenerator()
+    candidates, seeds = _generate_candidates_with_seeds(
+        generator,
+        ["friedreich ataxia"],
+        top_k=50,
+        require_all=False,
+        document_ids=[],
+        question_context="A patient with gait ataxia and cardiomyopathy.",
+    )
+    assert candidates == []
+    assert seeds == []
+    assert generator.question_context == (
+        "A patient with gait ataxia and cardiomyopathy."
+    )

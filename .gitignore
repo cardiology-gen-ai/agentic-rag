@@ -27,3 +27,6 @@ old_artifacts/
 configs/kg_retrieval/
 configs/retrieval/
 experiments/kg_regression/
+review_tools/
+tests/data/
+tests/kg/
